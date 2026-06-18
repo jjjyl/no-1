@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnjy48b32wqi8"]
+
+[ext_resource type="Script" uid="uid://cqqqgebp7ixsg" path="res://scripts/CharacterStats.cs" id="1_u6l8p"]
+
+[node name="BaseMob" type="Node"]
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("1_u6l8p")
+DisplayName = "基础魔种"
+MaxBruiseHP = 15
+MaxSevereHP = 15
+ATK_Max = 10
+Dodge = 0.0
+Speed = 6

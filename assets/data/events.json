@@ -1,0 +1,138 @@
+{
+  "events": [
+	{
+	  "id": "normal_encounter",
+	  "category": "world",
+	  "location": "*",
+	  "conditions": { "random": 0.4, "blessing_mod": "encounter_rate" },
+	  "effects": [
+		{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" }
+	  ]
+	},
+
+	{
+	  "id": "ivy_join",
+	  "name": "艾薇相遇",
+	  "category": "minor_conditional",
+	  "location": "废矿入口",
+	  "one_shot": true,
+	  "priority": 100,
+	  "conditions": { "companion_not_in_party": "艾薇" },
+	  "effects": [
+		{ "type": "companion_join", "name": "艾薇" },
+		{ "type": "message", "speaker": "艾薇", "text": "你是新来的旅人？这废矿可不安全，一起走吧。", "position": "top", "auto_hide": 3 },
+		{ "type": "grant_item", "item_id": "small_potion", "amount": 3 },
+		{ "type": "status", "text": "[color=cyan]艾薇加入了队伍！[/color]" }
+	  ]
+	},
+
+	{
+	  "id": "tianyi_join",
+	  "name": "天一相遇",
+	  "category": "minor_conditional",
+	  "location": "断崖台地",
+	  "one_shot": true,
+	  "priority": 100,
+	  "conditions": { "companion_not_in_party": "天一" },
+	  "effects": [
+		{ "type": "companion_join", "name": "天一" },
+		{ "type": "dialogue", "speaker": "天一", "text": "断崖风大，站不稳可会掉下去。你跟紧我。", "position": "center" },
+		{ "type": "status", "text": "[color=cyan]天一加入了队伍！[/color]" }
+	  ]
+	},
+
+	{
+	  "id": "dragon-threat",
+	  "name": "巨龙的威胁",
+	  "category": "world",
+	  "location": "林地边缘",
+	  "one_shot": false,
+	  "priority": 200,
+	  "layers": [
+		{
+		  "level": "shallow",
+		  "name": "远处目睹",
+		  "locks": [],
+		  "conditions": { "flag_not_set": "cycle:dragon_slain" },
+		  "effects": [
+			{ "type": "message", "text": "天空暗了下来。一个巨大的黑影从云层中掠过，遮住了太阳。", "position": "top", "auto_hide": 4 },
+			{ "type": "message", "text": "地面上的动物四散奔逃。那是巨龙——古代魔力种。", "position": "middle", "auto_hide": 3 },
+			{ "type": "status", "text": "[color=yellow]远处有巨龙的身影...[/color]" }
+		  ]
+		},
+		{
+		  "level": "middle",
+		  "name": "正面迎战",
+		  "one_shot": true,
+		  "locks": ["companion"],
+		  "conditions": { "min_cycle": 1, "companion_in_party": "艾薇" },
+		  "effects": [
+			{ "type": "dialogue", "speaker": "艾薇", "text": "它来了——小心！它的魔力太强了，我的治疗可能不够... 但我不会躲。", "position": "center" },
+			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
+			{ "type": "set_flag", "flag": "cycle:dragon_slain" },
+			{ "type": "status", "text": "[color=orange]击败了巨龙的一波攻势！[/color]" }
+		  ]
+		},
+		{
+		  "level": "deep",
+		  "name": "守护林地",
+		  "one_shot": true,
+		  "locks": ["fragment", "prerequisite"],
+		  "conditions": {
+			"min_cycle": 3,
+			"companion_in_party": "艾薇",
+			"min_favor": { "companion": "艾薇", "value": 40 },
+			"flag_set": "cycle:dragon_slain"
+		  },
+		  "effects": [
+			{ "type": "dialogue", "speaker": "艾薇", "text": "这次——这次不一样。我感觉到了。我要保护好这个地方。", "position": "center" },
+			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
+			{ "type": "set_flag", "flag": "event:dragon-threat:deep_done" },
+			{ "type": "message", "speaker": "艾薇", "text": "我们...赢了？林地还在。", "position": "top", "auto_hide": 4 },
+			{ "type": "status", "text": "[color=green]守护了林地！艾薇的羁绊加深了。[/color]" }
+		  ],
+		  "shrine_unlocks": ["dragon_power_boost"]
+		}
+	  ]
+	},
+
+	{
+	  "id": "first_awakening",
+	  "name": "初次苏醒",
+	  "category": "milestone",
+	  "location": "林地边缘",
+	  "one_shot": true,
+	  "priority": 250,
+	  "conditions": { "account_flag_not_set": "first_awakening_done" },
+	  "effects": [
+		{ "type": "dialogue", "speaker": "引导者", "text": "你又一次醒来了。和之前每一次一样。\n\n但这一次——你感觉到有什么不同。", "position": "center" },
+		{ "type": "set_account_flag", "flag": "first_awakening_done" }
+	  ]
+	},
+
+	{
+	  "id": "return_awakening",
+	  "name": "再度苏醒",
+	  "category": "milestone",
+	  "location": "林地边缘",
+	  "priority": 240,
+	  "conditions": { "account_flag_set": "first_awakening_done" },
+	  "effects": [
+		{ "type": "dialogue", "speaker": "引导者", "text": "你回来了。世界在等待。", "position": "center" }
+	  ]
+	},
+
+	{
+	  "id": "hermit-encounter",
+	  "name": "独居者",
+	  "category": "minor_conditional",
+	  "location": "*",
+	  "priority": 50,
+	  "conditions": { "random": 0.15 },
+	  "effects": [
+		{ "type": "message", "text": "路边一间歪斜的小屋飘出炊烟。有人在。", "position": "bottom", "auto_hide": 3 },
+		{ "type": "status", "text": "[color=gray]路边有户人家...[/color]" }
+	  ]
+	}
+  ]
+}

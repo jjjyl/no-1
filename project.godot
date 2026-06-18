@@ -1,0 +1,35 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="No1"
+run/main_scene="uid://m1n03v1auvcb"
+config/features=PackedStringArray("4.5", "C#", "Mobile")
+config/icon="res://icon.svg"
+
+[autoload]
+
+DialogueManager="*res://scripts/ui/DialogueManager.cs"
+GameManager="*res://scripts/core/GameManager.cs"
+CycleManager="*res://scripts/core/CycleManager.cs"
+AmbientCG="*res://addons/ambientcg/ambient_cg.gd"
+
+[dotnet]
+
+project/assembly_name="No1"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/Godot-MToon-Shader/plugin.cfg", "res://addons/ambientcg/plugin.cfg", "res://addons/vrm/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="mobile"

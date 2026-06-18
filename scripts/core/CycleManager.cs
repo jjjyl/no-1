@@ -1,0 +1,178 @@
+namespace No1.Core;
+
+using Godot;
+using No1.Data;
+
+public partial class CycleManager : Node
+{
+	public static CycleManager Instance { get; private set; } = null!;
+	public int CurrentCycle { get; private set; } = 1;
+	public BlessingType? SelectedBlessing { get; private set; }
+	public CharacterStats PlayerStats { get; private set; } = null!;
+	public int CurrentNodeIndex { get; set; }
+	public List<CompanionState> ActiveCompanions { get; private set; } = new();
+	public string PendingEnemyScene;
+	public string PendingBattleEvents;
+	public Inventory PlayerInventory { get; private set; } = null!;
+	public int FragmentCount { get; private set; }
+
+	HashSet<string> _flags = new();           // 轮回级
+	HashSet<string> _accountFlags = new();    // 账号级（跨轮回不重置）
+
+	const string SavePath = "user://save.json";
+
+	public override void _Ready()
+	{
+		CompanionState.LoadRegistry();
+		EventManager.Load();
+		Instance = this;
+		LoadAccount();
+		CreatePlayer();
+		PlayerInventory = new Inventory(PlayerStats);
+		LoadInventory();
+	}
+
+	void CreatePlayer()
+	{
+		PlayerStats = new CharacterStats
+		{
+			DisplayName = "玩家",
+			Power = 6, Body = 6, Agility = 6, Heart = 5, Fortune = 6
+		};
+		PlayerStats.FullHeal();
+	}
+
+	public void SelectBlessing(BlessingType type)
+	{
+		SelectedBlessing = type;
+		CreatePlayer();
+		foreach (var (key, val) in BlessingData.Get(type).Modifiers)
+		{
+			if (key == "encounter_rate") continue;  // 元变量自己处理
+			PlayerStats.ApplyModifier(key, val);
+		}
+		PlayerInventory.ReapplyEquipmentModifiers();
+	}
+
+	public float GetBlessingModifier(string key)
+	{
+		if (SelectedBlessing == null) return 0f;
+		return BlessingData.Get(SelectedBlessing.Value).Modifiers.TryGetValue(key, out var v) ? v : 0f;
+	}
+
+	public float GetEncounterRate()
+	{
+		float rate = 0.4f;
+		if (SelectedBlessing != null)
+			if (BlessingData.Get(SelectedBlessing.Value).Modifiers.TryGetValue("encounter_rate", out var m))
+				rate *= 1f + m;
+		return Math.Max(0.1f, rate);
+	}
+
+	public void EnterWorld()
+	{
+		PlayerStats.FullHeal();
+		ActiveCompanions.Clear();
+		_flags.Clear();
+		EventManager.ResetCycle();
+		CurrentNodeIndex = 0;
+	}
+
+	public void JoinCompanion(string name)
+	{
+		var comp = CompanionState.Meet(name);
+		if (comp == null) return;
+		ActiveCompanions.Add(comp);
+	}
+
+	public void AddFragment(int count = 1)
+	{
+		FragmentCount += count;
+		GD.Print($"[CycleManager] FragmentCount: {FragmentCount}");
+		SaveAccount();
+	}
+
+	// ── 轮回级 flag ──
+
+	public void SetFlag(string flag) => _flags.Add(flag);
+	public bool HasFlag(string flag) => _flags.Contains(flag);
+
+	// ── 账号级 flag（跨轮回持久）──
+
+	public void SetAccountFlag(string flag)
+	{
+		_accountFlags.Add(flag);
+		SaveAccount();
+	}
+
+	public bool HasAccountFlag(string flag) => _accountFlags.Contains(flag);
+
+	// ── 存档 ──
+
+	void SaveAccount()
+	{
+		var save = new Godot.Collections.Dictionary
+		{
+			["cycle"] = CurrentCycle,
+			["fragmentCount"] = FragmentCount,
+			["accountFlags"] = new Godot.Collections.Array(_accountFlags.Select(s => (Variant)s).ToArray()),
+		};
+		if (PlayerInventory != null)
+			save["inventory"] = PlayerInventory.Serialize();
+		var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Write);
+		if (file == null)
+		{
+			GD.PrintErr("[CycleManager] Failed to open save file for writing");
+			return;
+		}
+		file.StoreString(Json.Stringify(save));
+		file.Close();
+		GD.Print($"[CycleManager] Saved: cycle={CurrentCycle}, accountFlags={_accountFlags.Count}");
+	}
+
+	void LoadAccount()
+	{
+		if (!FileAccess.FileExists(SavePath)) return;
+
+		var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Read);
+		if (file == null) return;
+
+		var json = file.GetAsText();
+		file.Close();
+
+		var dict = Json.ParseString(json).AsGodotDictionary();
+		CurrentCycle = dict.ContainsKey("cycle") ? dict["cycle"].AsInt32() : 1;
+		FragmentCount = dict.ContainsKey("fragmentCount") ? dict["fragmentCount"].AsInt32() : 0;
+
+		if (dict.ContainsKey("accountFlags"))
+			foreach (var item in dict["accountFlags"].AsGodotArray())
+				_accountFlags.Add(item.AsString());
+
+		GD.Print($"[CycleManager] Loaded: cycle={CurrentCycle}, accountFlags={_accountFlags.Count}");
+	}
+
+	void LoadInventory()
+	{
+		if (!FileAccess.FileExists(SavePath)) return;
+		var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Read);
+		if (file == null) return;
+		var json = file.GetAsText();
+		file.Close();
+		var dict = Json.ParseString(json).AsGodotDictionary();
+		if (dict.ContainsKey("inventory"))
+			PlayerInventory.Deserialize(dict["inventory"].AsGodotDictionary());
+	}
+
+	public void OnDeath()
+	{
+		CurrentCycle++;
+		SaveAccount();
+	}
+
+	public void ReturnToTemple()
+	{
+		PlayerStats.FullHeal();
+		SelectedBlessing = null;
+		_flags.Clear();
+	}
+}

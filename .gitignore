@@ -1,0 +1,7 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# AmbientCG temporary files (re-downloadable)
+ambientcg/temp/
+ambientcg/extracted/

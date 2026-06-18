@@ -1,0 +1,407 @@
+[gd_scene load_steps=43 format=3 uid="uid://i7xthiny032v"]
+
+[ext_resource type="PackedScene" uid="uid://chmir3h6e4euw" path="res://assets/models/【free】VRoid・VRM Steam punk Dress Set（ぴケの創作屋さん）/vrm/Steam punk Dress Set free.vrm" id="1_obh7x"]
+[ext_resource type="Script" uid="uid://dkkjcivmnb5fm" path="res://addons/vrm/vrm_spring_bone.gd" id="2_8ciml"]
+[ext_resource type="Script" uid="uid://f82nagis8e17" path="res://addons/vrm/vrm_collider_group.gd" id="3_0nwie"]
+[ext_resource type="Script" uid="uid://dc2swam0xnsw2" path="res://addons/vrm/vrm_collider.gd" id="4_cqvvx"]
+
+[sub_resource type="Sky" id="Sky_1ceg6"]
+
+[sub_resource type="Environment" id="Environment_ejnxe"]
+background_mode = 2
+sky = SubResource("Sky_1ceg6")
+ambient_light_energy = 0.3
+
+[sub_resource type="Resource" id="Resource_7i68y"]
+resource_name = "Bust"
+script = ExtResource("2_8ciml")
+comment = "Bust"
+joint_nodes = PackedStringArray("J_Sec_L_Bust1", "J_Sec_L_Bust2", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.05
+hit_radius_scale = 0.007745158
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_brha1"]
+resource_name = "Bust"
+script = ExtResource("2_8ciml")
+comment = "Bust"
+joint_nodes = PackedStringArray("J_Sec_R_Bust1", "J_Sec_R_Bust2", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.05
+hit_radius_scale = 0.007745158
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_fc3bd"]
+resource_name = "LeftUpperLeg"
+script = ExtResource("4_cqvvx")
+bone = "LeftUpperLeg"
+offset = Vector3(0, 0, -2.3283064e-10)
+tail = Vector3(0, 0, -2.3283064e-10)
+radius = 0.07530339
+
+[sub_resource type="Resource" id="Resource_crwyp"]
+resource_name = "LeftUpperLeg"
+script = ExtResource("4_cqvvx")
+bone = "LeftUpperLeg"
+offset = Vector3(0, 0.111536145, -0.002334121)
+tail = Vector3(0, 0.111536145, -0.002334121)
+radius = 0.07530339
+
+[sub_resource type="Resource" id="Resource_iflh4"]
+resource_name = "LeftUpperLeg"
+script = ExtResource("4_cqvvx")
+bone = "LeftUpperLeg"
+offset = Vector3(0, 0.20448297, -0.0042792214)
+tail = Vector3(0, 0.20448297, -0.0042792214)
+radius = 0.07530339
+
+[sub_resource type="Resource" id="Resource_hbdqx"]
+script = ExtResource("3_0nwie")
+colliders = Array[ExtResource("4_cqvvx")]([SubResource("Resource_fc3bd"), SubResource("Resource_crwyp"), SubResource("Resource_iflh4")])
+
+[sub_resource type="Resource" id="Resource_whtpe"]
+resource_name = "RightUpperLeg"
+script = ExtResource("4_cqvvx")
+bone = "RightUpperLeg"
+offset = Vector3(0, 0, -2.3283064e-10)
+tail = Vector3(0, 0, -2.3283064e-10)
+radius = 0.07530339
+
+[sub_resource type="Resource" id="Resource_s453i"]
+resource_name = "RightUpperLeg"
+script = ExtResource("4_cqvvx")
+bone = "RightUpperLeg"
+offset = Vector3(0, 0.111536145, -0.002334121)
+tail = Vector3(0, 0.111536145, -0.002334121)
+radius = 0.07530339
+
+[sub_resource type="Resource" id="Resource_6l70w"]
+resource_name = "RightUpperLeg"
+script = ExtResource("4_cqvvx")
+bone = "RightUpperLeg"
+offset = Vector3(0, 0.20448297, -0.0042792214)
+tail = Vector3(0, 0.20448297, -0.0042792214)
+radius = 0.07530339
+
+[sub_resource type="Resource" id="Resource_naahg"]
+script = ExtResource("3_0nwie")
+colliders = Array[ExtResource("4_cqvvx")]([SubResource("Resource_whtpe"), SubResource("Resource_s453i"), SubResource("Resource_6l70w")])
+
+[sub_resource type="Resource" id="Resource_w3j8u"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_L_SkirtBack1_01", "J_Sec_L_SkirtBack2_01", "J_Sec_L_SkirtBack2_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_01aae"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_L_SkirtFront1_01", "J_Sec_L_SkirtFront2_01", "J_Sec_L_SkirtFront2_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_mw6ec"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_L_SkirtSide1_01", "J_Sec_L_SkirtSide2_01", "J_Sec_L_SkirtSide2_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_npigo"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_R_SkirtBack1_01", "J_Sec_R_SkirtBack2_01", "J_Sec_R_SkirtBack2_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_y7q1a"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_R_SkirtFront1_01", "J_Sec_R_SkirtFront2_01", "J_Sec_R_SkirtFront2_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_vyh0d"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_R_SkirtSide1_01", "J_Sec_R_SkirtSide2_01", "J_Sec_R_SkirtSide2_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_c244h"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_L_LowerSleeve_01", "J_Sec_L_LowerSleeve_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_w1ljg"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_L_TipSleeve_01", "J_Sec_L_TipSleeve_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_uygf8"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_R_LowerSleeve_01", "J_Sec_R_LowerSleeve_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_81lqu"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_R_TipSleeve_01", "J_Sec_R_TipSleeve_end_01", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_rswuq"]
+resource_name = "TopsUpperArm"
+script = ExtResource("2_8ciml")
+comment = "TopsUpperArm"
+joint_nodes = PackedStringArray("J_Sec_L_CoatSkirtBack_01", "J_Sec_L_CoatSkirtBack_end_01", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.0
+hit_radius_scale = 0.0176345855
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_4bf0a"]
+resource_name = "TopsUpperArm"
+script = ExtResource("2_8ciml")
+comment = "TopsUpperArm"
+joint_nodes = PackedStringArray("J_Sec_L_CoatSkirtFront_01", "J_Sec_L_CoatSkirtFront_end_01", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.0
+hit_radius_scale = 0.0176345855
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_1jlv5"]
+resource_name = "TopsUpperArm"
+script = ExtResource("2_8ciml")
+comment = "TopsUpperArm"
+joint_nodes = PackedStringArray("J_Sec_L_CoatSkirtSide1_01", "J_Sec_L_CoatSkirtSide2_01", "J_Sec_L_CoatSkirtSide2_end_01", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.0
+hit_radius_scale = 0.0176345855
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_1cjh4"]
+resource_name = "TopsUpperArm"
+script = ExtResource("2_8ciml")
+comment = "TopsUpperArm"
+joint_nodes = PackedStringArray("J_Sec_R_CoatSkirtBack_01", "J_Sec_R_CoatSkirtBack_end_01", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.0
+hit_radius_scale = 0.0176345855
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_x1ajo"]
+resource_name = "TopsUpperArm"
+script = ExtResource("2_8ciml")
+comment = "TopsUpperArm"
+joint_nodes = PackedStringArray("J_Sec_R_CoatSkirtFront_01", "J_Sec_R_CoatSkirtFront_end_01", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.0
+hit_radius_scale = 0.0176345855
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_78ric"]
+resource_name = "TopsUpperArm"
+script = ExtResource("2_8ciml")
+comment = "TopsUpperArm"
+joint_nodes = PackedStringArray("J_Sec_R_CoatSkirtSide1_01", "J_Sec_R_CoatSkirtSide2_01", "J_Sec_R_CoatSkirtSide2_end_01", "")
+stiffness_scale = 0.75
+drag_force_scale = 0.0
+hit_radius_scale = 0.0176345855
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_yl7l4"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_L_SkirtBack1_02", "J_Sec_L_SkirtBack2_02", "J_Sec_L_SkirtBack2_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_xsyt6"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_L_SkirtFront1_02", "J_Sec_L_SkirtFront2_02", "J_Sec_L_SkirtFront2_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_5djvj"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_L_SkirtSide1_02", "J_Sec_L_SkirtSide2_02", "J_Sec_L_SkirtSide2_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_mq0yp"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_R_SkirtBack1_02", "J_Sec_R_SkirtBack2_02", "J_Sec_R_SkirtBack2_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_154f1"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_R_SkirtFront1_02", "J_Sec_R_SkirtFront2_02", "J_Sec_R_SkirtFront2_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_jhrpe"]
+resource_name = "Skirt"
+script = ExtResource("2_8ciml")
+comment = "Skirt"
+joint_nodes = PackedStringArray("J_Sec_R_SkirtSide1_02", "J_Sec_R_SkirtSide2_02", "J_Sec_R_SkirtSide2_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.012237
+gravity_scale = 0.0
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_u6myb"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_L_LowerSleeve_02", "J_Sec_L_LowerSleeve_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_32wp6"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_L_TipSleeve_02", "J_Sec_L_TipSleeve_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_63phd"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_R_LowerSleeve_02", "J_Sec_R_LowerSleeve_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[sub_resource type="Resource" id="Resource_ec5vm"]
+resource_name = "Sleeve"
+script = ExtResource("2_8ciml")
+comment = "Sleeve"
+joint_nodes = PackedStringArray("J_Sec_R_TipSleeve_02", "J_Sec_R_TipSleeve_end_02", "")
+stiffness_scale = 0.5
+drag_force_scale = 0.05
+hit_radius_scale = 0.0119074639
+gravity_scale = 0.0
+center_bone = "Root_"
+
+[node name="Node3D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ejnxe")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8660254, 0.35355338, -0.35355338, 0, 0.70710677, 0.70710677, 0.5, -0.6123724, 0.6123724, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 3)
+
+[node name="Steam punk Dress Set free" parent="." instance=ExtResource("1_obh7x")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00026392937, 0, -0.0015392303)
+spring_bones = Array[ExtResource("2_8ciml")]([SubResource("Resource_7i68y"), SubResource("Resource_brha1"), SubResource("Resource_w3j8u"), SubResource("Resource_01aae"), SubResource("Resource_mw6ec"), SubResource("Resource_npigo"), SubResource("Resource_y7q1a"), SubResource("Resource_vyh0d"), SubResource("Resource_c244h"), SubResource("Resource_w1ljg"), SubResource("Resource_uygf8"), SubResource("Resource_81lqu"), SubResource("Resource_rswuq"), SubResource("Resource_4bf0a"), SubResource("Resource_1jlv5"), SubResource("Resource_1cjh4"), SubResource("Resource_x1ajo"), SubResource("Resource_78ric"), SubResource("Resource_yl7l4"), SubResource("Resource_xsyt6"), SubResource("Resource_5djvj"), SubResource("Resource_mq0yp"), SubResource("Resource_154f1"), SubResource("Resource_jhrpe"), SubResource("Resource_u6myb"), SubResource("Resource_32wp6"), SubResource("Resource_63phd"), SubResource("Resource_ec5vm")])
+collider_groups = Array[ExtResource("3_0nwie")]([SubResource("Resource_hbdqx"), SubResource("Resource_naahg")])
+collider_library = Array[ExtResource("4_cqvvx")]([SubResource("Resource_fc3bd"), SubResource("Resource_crwyp"), SubResource("Resource_iflh4"), SubResource("Resource_whtpe"), SubResource("Resource_s453i"), SubResource("Resource_6l70w")])

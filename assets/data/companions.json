@@ -1,0 +1,20 @@
+{
+  "companions": [
+	{
+	  "name": "艾薇",
+	  "power": 2,
+	  "body": 8,
+	  "agility": 5,
+	  "heart": 8,
+	  "fortune": 4
+	},
+	{
+	  "name": "天一",
+	  "power": 9,
+	  "body": 3,
+	  "agility": 8,
+	  "heart": 2,
+	  "fortune": 5
+	}
+  ]
+}

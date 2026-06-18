@@ -1,0 +1,78 @@
+[gd_scene load_steps=2 format=3 uid="uid://m1n03v1auvcb"]
+
+[ext_resource type="Script" uid="uid://cgc5p6yy3usee" path="res://scripts/ui/TempleUI.cs" id="1_7wi2x"]
+
+[node name="Temple" type="Control" node_paths=PackedStringArray("_cycleLabel", "_insightBtn", "_valorBtn", "_wandererBtn", "_enterBtn", "_blessingDesc", "_inventoryGrid", "_equipDisplay", "_itemDesc", "_useItemBtn")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7wi2x")
+_cycleLabel = NodePath("VBoxContainer/CycleLabel")
+_insightBtn = NodePath("VBoxContainer/InsightBtn")
+_valorBtn = NodePath("VBoxContainer/ValorBtn")
+_wandererBtn = NodePath("VBoxContainer/WandererBtn")
+_enterBtn = NodePath("VBoxContainer/EnterBtn")
+_blessingDesc = NodePath("VBoxContainer/BlessingDesc")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.17373675, 0.26388848, 0.5999568, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1.2927707, 1.2282239, 1, 1)
+theme_override_font_sizes/font_size = 32
+text = "神殿"
+horizontal_alignment = 1
+
+[node name="CycleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "周目: 1"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="InsightBtn" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "察知"
+
+[node name="ValorBtn" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "战意"
+
+[node name="WandererBtn" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "旅人"
+
+[node name="BlessingDesc" type="RichTextLabel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+
+[node name="EnterBtn" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "进入世界"

@@ -1,0 +1,90 @@
+[gd_scene load_steps=2 format=3 uid="uid://inventory_panel_01"]
+
+[ext_resource type="Script" path="res://scripts/ui/InventoryPanel.cs" id="1_inv"]
+
+[node name="InventoryPanel" type="Control" node_paths=PackedStringArray("_itemGrid", "_equipDisplay", "_itemDesc", "_actionBtn", "_closeBtn")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_inv")
+_itemGrid = NodePath("Panel/VBoxContainer/HSplit/RightSide/Scroll/ItemGrid")
+_equipDisplay = NodePath("Panel/VBoxContainer/HSplit/LeftSide/EquipDisplay")
+_itemDesc = NodePath("Panel/VBoxContainer/Bottom/ItemDesc")
+_actionBtn = NodePath("Panel/VBoxContainer/Bottom/HBox/ActionBtn")
+_closeBtn = NodePath("Panel/VBoxContainer/Bottom/HBox/CloseBtn")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -200.0
+offset_right = 250.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "物品"
+horizontal_alignment = 1
+
+[node name="HSplit" type="HSplitContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="LeftSide" type="VBoxContainer" parent="Panel/VBoxContainer/HSplit"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+
+[node name="EquipDisplay" type="RichTextLabel" parent="Panel/VBoxContainer/HSplit/LeftSide"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+
+[node name="RightSide" type="VBoxContainer" parent="Panel/VBoxContainer/HSplit"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBoxContainer/HSplit/RightSide"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemGrid" type="VBoxContainer" parent="Panel/VBoxContainer/HSplit/RightSide/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Bottom" type="VBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ItemDesc" type="RichTextLabel" parent="Panel/VBoxContainer/Bottom"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+autowrap_mode = 0
+
+[node name="HBox" type="HBoxContainer" parent="Panel/VBoxContainer/Bottom"]
+layout_mode = 2
+alignment = 1
+
+[node name="ActionBtn" type="Button" parent="Panel/VBoxContainer/Bottom/HBox"]
+layout_mode = 2
+text = "使用"
+
+[node name="CloseBtn" type="Button" parent="Panel/VBoxContainer/Bottom/HBox"]
+layout_mode = 2
+text = "关闭"

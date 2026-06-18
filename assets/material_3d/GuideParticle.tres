@@ -1,0 +1,14 @@
+[gd_resource type="ParticleProcessMaterial" load_steps=2 format=3 uid="uid://cpnsedbverjms"]
+
+[ext_resource type="Texture2D" uid="uid://cw5d0nytdl3rk" path="res://assets/material_3d/Color Ramp.tres" id="1_1bqsx"]
+
+[resource]
+emission_shape = 1
+emission_sphere_radius = 0.06
+initial_velocity_min = 0.049999997
+initial_velocity_max = 0.25
+gravity = Vector3(0, 0.15, 0)
+scale_min = 0.5
+scale_max = 1.5
+color = Color(1, 0.6666667, 0.4, 1)
+color_ramp = ExtResource("1_1bqsx")
