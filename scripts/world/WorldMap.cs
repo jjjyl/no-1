@@ -268,7 +268,13 @@ public partial class WorldMap : Node2D
 			Position = new Vector2(right - 320, 16),
 			Size = new Vector2(140, 36)
 		};
-		invBtn.Pressed += () => DialogueManager.Instance.ShowInventory();
+		invBtn.Pressed += () =>
+		{
+			var panel = DialogueManager.Instance.ShowInventory();
+			var cm = CycleManager.Instance;
+			if (panel != null && cm != null)
+				panel.SetInventory(cm.PlayerInventory, cm.PlayerStats?.DisplayName ?? "玩家");
+		};
 		canvas.AddChild(invBtn);
 
 		var btn = new Button

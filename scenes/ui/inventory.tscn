@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://inventory_panel_01"]
+[gd_scene load_steps=2 format=3 uid="uid://bcsmpyt8pg67s"]
 
-[ext_resource type="Script" path="res://scripts/ui/InventoryPanel.cs" id="1_inv"]
+[ext_resource type="Script" uid="uid://cseykbyguhhlr" path="res://scripts/ui/InventoryPanel.cs" id="1_inv"]
 
-[node name="InventoryPanel" type="Control" node_paths=PackedStringArray("_itemGrid", "_equipDisplay", "_itemDesc", "_actionBtn", "_closeBtn")]
+[node name="InventoryPanel" type="Control" node_paths=PackedStringArray("_itemGrid", "_equipDisplay", "_itemDesc", "_actionBtn", "_closeBtn", "_giveBtn", "_ownerLabel", "_characterList")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,6 +16,9 @@ _equipDisplay = NodePath("Panel/VBoxContainer/HSplit/LeftSide/EquipDisplay")
 _itemDesc = NodePath("Panel/VBoxContainer/Bottom/ItemDesc")
 _actionBtn = NodePath("Panel/VBoxContainer/Bottom/HBox/ActionBtn")
 _closeBtn = NodePath("Panel/VBoxContainer/Bottom/HBox/CloseBtn")
+_giveBtn = NodePath("Panel/VBoxContainer/Bottom/HBox/giveBtn")
+_ownerLabel = NodePath("Panel/VBoxContainer/Title")
+_characterList = NodePath("Panel2/CharacterList")
 
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -85,6 +88,22 @@ alignment = 1
 layout_mode = 2
 text = "使用"
 
+[node name="giveBtn" type="Button" parent="Panel/VBoxContainer/Bottom/HBox"]
+layout_mode = 2
+text = "给予"
+
 [node name="CloseBtn" type="Button" parent="Panel/VBoxContainer/Bottom/HBox"]
 layout_mode = 2
 text = "关闭"
+
+[node name="Panel2" type="Panel" parent="."]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 0
+offset_left = 832.0
+offset_top = 123.0
+offset_right = 932.0
+offset_bottom = 163.0
+
+[node name="CharacterList" type="HFlowContainer" parent="Panel2"]
+layout_mode = 0
+size_flags_horizontal = 3

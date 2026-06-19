@@ -21,7 +21,7 @@
 	  "effects": [
 		{ "type": "companion_join", "name": "艾薇" },
 		{ "type": "message", "speaker": "艾薇", "text": "你是新来的旅人？这废矿可不安全，一起走吧。", "position": "top", "auto_hide": 3 },
-		{ "type": "grant_item", "item_id": "small_potion", "amount": 3 },
+		{ "type": "grant_item", "item_id": "small_potion", "amount": 3, "target": "艾薇" },
 		{ "type": "status", "text": "[color=cyan]艾薇加入了队伍！[/color]" }
 	  ]
 	},

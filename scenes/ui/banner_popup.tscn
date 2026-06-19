@@ -2,80 +2,92 @@
 
 [ext_resource type="Script" uid="uid://dh3jc1508alg5" path="res://scripts/ui/BannerPopup.cs" id="1_2t4ty"]
 
-[node name="BannerPopup" type="Control" node_paths=PackedStringArray("_bg", "_portrait", "_initialLabel", "_nameLabel", "_textLabel", "_hintLabel")]
-custom_minimum_size = Vector2(1280, 720)
+[node name="BannerPopup" type="Control" node_paths=PackedStringArray("_bg", "_portrait", "_initialLabel", "_nameLabel", "_textLabel", "_hintLabel", "_bannerBox")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = 128.0
-offset_bottom = 72.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_2t4ty")
-_bg = NodePath("BannerBG")
-_portrait = NodePath("Portrait")
-_initialLabel = NodePath("InitialLabel")
-_nameLabel = NodePath("NameLabel")
-_textLabel = NodePath("TextLabel")
-_hintLabel = NodePath("HintLabel")
+_bg = NodePath("bannerBox/BannerBG")
+_portrait = NodePath("bannerBox/Portrait")
+_initialLabel = NodePath("bannerBox/Portrait/InitialLabel")
+_nameLabel = NodePath("bannerBox/TextContainer/VBoxContainer/NameLabel")
+_textLabel = NodePath("bannerBox/TextContainer/VBoxContainer/TextLabel")
+_hintLabel = NodePath("bannerBox/TextContainer/VBoxContainer/HintLabel")
+_bannerBox = NodePath("bannerBox")
 
-[node name="BannerBG" type="ColorRect" parent="."]
-visible = false
-custom_minimum_size = Vector2(640, 80)
-layout_mode = 0
-offset_left = 320.0
-offset_top = 20.0
-offset_right = 960.0
-offset_bottom = 100.0
+[node name="bannerBox" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = -1
+offset_left = 335.0
+offset_top = 30.0
+offset_right = 835.0
+offset_bottom = 180.0
+
+[node name="BannerBG" type="ColorRect" parent="bannerBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.101960786, 0.078431375, 0.1254902, 1)
 
-[node name="Portrait" type="ColorRect" parent="."]
-layout_mode = 0
-offset_left = 335.0
-offset_top = 20.0
-offset_right = 391.0
-offset_bottom = 76.0
+[node name="Portrait" type="ColorRect" parent="bannerBox"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 1
+offset_left = -22.0
+offset_top = -10.0
+offset_right = 34.0
+offset_bottom = 46.0
 color = Color(0.33333334, 0.33333334, 0.33333334, 1)
 
-[node name="InitialLabel" type="RichTextLabel" parent="."]
+[node name="InitialLabel" type="RichTextLabel" parent="bannerBox/Portrait"]
 layout_mode = 0
-offset_left = 335.0
-offset_top = 32.0
-offset_right = 391.0
-offset_bottom = 88.0
+offset_right = 56.0
+offset_bottom = 56.0
 theme_override_font_sizes/normal_font_size = 32
 bbcode_enabled = true
 text = "？"
 horizontal_alignment = 1
 
-[node name="NameLabel" type="RichTextLabel" parent="."]
-layout_mode = 0
-offset_left = 405.0
-offset_top = 28.0
-offset_right = 805.0
-offset_bottom = 50.0
+[node name="TextContainer" type="MarginContainer" parent="bannerBox"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 35
+
+[node name="VBoxContainer" type="VBoxContainer" parent="bannerBox/TextContainer"]
+layout_mode = 2
+
+[node name="NameLabel" type="RichTextLabel" parent="bannerBox/TextContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true
 fit_content = true
+autowrap_mode = 0
 
-[node name="TextLabel" type="RichTextLabel" parent="."]
-layout_mode = 0
-offset_left = 520.0
-offset_top = 40.0
-offset_right = 925.0
-offset_bottom = 93.0
+[node name="TextLabel" type="RichTextLabel" parent="bannerBox/TextContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 14
 bbcode_enabled = true
+text = "在那"
+scroll_following = true
+autowrap_mode = 2
 
-[node name="HintLabel" type="RichTextLabel" parent="."]
-visible = false
-layout_mode = 0
-offset_left = 600.0
-offset_top = 55.0
-offset_right = 640.0
-offset_bottom = 95.0
+[node name="HintLabel" type="RichTextLabel" parent="bannerBox/TextContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
 theme_override_font_sizes/normal_font_size = 14
 bbcode_enabled = true
 text = "▼"
+tab_size = 3
+horizontal_alignment = 2

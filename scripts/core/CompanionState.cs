@@ -1,6 +1,7 @@
 namespace No1.Core;
 
 using Godot;
+using No1.Data;
 
 public class CompanionState
 {
@@ -10,6 +11,9 @@ public class CompanionState
 	public int Favor;
 	public bool Alive = true;
 	public int HighestFavor, CyclesMet;
+	public Inventory Inventory;
+
+	const int CompanionMaxItems = 5;
 
 	static Dictionary<string, CompanionState> _registry;
 
@@ -48,6 +52,12 @@ public class CompanionState
 		if (!_registry.TryGetValue(name, out var t)) return null;
 
 		int bonus = Math.Min(t.CyclesMet * 2, 20);
+		var st = new CharacterStats
+		{
+			Power = t.Power, Body = t.Body, Agility = t.Agility,
+			Heart = t.Heart, Fortune = t.Fortune
+		};
+		st.FullHeal();
 		var cs = new CompanionState
 		{
 			Name    = t.Name,
@@ -56,11 +66,12 @@ public class CompanionState
 			Agility = t.Agility,
 			Heart   = t.Heart,
 			Fortune = t.Fortune,
-			BruiseHP = 0, SevereHP = 0,  // SpawnStats + FullHeal 时会填充
+			BruiseHP = st.MaxBruiseHP, SevereHP = st.MaxSevereHP,
 			Favor   = bonus,
 			Alive   = true,
 			HighestFavor = t.HighestFavor,
-			CyclesMet    = t.CyclesMet + 1
+			CyclesMet    = t.CyclesMet + 1,
+			Inventory = new Inventory(owner: null, maxItems: CompanionMaxItems)
 		};
 		t.HighestFavor = Math.Max(t.HighestFavor, cs.Favor);
 		t.CyclesMet = cs.CyclesMet;
@@ -80,5 +91,21 @@ public class CompanionState
 		};
 		st.FullHeal();
 		return st;
+	}
+
+	// Create a live stats snapshot for item targeting (HP reflects current state)
+	public CharacterStats CurrentStats()
+	{
+		var st = SpawnStats();
+		st.BruiseHP = BruiseHP;
+		st.SevereHP = SevereHP;
+		return st;
+	}
+
+	// Apply healing directly and sync stats back from a CharacterStats target
+	public void SyncFromStats(CharacterStats st)
+	{
+		BruiseHP = st.BruiseHP;
+		SevereHP = st.SevereHP;
 	}
 }

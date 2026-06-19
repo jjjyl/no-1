@@ -11,32 +11,52 @@ public partial class InventoryPanel : Control
 	[Export] RichTextLabel _itemDesc;
 	[Export] Button _actionBtn;
 	[Export] Button _closeBtn;
+	[Export] Button _giveBtn;
+	[Export] Label _ownerLabel;
+	[Export] Container _characterList;
 
 	string _selectedItemId;
 	Inventory _inv;
+	string _ownerName;
+
+	// Set this to handle consumable usage with your own target selector.
+	// Called with (itemId, inventory). Your handler should:
+	//   1. Show your target selector UI
+	//   2. On target picked: inv.UseItemOn(itemId, target.CharacterStats)
+	//   3. Handle companion HP sync via target.CompanionState?.SyncFromStats(stats)
+	//   4. Call RefreshAll() when done
+	public System.Action<string, Inventory> OnUseConsumable;
+	public System.Action<string, Inventory> OnGiveItem;
 
 	public override void _Ready()
 	{
-		_inv = CycleManager.Instance.PlayerInventory;
-		if (_inv == null) { QueueFree(); return; }
-
-		_closeBtn.Pressed += () =>
-		{
-			var parent = GetParent();
-			QueueFree();
-			parent?.QueueFree();
-		};
+		_closeBtn.Pressed += QueueFree;
 		_actionBtn.Pressed += OnAction;
 		_actionBtn.Disabled = true;
+		if (_giveBtn != null) _giveBtn.Pressed += OnGive;
+	}
+
+	public void SetInventory(Inventory inv, string ownerName)
+	{
+		_inv = inv;
+		_ownerName = ownerName;
+		_selectedItemId = null;
+		_actionBtn.Disabled = true;
+		if (_itemDesc != null) _itemDesc.Text = "";
 		RefreshAll();
 	}
 
-	void RefreshAll()
+	public void RefreshAll()
 	{
+		if (_ownerLabel != null)
+			_ownerLabel.Text = $"背包 — {_ownerName ?? ""}";
+		RefreshCharacterList();
 		if (_itemGrid != null)
 		{
 			foreach (var child in _itemGrid.GetChildren())
 				child.QueueFree();
+
+			if (_inv == null) return;
 
 			foreach (var itemId in _inv.GetAllItemIds())
 			{
@@ -65,6 +85,13 @@ public partial class InventoryPanel : Control
 
 		if (_equipDisplay != null)
 		{
+			var showEquip = _inv != null && _inv.Owner != null;
+			if (!showEquip)
+			{
+				_equipDisplay.Text = "";
+				return;
+			}
+
 			var text = "[b]\u88c5\u5907\u680f[/b]\n";
 			foreach (EquipmentSlot slot in System.Enum.GetValues<EquipmentSlot>())
 			{
@@ -90,9 +117,44 @@ public partial class InventoryPanel : Control
 		}
 	}
 
+	void RefreshCharacterList()
+	{
+		if (_characterList == null) return;
+		foreach (var child in _characterList.GetChildren())
+			child.QueueFree();
+
+		var cm = CycleManager.Instance;
+		if (cm == null) return;
+
+		AddCharButton("玩家", () => SetInventory(cm.PlayerInventory, "玩家"));
+
+		foreach (var comp in cm.ActiveCompanions)
+		{
+			if (!comp.Alive) continue;
+			var cap = comp;
+			AddCharButton(comp.Name, () => SetInventory(cap.Inventory, cap.Name));
+		}
+	}
+
+	void AddCharButton(string label, System.Action onPress)
+	{
+		var btn = new Button
+		{
+			Text = label,
+			CustomMinimumSize = new Vector2(60, 28),
+			SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter
+		};
+		bool isActive = (label == _ownerName) || (label == "玩家" && _inv == CycleManager.Instance?.PlayerInventory);
+		if (isActive)
+			btn.AddThemeColorOverride("font_color", new Color(0.3f, 1.0f, 0.3f));
+		btn.Pressed += onPress;
+		_characterList.AddChild(btn);
+	}
+
 	void SelectItem(string itemId)
 	{
 		_selectedItemId = itemId;
+		if (_giveBtn != null) _giveBtn.Disabled = true;
 		var def = ItemDef.Get(itemId);
 		if (def == null) return;
 
@@ -107,48 +169,58 @@ public partial class InventoryPanel : Control
 		}
 		else if (def.Type == ItemType.Equipment)
 		{
-			desc += "\n[color=#8888ff]\u70b9\u51fb\u88c5\u5907[/color]";
-			if (_actionBtn != null) _actionBtn.Text = "\u88c5\u5907";
+			var canEquip = _inv.Owner != null;
+			desc += canEquip ? "\n[color=#8888ff]\u70b9\u51fb\u88c5\u5907[/color]" : "\n[color=gray]\u65e0\u6cd5\u88c5\u5907[/color]";
+			if (_actionBtn != null)
+			{
+				_actionBtn.Text = "\u88c5\u5907";
+				_actionBtn.Disabled = !canEquip;
+			}
 		}
 		else
 		{
 			desc += "\n[color=#ffff88]\u70b9\u51fb\u4f7f\u7528[/color]";
-			if (_actionBtn != null) _actionBtn.Text = "\u4f7f\u7528";
+			if (_actionBtn != null)
+			{
+				_actionBtn.Text = "\u4f7f\u7528";
+				_actionBtn.Disabled = false;
+			}
+			if (_giveBtn != null) { _giveBtn.Text = "\u7ed9\u4e88"; _giveBtn.Disabled = false; }
 		}
 
 		if (_itemDesc != null) _itemDesc.Text = desc;
-		if (_actionBtn != null) _actionBtn.Disabled = false;
 	}
 
 	void OnAction()
 	{
-		if (string.IsNullOrEmpty(_selectedItemId)) return;
+		if (string.IsNullOrEmpty(_selectedItemId) || _inv == null) return;
 		var def = ItemDef.Get(_selectedItemId);
 		if (def == null) return;
 
-		string result;
 		if (def.Type == ItemType.Equipment)
 		{
+			string result;
 			if (_inv.IsEquipped(_selectedItemId))
 				result = _inv.UnequipItem(def.Slot);
 			else
 				result = _inv.EquipItem(_selectedItemId);
-		}
-		else
-		{
-			result = _inv.UseItem(_selectedItemId);
-		}
 
-		if (result != null)
-		{
-			if (_itemDesc != null) _itemDesc.Text += $"\n[color=red]{result}[/color]";
-		}
-		else
-		{
+			if (result != null && _itemDesc != null)
+				_itemDesc.Text += $"\n[color=red]{result}[/color]";
+
 			_selectedItemId = null;
-			if (_actionBtn != null) _actionBtn.Disabled = true;
+			_actionBtn.Disabled = true;
+			RefreshAll();
 		}
+		else
+		{
+			OnUseConsumable?.Invoke(_selectedItemId, _inv);
+		}
+	}
 
-		RefreshAll();
+	void OnGive()
+	{
+		if (string.IsNullOrEmpty(_selectedItemId) || _inv == null) return;
+		OnGiveItem?.Invoke(_selectedItemId, _inv);
 	}
 }

@@ -2,20 +2,13 @@ namespace No1.World;
 using Godot;
 
 /// <summary>
-/// 3D player character. XZ-plane click-to-move via Camera3D raycast.
-/// Renders as a colored Sprite3D billboard with shadow.
+/// 3D player character. WASD movement on XZ plane.
+/// MoveDirection exposed for camera tracking and future mobile joystick.
 /// </summary>
 public partial class Player3D : CharacterBody3D
 {
 	[Export] public float Speed = 5f;
-	[Export] public float ArriveThreshold = 0.3f;
-
-	Camera3D _camera;
-	Vector3 _target;
-	bool _moving;
-
-	public bool IsMoving => _moving;
-	public Vector3 MoveDirection => _moving ? (_target - GlobalPosition).Normalized() : Vector3.Zero;
+	public Vector3 MoveDirection { get; private set; }
 
 	public override void _Ready()
 	{
@@ -48,43 +41,26 @@ public partial class Player3D : CharacterBody3D
 		AddChild(shadow);
 	}
 
-	public void SetCamera(Camera3D cam) => _camera = cam;
-
-	public override void _Input(InputEvent e)
+	public override void _Process(double delta)
 	{
-		if (e is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
+		float dt = (float)delta;
+		var input = Vector3.Zero;
+
+		var dm = No1.UI.DialogueManager.Instance;
+		if (dm == null || !dm.IsOverlayOpen)
 		{
-			if (_camera == null) return;
-
-			var from = _camera.ProjectRayOrigin(mb.Position);
-			var dir = _camera.ProjectRayNormal(mb.Position);
-
-			// Raycast to Y=0 plane (ground)
-			if (dir.Y >= 0) return; // pointing upward, won't hit ground
-			float t = -from.Y / dir.Y;
-			if (t <= 0) return;
-
-			_target = from + dir * t;
-			_target.Y = 0;
-			_moving = true;
+			if (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.Up))    input.Z -= 1;
+			if (Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.Down))  input.Z += 1;
+			if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left))  input.X -= 1;
+			if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right)) input.X += 1;
 		}
-	}
-
-	public override void _PhysicsProcess(double delta)
-	{
-		if (!_moving) return;
-
-		var toTarget = _target - GlobalPosition;
-		toTarget.Y = 0; // stay on ground plane
-		if (toTarget.Length() < ArriveThreshold)
+		else if (input.LengthSquared() < 0.01f && (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.D)))
 		{
-			_moving = false;
-			Velocity = Vector3.Zero;
-			return;
+			GD.Print($"[Player3D] BLOCKED: IsOverlayOpen=true overlayCount={dm.OverlayCountDebug}");
 		}
 
-		Velocity = toTarget.Normalized() * Speed;
-		MoveAndSlide();
+		MoveDirection = input.Normalized();
+		Translate(MoveDirection * Speed * dt);
 	}
 
 	// ── Dummy textures (replace with real sprites later) ──
@@ -92,7 +68,7 @@ public partial class Player3D : CharacterBody3D
 	static ImageTexture MakeDiamondTexture(float r, float g, float b)
 	{
 		var img = Image.CreateEmpty(12, 20, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0)); // transparent bg
+		img.Fill(new Color(0, 0, 0, 0));
 		for (int y = 0; y < 20; y++)
 		for (int x = 0; x < 12; x++)
 		{

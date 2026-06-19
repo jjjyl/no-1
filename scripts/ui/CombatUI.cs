@@ -7,6 +7,8 @@ using No1.Combat;
 using No1.Core;
 using No1.Data;
 
+public enum CombatResult { Win, Lose, Escape }
+
 public partial class CombatUI : Control
 {
 	[Export] RichTextLabel _playerStat, _playerName, _battleLog, _turnLabel, _resultLabel;
@@ -23,6 +25,9 @@ public partial class CombatUI : Control
 	CharacterStats _player;
 	float _pGauge;
 	const float GaugeMax = 100f;
+	float _escapeGauge;
+	ProgressBar _escapeGaugeBar;
+	const float EscapeGaugeMax = 300f;
 	[Export] float GaugeMultiplier = 10f;
 	string _queuedAction = "atk";
 	int _defBonus, _dodgeBonus;
@@ -39,6 +44,8 @@ public partial class CombatUI : Control
 	SkillDef _targetSkill;
 	CompSlot _targetActor;
 	string _targetItemId;
+	CompSlot _activeItemUser;
+	bool _givingMode;
 
 	class CompSlot
 	{
@@ -80,21 +87,35 @@ public partial class CombatUI : Control
 		AddBarLabel(_pSevereBar, out _pSevereLabel);
 		AddBarLabel(_pEnergyBar, out _pEnergyLabel);
 
-		_continueBtn.Pressed += () => GameManager.Instance.GoToScene("res://scenes/world/world_map.tscn");
+		_continueBtn.Pressed += () =>
+		{
+			CycleManager.Instance.SkipStartEvents = true;
+			GameManager.Instance.GoToScene("res://scenes/world/world_map.tscn");
+		};
 		_templeBtn.Pressed += () =>
 		{
 			CycleManager.Instance.ReturnToTemple();
 			GameManager.Instance.GoToScene("res://scenes/temple/temple.tscn");
 		};
-
 		_atkBtn.Pressed += () => QueueAction("atk");
-		_atkBtn.Icon = Icon("attack");
+		_atkBtn.Icon = Icon("attack"); _atkBtn.ExpandIcon = true;
 		_defBtn.Pressed += () => QueueAction("def");
-		_defBtn.Icon = Icon("defend");
+		_defBtn.Icon = Icon("defend");  _defBtn.ExpandIcon = true;
 		_dodgeBtn.Pressed += () => QueueAction("dodge");
-		_dodgeBtn.Icon = Icon("dodge");
-		_escapeBtn.Pressed += () => QueueAction("escape");
-		_escapeBtn.Icon = Icon("dodge");
+		_dodgeBtn.Icon = Icon("dodge"); _dodgeBtn.ExpandIcon = true;
+		_escapeBtn.Icon = Icon("dodge"); _escapeBtn.ExpandIcon = true;
+		_escapeBtn.Pressed += () => TryEscape();
+		_escapeBtn.Disabled = true;
+		_escapeGauge = 0;
+
+		_escapeGaugeBar = new ProgressBar { ShowPercentage = false };
+		_escapeGaugeBar.AnchorRight = 1; _escapeGaugeBar.AnchorBottom = 1;
+		_escapeGaugeBar.MouseFilter = MouseFilterEnum.Ignore;
+		_escapeGaugeBar.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+		_escapeGaugeBar.AddThemeStyleboxOverride("fill", new StyleBoxFlat { BgColor = new Color(0.15f, 0.5f, 0.15f, 0.35f) });
+		_escapeGaugeBar.AddThemeStyleboxOverride("background", new StyleBoxEmpty());
+		_escapeBtn.AddChild(_escapeGaugeBar);
+		_escapeBtn.MoveChild(_escapeGaugeBar, 0);
 		_itemBtn.Pressed += () => ShowItemMenu();
 		_itemBtn.Text = " 物品";
 		_itemBtn.Icon = Icon("heal");
@@ -106,7 +127,21 @@ public partial class CombatUI : Control
 			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
 			{
 				if (_targeting && !string.IsNullOrEmpty(_targetItemId))
-					ConfirmItemTarget(_player);
+				{
+					if (_activeItemUser != null)
+					{
+						if (_givingMode)
+							ConfirmCompanionGiveTarget(_targetItemId, _activeItemUser, null);
+						else
+							ConfirmCompanionItemUse(null);
+					}
+					else if (_givingMode)
+					{
+						// Player can't give to self — ignore click
+					}
+					else
+						ConfirmItemTarget(_player);
+				}
 				else if (_targeting && _targetSkill != null && _targetSkill.Type == "heal" && _targetActor != null)
 					ConfirmHealOnPlayer();
 				else
@@ -212,7 +247,7 @@ public partial class CombatUI : Control
 			{
 				if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
 				{
-					if (_targeting && _targetSkill.Type == "attack" && slot.Alive)
+					if (_targeting && _targetSkill != null && _targetSkill.Type == "attack" && slot.Alive)
 						ConfirmTarget(slot);
 					else
 						slot.StatLabel.Visible = !slot.StatLabel.Visible;
@@ -220,7 +255,7 @@ public partial class CombatUI : Control
 			};
 			card.GuiInput += e =>
 			{
-				if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && _targeting && slot.Alive && _targetSkill.Type == "attack")
+if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && _targeting && slot.Alive && _targetSkill != null && _targetSkill.Type == "attack")
 				{
 					ConfirmTarget(slot);
 					GetViewport().SetInputAsHandled();
@@ -361,7 +396,19 @@ public partial class CombatUI : Control
 				if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
 				{
 					if (_targeting && !string.IsNullOrEmpty(_targetItemId) && slot.State.Alive)
-						ConfirmItemTarget(slot.Stats);
+					{
+						if (_activeItemUser != null)
+						{
+							if (_givingMode)
+								ConfirmCompanionGiveTarget(_targetItemId, _activeItemUser, slot);
+							else
+								ConfirmCompanionItemUse(slot);
+						}
+						else if (_givingMode)
+							DoPlayerGift(_targetItemId, slot);
+						else
+							ConfirmItemTarget(slot.Stats);
+					}
 					else if (_targeting && _targetSkill != null && _targetSkill.Type == "heal" && slot.State.Alive)
 						ConfirmAllyTarget(slot);
 					else
@@ -375,7 +422,17 @@ public partial class CombatUI : Control
 				{
 					if (_targeting && !string.IsNullOrEmpty(_targetItemId) && slot.State.Alive)
 					{
-						ConfirmItemTarget(slot.Stats);
+						if (_activeItemUser != null)
+						{
+							if (_givingMode)
+								ConfirmCompanionGiveTarget(_targetItemId, _activeItemUser, slot);
+							else
+								ConfirmCompanionItemUse(slot);
+						}
+						else if (_givingMode)
+							DoPlayerGift(_targetItemId, slot);
+						else
+							ConfirmItemTarget(slot.Stats);
 						GetViewport().SetInputAsHandled();
 					}
 					else if (_targeting && _targetSkill != null && _targetSkill.Type == "heal" && slot.State.Alive)
@@ -400,7 +457,7 @@ public partial class CombatUI : Control
 			btn.Text = skill.Cost > 0 ? $" {skill.Name}({skill.Cost})" : $" {skill.Name}";
 			btn.CustomMinimumSize = new Vector2(80, 28);
 			btn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-			btn.Icon = SkillIcon(skill);
+			btn.Icon = SkillIcon(skill); btn.ExpandIcon = true;
 			if (skill.DamageType == "spirit")
 				btn.AddThemeColorOverride("font_color", new Color(0.6f, 0.7f, 1.0f));
 			var captured = skill;
@@ -415,6 +472,18 @@ public partial class CombatUI : Control
 		if (_blocking) return;
 		if (CombatEvents.HasPending()) { CombatEvents.ProcessNext(); return; }
 		float dt = (float)delta;
+
+		// Escape gauge fills only when game is NOT waiting for player input
+		if (!_waiting && !_targeting && !_done)
+		{
+			_escapeGauge += _player.Speed * GaugeMultiplier * 5f * dt; // 10x for testing
+			if (_escapeGauge >= EscapeGaugeMax)
+			{
+				_escapeGauge = EscapeGaugeMax;
+				_escapeBtn.Disabled = false;
+			}
+			if (_escapeGaugeBar != null) _escapeGaugeBar.Value = _escapeGauge / EscapeGaugeMax * 100;
+		}
 
 		if (!_waiting && !_targeting)
 		{
@@ -502,7 +571,7 @@ public partial class CombatUI : Control
 		atkBtn.Text = " 攻击";
 		atkBtn.CustomMinimumSize = new Vector2(80, 28);
 		atkBtn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-		atkBtn.Icon = Icon("attack");
+		atkBtn.Icon = Icon("attack"); atkBtn.ExpandIcon = true;
 		atkBtn.Pressed += () => BeginTargeting(new SkillDef { Type = "attack", DamageType = "physical", Power = 1.0f, Cost = 0, Name = "攻击" }, comp);
 		basicRow.AddChild(atkBtn);
 
@@ -510,7 +579,7 @@ public partial class CombatUI : Control
 		defBtn.Text = " 防御";
 		defBtn.CustomMinimumSize = new Vector2(80, 28);
 		defBtn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-		defBtn.Icon = Icon("defend");
+		defBtn.Icon = Icon("defend"); defBtn.ExpandIcon = true;
 		defBtn.Pressed += () => ExecuteCompanionSkill(comp, new SkillDef { Type = "def", Cost = 0, Name = "防御" });
 		basicRow.AddChild(defBtn);
 
@@ -518,9 +587,22 @@ public partial class CombatUI : Control
 		dodBtn.Text = " 闪避";
 		dodBtn.CustomMinimumSize = new Vector2(80, 28);
 		dodBtn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-		dodBtn.Icon = Icon("dodge");
+		dodBtn.Icon = Icon("dodge"); dodBtn.ExpandIcon = true;
 		dodBtn.Pressed += () => ExecuteCompanionSkill(comp, new SkillDef { Type = "dodge", Cost = 0, Name = "闪避" });
 		basicRow.AddChild(dodBtn);
+
+		var hasItems = comp.State.Inventory != null && comp.State.Inventory.GetAllItemIds().Any();
+		var itemBtn = new Button();
+		itemBtn.Text = " 物品";
+		itemBtn.CustomMinimumSize = new Vector2(80, 28);
+		itemBtn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+		itemBtn.Icon = Icon("heal"); itemBtn.ExpandIcon = true;
+		if (hasItems)
+			itemBtn.Pressed += () => ShowCompanionItemMenu(comp);
+		else
+			itemBtn.Disabled = true;
+		basicRow.AddChild(itemBtn);
+
 		comp.SkillsArea.AddChild(basicRow);
 
 		var skillRow = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
@@ -533,7 +615,7 @@ public partial class CombatUI : Control
 			btn.Text = skill.Cost > 0 ? $" {skill.Name}({skill.Cost})" : $" {skill.Name}";
 			btn.CustomMinimumSize = new Vector2(80, 28);
 			btn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-			btn.Icon = SkillIcon(skill);
+			btn.Icon = SkillIcon(skill); btn.ExpandIcon = true;
 			var captured = skill;
 			if (skill.Type == "attack")
 				btn.Pressed += () => BeginTargeting(captured, comp);
@@ -554,7 +636,11 @@ public partial class CombatUI : Control
 	{
 		if (!_targeting) return;
 		_targeting = false;
+		_targetSkill = null;
+		_targetActor = null;
 		_targetItemId = null;
+		_activeItemUser = null;
+		_givingMode = false;
 		_playerName.RemoveThemeColorOverride("font_color");
 		foreach (var e in _enemies) e.Card.RemoveThemeColorOverride("panel");
 		foreach (var s in _compSlots) s.Card.RemoveThemeColorOverride("panel");
@@ -704,7 +790,8 @@ public partial class CombatUI : Control
 
 	void ConfirmHealOnPlayer()
 	{
-		CancelTargeting();
+		_playerName.RemoveThemeColorOverride("font_color");
+		_targeting = false;
 		var actor = _targetActor;
 		if (actor == null) return;
 		var skill = _targetSkill;
@@ -861,22 +948,6 @@ public partial class CombatUI : Control
 				_player.ApplyModifier("dodge", 30);
 				Log("你集中闪避，闪避提升", "#88ccff");
 				break;
-			case "escape":
-				int chance = 40 + _player.Agility * 2;
-				if ((int)(GD.Randi() % 100) < chance)
-				{
-					Log("你成功逃脱了！", "#ffcc44");
-					_done = true;
-					_turnLabel.Text = "[center][b][color=#ffcc44]逃脱成功[/color][/b][/center]";
-					_playerActions.Visible = false;
-					_resultLabel.Visible = _continueBtn.Visible = _templeBtn.Visible = true;
-					return;
-				}
-				else
-				{
-					Log("逃跑失败！", "#888888");
-				}
-				break;
 			case "skill":
 				ExecuteSkill();
 				break;
@@ -885,6 +956,26 @@ public partial class CombatUI : Control
 		RefreshAll();
 		_playerActions.Visible = false;
 		CombatEvents.Fire("on_turn_end", new FireContext { Source = "player", Round = _round });
+	}
+
+	void TryEscape()
+	{
+		if (_escapeGauge < EscapeGaugeMax) return;
+		_escapeGauge = 0;
+		_escapeBtn.Disabled = true;
+		if (_escapeGaugeBar != null) _escapeGaugeBar.Value = 0;
+
+		int chance = 40 + _player.Agility * 2;
+		if ((int)(GD.Randi() % 100) < chance)
+		{
+			Log("你成功逃脱了！", "#ffcc44");
+			EndCombat(CombatResult.Escape);
+		}
+		else
+		{
+			Log("逃跑失败！", "#888888");
+		}
+		RefreshAll();
 	}
 
 	void ExecuteSkill()
@@ -931,41 +1022,21 @@ public partial class CombatUI : Control
 		var inv = CycleManager.Instance.PlayerInventory;
 		if (inv == null) return;
 
-		var consumables = inv.GetAllItemIds()
-			.Where(id => ItemDef.Get(id)?.Type == ItemType.Consumable)
-			.Where(id => inv.GetCount(id) > 0)
-			.ToList();
+		var scene = GD.Load<PackedScene>("res://scenes/ui/combat_item_menu.tscn");
+		if (scene == null) return;
+		var node = scene.Instantiate();
+		var menu = node as CombatItemMenu;
+		if (menu == null) { node.QueueFree(); return; }
 
-		if (consumables.Count == 0)
+		menu.SourceInventory = inv;
+		menu.OnItemSelected = (itemId) => BeginItemTargeting(itemId);
+		menu.OnItemGiven = (itemId) =>
 		{
-			Log("没有可用的物品", "#888888");
-			return;
-		}
-
-		if (consumables.Count == 1)
-		{
-			BeginItemTargeting(consumables[0]);
-			return;
-		}
-
-		foreach (var itemId in consumables)
-		{
-			var def = ItemDef.Get(itemId);
-			var count = inv.GetCount(itemId);
-			var btn = new Button();
-			btn.Text = $" {def?.Name ?? itemId} ×{count}";
-			btn.CustomMinimumSize = new Vector2(100, 28);
-			btn.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-			var captured = itemId;
-			btn.Pressed += () =>
-			{
-				foreach (var child in _playerActions.GetChildren())
-					if (child is Button b && b != _atkBtn && b != _defBtn && b != _dodgeBtn && b != _escapeBtn && b != _itemBtn)
-						b.QueueFree();
-				BeginItemTargeting(captured);
-			};
-			_playerActions.AddChild(btn);
-		}
+			_givingMode = true;
+			BeginPlayerGiveTargeting(itemId);
+			menu.QueueFree();
+		};
+		AddChild(menu);
 	}
 
 	void BeginItemTargeting(string itemId)
@@ -988,7 +1059,9 @@ public partial class CombatUI : Control
 		if (inv == null || string.IsNullOrEmpty(itemId)) return;
 
 		var def = ItemDef.Get(itemId);
-		var result = inv.UseItemOn(itemId, target);
+		// Always use live stats from CycleManager so heals apply to the current player object
+		var liveTarget = (target == _player) ? CycleManager.Instance.PlayerStats : target;
+		var result = inv.UseItemOn(itemId, liveTarget);
 
 		if (result != null)
 		{
@@ -1007,50 +1080,321 @@ public partial class CombatUI : Control
 		_playerActions.Visible = false;
 	}
 
-	void Win()
+	void ShowCompanionItemMenu(CompSlot comp)
+	{
+		var scene = GD.Load<PackedScene>("res://scenes/ui/combat_item_menu.tscn");
+		if (scene == null) return;
+		var node = scene.Instantiate();
+		var menu = node as CombatItemMenu;
+		if (menu == null) { node.QueueFree(); return; }
+
+		menu.SourceInventory = comp.State.Inventory;
+		menu.OnItemSelected = (itemId) =>
+		{
+			_givingMode = false;
+			BeginCompanionItemTargeting(itemId, comp);
+		};
+		menu.OnItemGiven = (itemId) =>
+		{
+			_givingMode = true;
+			BeginCompanionGiveTargeting(itemId, comp);
+			menu.QueueFree();
+		};
+		AddChild(menu);
+	}
+
+	void BeginCompanionItemTargeting(string itemId, CompSlot fromComp)
+	{
+		CancelTargeting();
+		_targeting = true;
+		_targetItemId = itemId;
+		_activeItemUser = fromComp;
+
+		_playerName.AddThemeColorOverride("font_color", new Color(0.3f, 0.8f, 0.3f));
+		foreach (var s in _compSlots)
+			if (s.State.Alive && s != fromComp)
+				s.Card.AddThemeColorOverride("panel", new Color(0.3f, 0.5f, 0.3f));
+	}
+
+	void ConfirmCompanionItemUse(CompSlot target)
+	{
+		var itemId = _targetItemId;
+		var fromComp = _activeItemUser;
+		if (fromComp == null) return;
+
+		CancelTargeting();
+
+		var liveTarget = (target == null) ? _player : target.Stats;
+		var def = ItemDef.Get(itemId);
+		var result = fromComp.State.Inventory.UseItemOn(itemId, liveTarget);
+
+		if (result != null)
+		{
+			Log($"使用失败: {result}", "#ff8888");
+			fromComp.SkillsArea.Visible = false;
+			_activeCompanion = null;
+			_waiting = false;
+			return;
+		}
+
+		if (target != null)
+			target.State.SyncFromStats(target.Stats);
+
+		string targetName = target == null ? "你" : target.State.Name;
+		Log($"『{fromComp.State.Name}』对{targetName}使用了 [b]{def?.Name ?? "物品"}[/b]", "#88aacc");
+
+		fromComp.Stats.Energy = Math.Min(fromComp.Stats.Energy + fromComp.Stats.EnergyRegen, fromComp.Stats.EnergyMax);
+		RefreshAll();
+		_waiting = false;
+		_activeItemUser = null;
+		fromComp.SkillsArea.Visible = false;
+		_activeCompanion = null;
+		CombatEvents.Fire("on_turn_end", new FireContext { Source = fromComp.State.Name, Round = _round });
+	}
+
+	void BeginCompanionGiveTargeting(string itemId, CompSlot fromComp)
+	{
+		CancelTargeting();
+		_targeting = true;
+		_targetItemId = itemId;
+		_activeItemUser = fromComp;
+
+		_playerName.AddThemeColorOverride("font_color", new Color(0.3f, 0.8f, 0.3f));
+		foreach (var s in _compSlots)
+			if (s.State.Alive && s != fromComp)
+				s.Card.AddThemeColorOverride("panel", new Color(0.3f, 0.5f, 0.3f));
+	}
+
+	void BeginPlayerGiveTargeting(string itemId)
+	{
+		CancelTargeting();
+		_targeting = true;
+		_targetItemId = itemId;
+		_activeItemUser = null; // null means player is the giver
+
+		// Highlight companions only (NOT player, NOT enemies)
+		foreach (var s in _compSlots)
+			if (s.State.Alive)
+				s.Card.AddThemeColorOverride("panel", new Color(0.3f, 0.5f, 0.3f));
+	}
+
+	void ConfirmCompanionGiveTarget(string itemId, CompSlot fromComp, CompSlot toComp)
+	{
+		CancelTargeting();
+
+		string recipientName = toComp?.State.Name ?? "玩家";
+		string giverName = fromComp.State.Name;
+		int maxGive = Math.Min(fromComp.State.Inventory.GetCount(itemId), 3);
+
+		var popup = new Panel();
+		popup.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0.1f, 0.1f, 0.15f, 0.95f), CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6 });
+		popup.SetAnchorsPreset(Control.LayoutPreset.Center);
+		popup.CustomMinimumSize = new Vector2(260, 120);
+
+		var vbox = new VBoxContainer();
+		vbox.AddThemeConstantOverride("separation", 8);
+		vbox.AnchorRight = 1;
+		vbox.AnchorBottom = 1;
+		vbox.OffsetLeft = 12;
+		vbox.OffsetTop = 12;
+		vbox.OffsetRight = -12;
+		vbox.OffsetBottom = -12;
+
+		var label = new Label { Text = $"给 {recipientName} 几个？", HorizontalAlignment = HorizontalAlignment.Center };
+		vbox.AddChild(label);
+
+		var spinBox = new SpinBox();
+		spinBox.MinValue = 1;
+		spinBox.MaxValue = maxGive;
+		spinBox.Value = 1;
+		spinBox.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+		vbox.AddChild(spinBox);
+
+		var hbox = new HBoxContainer();
+		hbox.Alignment = BoxContainer.AlignmentMode.Center;
+		hbox.AddThemeConstantOverride("separation", 8);
+
+		var confirmBtn = new Button { Text = "确认" };
+		confirmBtn.Pressed += () =>
+		{
+			DoCompanionGift(itemId, fromComp, toComp, (int)spinBox.Value);
+			popup.QueueFree();
+		};
+		hbox.AddChild(confirmBtn);
+
+		var cancelBtn = new Button { Text = "取消" };
+		cancelBtn.Pressed += () =>
+		{
+			popup.QueueFree();
+			fromComp.SkillsArea.Visible = true;
+		};
+		hbox.AddChild(cancelBtn);
+
+		vbox.AddChild(hbox);
+		popup.AddChild(vbox);
+		AddChild(popup);
+	}
+
+	void DoCompanionGift(string itemId, CompSlot fromComp, CompSlot toComp, int amount)
+	{
+		if (fromComp == null) return;
+
+		var targetInv = toComp?.State.Inventory ?? CycleManager.Instance.PlayerInventory;
+		var result = fromComp.State.Inventory.TransferTo(targetInv, itemId, amount);
+
+		if (result != null)
+		{
+			Log($"给予失败: {result}", "#ff8888");
+			fromComp.SkillsArea.Visible = false;
+			_activeCompanion = null;
+			_waiting = false;
+			return;
+		}
+
+		string recipientName = toComp?.State.Name ?? "玩家";
+		var def = ItemDef.Get(itemId);
+		Log($"『{fromComp.State.Name}』将 {def?.Name ?? "物品"} ×{amount} 交给了『{recipientName}』", "#88aacc");
+
+		fromComp.Stats.Energy = Math.Min(fromComp.Stats.Energy + fromComp.Stats.EnergyRegen, fromComp.Stats.EnergyMax);
+		RefreshAll();
+		_waiting = false;
+		_activeItemUser = null;
+		fromComp.SkillsArea.Visible = false;
+		_activeCompanion = null;
+		CombatEvents.Fire("on_turn_end", new FireContext { Source = fromComp.State.Name, Round = _round });
+	}
+
+	void DoPlayerGift(string itemId, CompSlot toComp)
+	{
+		CancelTargeting();
+		var inv = CycleManager.Instance.PlayerInventory;
+		if (inv == null || toComp?.State?.Inventory == null) return;
+
+		int maxGive = Math.Min(inv.GetCount(itemId), 3);
+
+		var popup = new Panel();
+		popup.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(0.1f, 0.1f, 0.15f, 0.95f), CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6 });
+		popup.SetAnchorsPreset(Control.LayoutPreset.Center);
+		popup.CustomMinimumSize = new Vector2(260, 120);
+
+		var vbox = new VBoxContainer();
+		vbox.AddThemeConstantOverride("separation", 8);
+		vbox.AnchorRight = 1;
+		vbox.AnchorBottom = 1;
+		vbox.OffsetLeft = 12;
+		vbox.OffsetTop = 12;
+		vbox.OffsetRight = -12;
+		vbox.OffsetBottom = -12;
+
+		var label = new Label { Text = $"给 {toComp.State.Name} 几个？", HorizontalAlignment = HorizontalAlignment.Center };
+		vbox.AddChild(label);
+
+		var spinBox = new SpinBox();
+		spinBox.MinValue = 1;
+		spinBox.MaxValue = maxGive;
+		spinBox.Value = 1;
+		spinBox.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+		vbox.AddChild(spinBox);
+
+		var hbox = new HBoxContainer();
+		hbox.Alignment = BoxContainer.AlignmentMode.Center;
+		hbox.AddThemeConstantOverride("separation", 8);
+
+		var confirmBtn = new Button { Text = "确认" };
+		confirmBtn.Pressed += () =>
+		{
+			int amount = (int)spinBox.Value;
+			var result = inv.TransferTo(toComp.State.Inventory, itemId, amount);
+			if (result != null)
+			{
+				Log($"给予失败: {result}", "#ff8888");
+			}
+			else
+			{
+				var def = ItemDef.Get(itemId);
+				Log($"将 [b]{def?.Name ?? itemId}[/b] ×{amount} 交给了『{toComp.State.Name}』", "#88ff88");
+			}
+			popup.QueueFree();
+
+			// End player turn
+			_pGauge -= GaugeMax;
+			_player.Energy = Math.Min(_player.Energy + _player.EnergyRegen, _player.EnergyMax);
+			RefreshAll();
+			_waiting = false;
+			_playerActions.Visible = false;
+		};
+		hbox.AddChild(confirmBtn);
+
+		var cancelBtn = new Button { Text = "取消" };
+		cancelBtn.Pressed += () => popup.QueueFree();
+		hbox.AddChild(cancelBtn);
+
+		vbox.AddChild(hbox);
+		popup.AddChild(vbox);
+		AddChild(popup);
+	}
+
+	void EndCombat(CombatResult result)
 	{
 		_done = true;
+		_playerActions.Visible = false;
+
+		// Save companion HP regardless of result
 		foreach (var s in _compSlots)
 		{
-			s.State.Favor++;
-			s.State.HighestFavor = Math.Max(s.State.HighestFavor, s.State.Favor);
 			s.State.BruiseHP = s.Stats.BruiseHP;
 			s.State.SevereHP = s.Stats.SevereHP;
 			if (!s.State.Alive) { s.State.BruiseHP = 0; s.State.SevereHP = 0; }
 		}
-		// Transfer combat drops to persistent inventory
-		var drops = CombatLog.GetItems();
-		var inv = CycleManager.Instance.PlayerInventory;
-		if (inv != null)
+
+		switch (result)
 		{
-			foreach (var kv in drops)
-			{
-				inv.AddItem(kv.Key, kv.Value);
-				var itemDef = ItemDef.Get(kv.Key);
-				var itemName = itemDef?.Name ?? kv.Key;
-				Log($"获得了 [b]{itemName}[/b] ×{kv.Value}", "#ffcc44");
-			}
+			case CombatResult.Win:
+				foreach (var s in _compSlots)
+				{
+					s.State.Favor++;
+					s.State.HighestFavor = Math.Max(s.State.HighestFavor, s.State.Favor);
+				}
+				var drops = CombatLog.GetItems();
+				var inv = CycleManager.Instance.PlayerInventory;
+				if (inv != null)
+					foreach (var kv in drops)
+					{
+						inv.AddItem(kv.Key, kv.Value);
+						var itemDef = ItemDef.Get(kv.Key);
+						Log($"获得了 [b]{itemDef?.Name ?? kv.Key}[/b] ×{kv.Value}", "#ffcc44");
+					}
+				CombatLog.Clear();
+				_turnLabel.Text = "[center][b][color=green]胜利！[/color][/b][/center]";
+				Log("击败了所有敌人！", "#ffcc44");
+				_resultLabel.Text = "[center][b]胜利[/b][/center]";
+				break;
+
+			case CombatResult.Escape:
+				_turnLabel.Text = "[center][b][color=#ffcc44]逃脱成功[/color][/b][/center]";
+				_resultLabel.Text = "[center][b]逃脱[/b][/center]";
+				break;
+
+			case CombatResult.Lose:
+			default:
+				break;
 		}
-		CombatLog.Clear();
-		_turnLabel.Text = "[center][b][color=green]胜利！[/color][/b][/center]";
-		Log("击败了所有敌人！", "#ffcc44");
-		_resultLabel.Text = "[center][b]胜利[/b][/center]";
+
 		_resultLabel.Visible = _continueBtn.Visible = _templeBtn.Visible = true;
+	}
+
+	void Win()
+	{
+		EndCombat(CombatResult.Win);
 	}
 
 	async void Lose()
 	{
-		_done = true;
-		foreach (var s in _compSlots)
-		{
-			s.State.BruiseHP = s.Stats.BruiseHP;
-			s.State.SevereHP = s.Stats.SevereHP;
-			if (!s.State.Alive) { s.State.BruiseHP = 0; s.State.SevereHP = 0; }
-		}
+		EndCombat(CombatResult.Lose);
+		_continueBtn.Visible = false; // can't continue after losing
 		_turnLabel.Text = "[center][b][color=red]败北[/color][/b][/center]";
 		Log("你倒下了……", "#ffcc44");
 		_resultLabel.Text = "[center][b]你被击败了[/b][/center]";
-		_resultLabel.Visible = _templeBtn.Visible = true;
 		await ToSignal(GetTree().CreateTimer(1.5f), "timeout");
 		CycleManager.Instance.OnDeath();
 		GameManager.Instance.GoToScene("res://scenes/temple/temple.tscn");
@@ -1082,7 +1426,7 @@ public partial class CombatUI : Control
 		else if (_targeting && !string.IsNullOrEmpty(_targetItemId))
 			status = "[center][color=#88ff88][b]▸ 点击角色选择目标[/b][/color][/center]";
 		else if (_targeting)
-			status = _targetSkill.Type == "heal"
+			status = _targetSkill != null && _targetSkill.Type == "heal"
 				? "[center][color=#88ff88][b]▸ 点击同伴选择目标[/b][/color][/center]"
 				: "[center][color=#ff8888][b]▸ 点击敌人选择目标[/b][/color][/center]";
 		else if (_waiting && _activeCompanion != null)
@@ -1285,7 +1629,7 @@ public partial class CombatUI : Control
 		{
 			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
 			{
-				if (_targeting && _targetSkill.Type == "attack" && slot.Alive)
+				if (_targeting && _targetSkill != null && _targetSkill.Type == "attack" && slot.Alive)
 					ConfirmTarget(slot);
 				else
 					slot.StatLabel.Visible = !slot.StatLabel.Visible;
@@ -1293,7 +1637,7 @@ public partial class CombatUI : Control
 		};
 		card.GuiInput += e =>
 		{
-			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && _targeting && slot.Alive && _targetSkill.Type == "attack")
+			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && _targeting && slot.Alive && _targetSkill != null && _targetSkill.Type == "attack")
 			{
 				ConfirmTarget(slot);
 				GetViewport().SetInputAsHandled();
@@ -1343,10 +1687,50 @@ public partial class CombatUI : Control
 		{
 			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
 			{
-				if (_targeting && _targetSkill.Type == "heal" && slot.State.Alive)
+				if (_targeting && !string.IsNullOrEmpty(_targetItemId) && slot.State.Alive)
+				{
+					if (_activeItemUser != null)
+					{
+						if (_givingMode)
+							ConfirmCompanionGiveTarget(_targetItemId, _activeItemUser, slot);
+						else
+							ConfirmCompanionItemUse(slot);
+					}
+					else if (_givingMode)
+						DoPlayerGift(_targetItemId, slot);
+					else
+						ConfirmItemTarget(slot.Stats);
+				}
+				else if (_targeting && _targetSkill != null && _targetSkill.Type == "heal" && slot.State.Alive)
 					ConfirmAllyTarget(slot);
 				else
 					slot.StatLabel.Visible = !slot.StatLabel.Visible;
+			}
+		};
+		card.GuiInput += e =>
+		{
+			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
+			{
+				if (_targeting && !string.IsNullOrEmpty(_targetItemId) && slot.State.Alive)
+				{
+					if (_activeItemUser != null)
+					{
+						if (_givingMode)
+							ConfirmCompanionGiveTarget(_targetItemId, _activeItemUser, slot);
+						else
+							ConfirmCompanionItemUse(slot);
+					}
+					else if (_givingMode)
+						DoPlayerGift(_targetItemId, slot);
+					else
+						ConfirmItemTarget(slot.Stats);
+					GetViewport().SetInputAsHandled();
+				}
+				else if (_targeting && _targetSkill != null && _targetSkill.Type == "heal" && slot.State.Alive)
+				{
+					ConfirmAllyTarget(slot);
+					GetViewport().SetInputAsHandled();
+				}
 			}
 		};
 		_compSlots.Add(slot);

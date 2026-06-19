@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://dyoojd4xbfdks"]
 
 [ext_resource type="Shader" uid="uid://frby0g8rvmoo" path="res://addons/Godot-MToon-Shader/mtoon_cull_off.gdshader" id="1_045np"]
-[ext_resource type="Texture2D" path="res://assets/png/CaveWallGrey.png" id="2_ra1wl"]
+[ext_resource type="Texture2D" uid="uid://dj7sdmghfwn82" path="res://assets/png/StoneWall_TXR.png" id="2_045np"]
 
 [resource]
 render_priority = 0
@@ -10,9 +10,8 @@ shader_parameter/_AlphaCutoutEnable = 0.0
 shader_parameter/_Cutoff = 0.5
 shader_parameter/_Color = Color(1, 1, 1, 1)
 shader_parameter/_ShadeColor = Color(0.3372549, 0.27450982, 0.29411766, 1)
-shader_parameter/_MainTex = ExtResource("2_ra1wl")
+shader_parameter/_MainTex = ExtResource("2_045np")
 shader_parameter/_MainTex_ST = Vector4(5, 4, 0, 0)
-shader_parameter/_ShadeTexture = ExtResource("2_ra1wl")
 shader_parameter/_BumpScale = 1.0
 shader_parameter/_ReceiveShadowRate = 1.0
 shader_parameter/_ShadingGradeRate = 1.0
@@ -20,6 +19,7 @@ shader_parameter/_ShadeShift = 0.0
 shader_parameter/_ShadeToony = 0.9
 shader_parameter/_LightColorAttenuation = 0.0
 shader_parameter/_IndirectLightIntensity = 0.1
+shader_parameter/_RimTexture = ExtResource("2_045np")
 shader_parameter/_RimColor = Color(0, 0, 0, 1)
 shader_parameter/_RimLightingMix = 0.0
 shader_parameter/_RimFresnelPower = 1.0

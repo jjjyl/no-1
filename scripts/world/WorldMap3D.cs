@@ -62,6 +62,7 @@ public partial class WorldMap3D : Node3D
 		ScatterDecorations();
 		BuildZoneTriggers();
 		BuildEnemyPlaceholders();
+		BuildShopNPC();
 		BuildCamera();
 		BuildPlayer();
 		BuildReturnButton();
@@ -367,6 +368,112 @@ public partial class WorldMap3D : Node3D
 	}
 
 	// ═══════════════════════════════════════════════════════════════
+	//  Decorations — random Sprite3D trees/rocks/ruins
+	// ═══════════════════════════════════════════════════════════════
+
+	void ScatterDecorations()
+	{
+		var deco = new Node3D { Name = "Decorations" };
+		var rng = new RandomNumberGenerator();
+		rng.Seed = 42; // fixed seed → same layout every time; vary per cycle later
+
+		var mats = WorldMaterials.Instance;
+
+		// Trees — clusters near forest zone (zone 0)
+		for (int i = 0; i < 25; i++)
+		{
+			float dx = (rng.Randf() - 0.3f) * 8f;
+			float dz = (rng.Randf() - 0.7f) * 8f;
+			MakeTree(deco, new Vector3(4f + dx, 0, 12f + dz), rng.RandfRange(0.6f, 1.3f), mats.DecoTree);
+		}
+
+		// Rocks — near mine zone (zone 1)
+		for (int i = 0; i < 15; i++)
+		{
+			float dx = (rng.Randf() - 0.5f) * 6f;
+			float dz = (rng.Randf() - 0.5f) * 6f;
+			MakeRock(deco, new Vector3(10f + dx, 0, 8f + dz), rng.RandfRange(0.3f, 0.8f), mats.DecoRock);
+		}
+
+		// Ruins — near cliff zone (zone 2)
+		for (int i = 0; i < 8; i++)
+		{
+			float dx = (rng.Randf() - 0.5f) * 5f;
+			float dz = (rng.Randf() - 0.5f) * 5f;
+			MakeRuin(deco, new Vector3(10f + dx, 0, 3.5f + dz), mats.DecoRuin);
+		}
+
+		// Scattered decorations across the world
+		for (int i = 0; i < 20; i++)
+		{
+			float x = rng.RandfRange(1f, WorldW - 1f);
+			float z = rng.RandfRange(1f, WorldH - 1f);
+			float type = rng.Randf();
+			if (type < 0.5f)
+				MakeTree(deco, new Vector3(x, 0, z), rng.RandfRange(0.4f, 0.9f), mats.DecoTree);
+			else
+				MakeRock(deco, new Vector3(x, 0, z), rng.RandfRange(0.2f, 0.5f), mats.DecoRock);
+		}
+
+		AddChild(deco);
+	}
+
+	void MakeTree(Node parent, Vector3 pos, float scale, Material mat)
+	{
+		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : Colors.Green;
+
+		// Trunk — brown rectangle
+		var trunk = new Sprite3D
+		{
+			Texture = MakeColorTexture(new Color(0.25f, 0.18f, 0.10f), 4, 16),
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = pos + new Vector3(0, 0.3f * scale, 0),
+			PixelSize = 0.03f * scale,
+			Modulate = new Color(0.25f, 0.18f, 0.10f)
+		};
+		parent.AddChild(trunk);
+
+		// Canopy — green triangle
+		var canopy = new Sprite3D
+		{
+			Texture = MakeTriangleTexture(24, 18, color),
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = pos + new Vector3(0, 0.8f * scale, 0),
+			PixelSize = 0.025f * scale,
+			Modulate = color
+		};
+		parent.AddChild(canopy);
+	}
+
+	void MakeRock(Node parent, Vector3 pos, float scale, Material mat)
+	{
+		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : Colors.Gray;
+		var rock = new Sprite3D
+		{
+			Texture = MakeCircleTexture(color, 24),
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = pos + new Vector3(0, 0.15f * scale, 0),
+			PixelSize = 0.025f * scale,
+			Modulate = color
+		};
+		parent.AddChild(rock);
+	}
+
+	void MakeRuin(Node parent, Vector3 pos, Material mat)
+	{
+		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : new Color(0.28f, 0.24f, 0.20f);
+		var ruin = new Sprite3D
+		{
+			Texture = MakeColorTexture(color, 6, 14),
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = pos + new Vector3(0, 0.45f, 0),
+			PixelSize = 0.06f,
+			Modulate = color
+		};
+		parent.AddChild(ruin);
+	}
+
+	// ═══════════════════════════════════════════════════════════════
 	//  Zone triggers — Area3D + Box colliders
 	// ═══════════════════════════════════════════════════════════════
 
@@ -410,6 +517,12 @@ public partial class WorldMap3D : Node3D
 
 	void TriggerStartZone()
 	{
+		if (CycleManager.Instance.SkipStartEvents)
+		{
+			CycleManager.Instance.SkipStartEvents = false;
+			return;
+		}
+
 		int start = CycleManager.Instance.CurrentNodeIndex;
 		GD.Print($"[WorldMap3D] Start zone: {_zoneNames[start]}");
 		EventManager.CheckEvents(_zoneNames[start], CycleManager.Instance, _ => { });
@@ -445,6 +558,46 @@ public partial class WorldMap3D : Node3D
 	}
 
 	// ═══════════════════════════════════════════════════════════════
+	//  Shop NPC
+	// ═══════════════════════════════════════════════════════════════
+
+	void BuildShopNPC()
+	{
+		var npc = new ShopNPC { Name = "ShopNPC" };
+		// Place near 废矿入口 zone
+		npc.Position = new Vector3(13f, 0f, 7.5f);
+
+		var sprite = new Sprite3D
+		{
+			Name = "Sprite",
+			Texture = MakeCircleTexture(new Color(1f, 0.85f, 0.3f)),
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			PixelSize = 0.008f,
+			Modulate = new Color(1f, 0.85f, 0.3f)
+		};
+		npc.AddChild(sprite);
+
+		var label = new Label3D
+		{
+			Name = "Label",
+			Text = "商人",
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			PixelSize = 0.004f,
+			Position = new Vector3(0f, 0.3f, 0f),
+			Modulate = new Color(1f, 0.85f, 0.3f)
+		};
+		npc.AddChild(label);
+
+		var area = new Area3D { Name = "Trigger" };
+		var shape = new CollisionShape3D();
+		shape.Shape = new BoxShape3D { Size = new Vector3(2f, 2f, 2f) };
+		area.AddChild(shape);
+		npc.AddChild(area);
+
+		AddChild(npc);
+	}
+
+	// ═══════════════════════════════════════════════════════════════
 	//  Player
 	// ═══════════════════════════════════════════════════════════════
 
@@ -452,7 +605,6 @@ public partial class WorldMap3D : Node3D
 	{
 		_player = new Player3D { Name = "Player" };
 		_player.Position = _zonePoses[CycleManager.Instance.CurrentNodeIndex];
-		_player.SetCamera(_camera);
 		AddChild(_player);
 	}
 
@@ -492,7 +644,7 @@ public partial class WorldMap3D : Node3D
 			Position = new Vector2(right - 320, 16),
 			Size = new Vector2(140, 36)
 		};
-		invBtn.Pressed += () => DialogueManager.Instance.ShowInventory();
+		invBtn.Pressed += () => DialogueManager.Instance.ShowCharacterPanel();
 		canvas.AddChild(invBtn);
 
 		var btn = new Button
@@ -522,15 +674,16 @@ public partial class WorldMap3D : Node3D
 		return ImageTexture.CreateFromImage(img);
 	}
 
-	static ImageTexture MakeCircleTexture(Color c)
+	static ImageTexture MakeCircleTexture(Color c, int size = 32)
 	{
-		var img = Image.CreateEmpty(32, 32, false, Image.Format.Rgba8);
+		var img = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
 		img.Fill(new Color(0, 0, 0, 0));
-		for (int y = 0; y < 32; y++)
-		for (int x = 0; x < 32; x++)
+		float half = size * 0.5f;
+		for (int y = 0; y < size; y++)
+		for (int x = 0; x < size; x++)
 		{
-			float dx = (x - 16f) / 16f;
-			float dy = (y - 16f) / 16f;
+			float dx = (x - half) / half;
+			float dy = (y - half) / half;
 			if (dx * dx + dy * dy <= 1f)
 				img.SetPixel(x, y, c);
 		}

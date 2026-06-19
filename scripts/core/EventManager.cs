@@ -441,10 +441,33 @@ public class EventManager
 				{
 					var itemId = GetStr(e, "item_id");
 					var amount = e.ContainsKey("amount") ? e["amount"].AsInt32() : 1;
-					cm.PlayerInventory?.AddItem(itemId, amount);
 					var def = ItemDef.Get(itemId);
 					var itemName = def?.Name ?? itemId;
-					onStatus?.Invoke($"[color=#ffcc44]获得 {itemName} ×{amount}[/color]");
+
+					// Read optional target field — if not specified, defaults to player
+					if (e.ContainsKey("target") && !string.IsNullOrEmpty(e["target"].AsString()))
+					{
+						var targetName = e["target"].AsString();
+						var comp = cm.ActiveCompanions.FirstOrDefault(c => c.Name == targetName);
+						if (comp != null && comp.Inventory != null)
+						{
+							comp.Inventory.AddItem(itemId, amount);
+							onStatus?.Invoke($"[color=#ffcc44]{targetName}获得 {itemName} ×{amount}[/color]");
+						}
+						else
+						{
+							// Companion not found or no inventory — fall back to player
+							GD.PrintErr($"[EventManager] grant_item target '{targetName}' not found, giving to player");
+							cm.PlayerInventory?.AddItem(itemId, amount);
+							onStatus?.Invoke($"[color=#ffcc44]获得 {itemName} ×{amount}[/color]");
+						}
+					}
+					else
+					{
+						// Default: give to player (backward compatible)
+						cm.PlayerInventory?.AddItem(itemId, amount);
+						onStatus?.Invoke($"[color=#ffcc44]获得 {itemName} ×{amount}[/color]");
+					}
 					break;
 				}
 			}

@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=4 uid="uid://dnwftcxrvlav"]
+[gd_scene load_steps=21 format=4 uid="uid://dnwftcxrvlav"]
 
 [ext_resource type="Script" uid="uid://nqum378c1dw8" path="res://scripts/temple/Temple3D.cs" id="1_mw1jk"]
 [ext_resource type="Material" path="res://ambientcg/materials/Rock062_1K-JPG.tres" id="2_n3ne3"]
@@ -10,9 +10,7 @@
 [ext_resource type="Material" path="res://assets/material_3d/glass_window.tres" id="5_vw81n"]
 [ext_resource type="Script" uid="uid://c2cvbxnn8sida" path="res://scripts/temple/GuideLight.cs" id="6_k0tje"]
 [ext_resource type="Material" uid="uid://byfr5ojxvpe1n" path="res://assets/material_3d/toon_slab.tres" id="7_l3jdg"]
-[ext_resource type="Shader" uid="uid://bkup7pjbtl3i0" path="res://addons/Godot-MToon-Shader/mtoon.gdshader" id="7_umhfq"]
 [ext_resource type="Material" uid="uid://cpnsedbverjms" path="res://assets/material_3d/GuideParticle.tres" id="7_vw81n"]
-[ext_resource type="Texture2D" uid="uid://caqliuanpmj1q" path="res://assets/png/Vertical Wood Panels.png" id="8_6mldc"]
 [ext_resource type="Material" uid="uid://26lp842x0irc" path="res://assets/material_3d/toon_roof.tres" id="8_k0tje"]
 [ext_resource type="Script" uid="uid://cedb24ryjx2ao" path="res://scripts/temple/TempleEvolution.cs" id="8_l3jdg"]
 [ext_resource type="Material" uid="uid://dyoojd4xbfdks" path="res://assets/material_3d/cavaWall.tres" id="10_umhfq"]
@@ -31,41 +29,6 @@ fog_density = 0.08
 [sub_resource type="QuadMesh" id="QuadMesh_l3jdg"]
 size = Vector2(0.6, 1.2)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1dlle"]
-render_priority = 0
-shader = ExtResource("7_umhfq")
-shader_parameter/_AlphaCutoutEnable = 0.0
-shader_parameter/_Cutoff = 0.5
-shader_parameter/_Color = Color(1, 1, 1, 1)
-shader_parameter/_ShadeColor = Color(0.97, 0.81, 0.86, 1)
-shader_parameter/_MainTex = ExtResource("8_6mldc")
-shader_parameter/_MainTex_ST = Vector4(1, 1, 0, 0)
-shader_parameter/_BumpScale = 1.0
-shader_parameter/_ReceiveShadowRate = 1.0
-shader_parameter/_ShadingGradeRate = 1.0
-shader_parameter/_ShadeShift = 0.0
-shader_parameter/_ShadeToony = 0.9
-shader_parameter/_LightColorAttenuation = 0.0
-shader_parameter/_IndirectLightIntensity = 0.1
-shader_parameter/_RimColor = Color(0, 0, 0, 1)
-shader_parameter/_RimLightingMix = 0.0
-shader_parameter/_RimFresnelPower = 1.0
-shader_parameter/_RimLift = 0.0
-shader_parameter/_MatcapColor = Color(0, 0, 0, 1)
-shader_parameter/_EmissionColor = Color(0, 0, 0, 1)
-shader_parameter/_EmissionMultiplier = 1.0
-shader_parameter/_OutlineWidthMode = 1.0
-shader_parameter/_OutlineWidth = 0.5
-shader_parameter/_OutlineScaledMaxDistance = 1.0
-shader_parameter/_OutlineColorMode = 0.0
-shader_parameter/_OutlineColor = Color(0, 0, 0, 1)
-shader_parameter/_OutlineLightingMix = 0.0
-shader_parameter/_UvAnimScrollX = 0.0
-shader_parameter/_UvAnimRotation = 0.0
-shader_parameter/_UvAnimScrollY = 0.0
-shader_parameter/_DebugMode = 0.0
-shader_parameter/_MToonVersion = 33.0
-
 [sub_resource type="ArrayMesh" id="ArrayMesh_umhfq"]
 _surfaces = [{
 "aabb": AABB(-2, -0.2, -2, 4, 0.2, 4),
@@ -80,7 +43,7 @@ _surfaces = [{
 "aabb": AABB(-2.1, 0, -2.1, 4.2, 3.5, 4.2),
 "attribute_data": PackedByteArray("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"),
 "format": 34359738391,
-"material": SubResource("ShaderMaterial_1dlle"),
+"material": ExtResource("10_umhfq"),
 "primitive": 3,
 "uv_scale": Vector4(0, 0, 0, 0),
 "vertex_count": 348,
@@ -127,7 +90,6 @@ light_energy = 0.8
 shadow_enabled = true
 
 [node name="Room" type="CSGCombiner3D" parent="."]
-visible = false
 
 [node name="Floor" type="CSGBox3D" parent="Room"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
@@ -137,7 +99,7 @@ material = ExtResource("2_n3ne3")
 [node name="WallBack" type="CSGBox3D" parent="Room"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -2)
 size = Vector3(4.2, 3.5, 0.2)
-material = ExtResource("3_sn3t6")
+material = ExtResource("10_umhfq")
 
 [node name="WallFront" type="CSGBox3D" parent="Room"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 2)
@@ -186,6 +148,7 @@ material_overlay = ExtResource("5_vw81n")
 mesh = SubResource("QuadMesh_l3jdg")
 
 [node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
 mesh = SubResource("ArrayMesh_umhfq")
 surface_material_override/0 = ExtResource("5_k0tje")
 surface_material_override/1 = ExtResource("10_umhfq")

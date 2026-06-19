@@ -28,7 +28,7 @@ _pEnergyBar = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxCon
 _atkBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/AttackBtn")
 _defBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/DefendBtn")
 _dodgeBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/DodgeBtn")
-_escapeBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/EscapeBtn")
+_escapeBtn = NodePath("EscapeBtn")
 _itemBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/ItemBtn")
 _continueBtn = NodePath("MarginContainer/HBoxContainer/VBoxContainer/ResultButtons/ContinueBtn")
 _templeBtn = NodePath("MarginContainer/HBoxContainer/VBoxContainer/ResultButtons/TempleBtn")
@@ -177,22 +177,22 @@ alignment = 1
 [node name="ItemBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
 layout_mode = 2
 text = "物品"
+expand_icon = true
 
 [node name="AttackBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
 layout_mode = 2
 text = "攻击"
+expand_icon = true
 
 [node name="DefendBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
 layout_mode = 2
 text = "防御"
+expand_icon = true
 
 [node name="DodgeBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
 layout_mode = 2
 text = "闪避"
-
-[node name="EscapeBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
-layout_mode = 2
-text = "逃跑"
+expand_icon = true
 
 [node name="SkillButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions"]
 layout_mode = 2
@@ -274,3 +274,12 @@ scroll_following = true
 [node name="DialogueNext" type="Button" parent="DialoguePanel/VBoxContainer"]
 layout_mode = 2
 text = "继续"
+
+[node name="EscapeBtn" type="Button" parent="."]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 45.0
+offset_right = 590.0
+offset_bottom = 76.0
+text = "撤离"
+expand_icon = true

@@ -1,0 +1,66 @@
+[gd_scene load_steps=2 format=3 uid="uid://b16q6knigp3xb"]
+
+[ext_resource type="Script" uid="uid://bn4drrsvvlwr5" path="res://scripts/ui/ShopUI.cs" id="1"]
+
+[node name="ShopUI" type="Control" node_paths=PackedStringArray("_stockList", "_moneyLabel", "_refreshLabel", "_refreshBtn", "_closeBtn")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1")
+_stockList = NodePath("Panel/VBox/StockList")
+_moneyLabel = NodePath("Panel/VBox/TopBar/MoneyLabel")
+_refreshLabel = NodePath("Panel/VBox/TopBar/RefreshLabel")
+_refreshBtn = NodePath("Panel/VBox/TopBar/RefreshBtn")
+_closeBtn = NodePath("Panel/VBox/TopBar/CloseBtn")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -180.0
+offset_right = 160.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 308.0
+offset_bottom = 352.0
+
+[node name="TopBar" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Panel/VBox/TopBar"]
+layout_mode = 2
+text = "商店"
+
+[node name="MoneyLabel" type="Label" parent="Panel/VBox/TopBar"]
+layout_mode = 2
+text = "钱: 100"
+
+[node name="RefreshLabel" type="Label" parent="Panel/VBox/TopBar"]
+layout_mode = 2
+text = "刷新 (0/5)"
+
+[node name="RefreshBtn" type="Button" parent="Panel/VBox/TopBar"]
+layout_mode = 2
+text = "刷新"
+
+[node name="CloseBtn" type="Button" parent="Panel/VBox/TopBar"]
+layout_mode = 2
+text = "✕"
+
+[node name="StockList" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3

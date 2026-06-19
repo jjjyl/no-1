@@ -15,6 +15,8 @@ public partial class CycleManager : Node
 	public string PendingBattleEvents;
 	public Inventory PlayerInventory { get; private set; } = null!;
 	public int FragmentCount { get; private set; }
+	public int Money { get; set; }
+	public bool SkipStartEvents;
 
 	HashSet<string> _flags = new();           // 轮回级
 	HashSet<string> _accountFlags = new();    // 账号级（跨轮回不重置）
@@ -27,8 +29,9 @@ public partial class CycleManager : Node
 		EventManager.Load();
 		Instance = this;
 		LoadAccount();
+		if (Money == 0) Money = 100;
 		CreatePlayer();
-		PlayerInventory = new Inventory(PlayerStats);
+		PlayerInventory = new Inventory(PlayerStats, maxItems: 10);
 		LoadInventory();
 	}
 
@@ -109,16 +112,25 @@ public partial class CycleManager : Node
 
 	// ── 存档 ──
 
-	void SaveAccount()
+	public void SaveAccount()
 	{
 		var save = new Godot.Collections.Dictionary
 		{
 			["cycle"] = CurrentCycle,
 			["fragmentCount"] = FragmentCount,
+			["money"] = Money,
 			["accountFlags"] = new Godot.Collections.Array(_accountFlags.Select(s => (Variant)s).ToArray()),
 		};
 		if (PlayerInventory != null)
 			save["inventory"] = PlayerInventory.Serialize();
+
+		// Save companion inventories
+		var compDict = new Godot.Collections.Dictionary();
+		foreach (var c in ActiveCompanions)
+			if (c.Inventory != null)
+				compDict[c.Name] = c.Inventory.Serialize();
+		save["companion_inventories"] = compDict;
+
 		var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Write);
 		if (file == null)
 		{
@@ -143,6 +155,7 @@ public partial class CycleManager : Node
 		var dict = Json.ParseString(json).AsGodotDictionary();
 		CurrentCycle = dict.ContainsKey("cycle") ? dict["cycle"].AsInt32() : 1;
 		FragmentCount = dict.ContainsKey("fragmentCount") ? dict["fragmentCount"].AsInt32() : 0;
+		Money = dict.ContainsKey("money") ? dict["money"].AsInt32() : 100;
 
 		if (dict.ContainsKey("accountFlags"))
 			foreach (var item in dict["accountFlags"].AsGodotArray())
@@ -161,11 +174,24 @@ public partial class CycleManager : Node
 		var dict = Json.ParseString(json).AsGodotDictionary();
 		if (dict.ContainsKey("inventory"))
 			PlayerInventory.Deserialize(dict["inventory"].AsGodotDictionary());
+
+		if (dict.ContainsKey("companion_inventories"))
+		{
+			var compDict = dict["companion_inventories"].AsGodotDictionary();
+			foreach (var key in compDict.Keys)
+			{
+				var name = key.AsString();
+				var comp = ActiveCompanions.FirstOrDefault(c => c.Name == name);
+				if (comp != null && comp.Inventory != null)
+					comp.Inventory.Deserialize(compDict[key].AsGodotDictionary());
+			}
+		}
 	}
 
 	public void OnDeath()
 	{
 		CurrentCycle++;
+		Money = 100;
 		SaveAccount();
 	}
 
