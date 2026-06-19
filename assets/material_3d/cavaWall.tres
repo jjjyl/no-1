@@ -1,0 +1,40 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://dyoojd4xbfdks"]
+
+[ext_resource type="Shader" uid="uid://frby0g8rvmoo" path="res://addons/Godot-MToon-Shader/mtoon_cull_off.gdshader" id="1_045np"]
+[ext_resource type="Texture2D" path="res://assets/png/CaveWallGrey.png" id="2_ra1wl"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_045np")
+shader_parameter/_AlphaCutoutEnable = 0.0
+shader_parameter/_Cutoff = 0.5
+shader_parameter/_Color = Color(1, 1, 1, 1)
+shader_parameter/_ShadeColor = Color(0.3372549, 0.27450982, 0.29411766, 1)
+shader_parameter/_MainTex = ExtResource("2_ra1wl")
+shader_parameter/_MainTex_ST = Vector4(5, 4, 0, 0)
+shader_parameter/_ShadeTexture = ExtResource("2_ra1wl")
+shader_parameter/_BumpScale = 1.0
+shader_parameter/_ReceiveShadowRate = 1.0
+shader_parameter/_ShadingGradeRate = 1.0
+shader_parameter/_ShadeShift = 0.0
+shader_parameter/_ShadeToony = 0.9
+shader_parameter/_LightColorAttenuation = 0.0
+shader_parameter/_IndirectLightIntensity = 0.1
+shader_parameter/_RimColor = Color(0, 0, 0, 1)
+shader_parameter/_RimLightingMix = 0.0
+shader_parameter/_RimFresnelPower = 1.0
+shader_parameter/_RimLift = 0.0
+shader_parameter/_MatcapColor = Color(0, 0, 0, 1)
+shader_parameter/_EmissionColor = Color(0, 0, 0, 1)
+shader_parameter/_EmissionMultiplier = 1.0
+shader_parameter/_OutlineWidthMode = 1.0
+shader_parameter/_OutlineWidth = 0.5
+shader_parameter/_OutlineScaledMaxDistance = 1.0
+shader_parameter/_OutlineColorMode = 0.0
+shader_parameter/_OutlineColor = Color(0, 0, 0, 1)
+shader_parameter/_OutlineLightingMix = 0.0
+shader_parameter/_UvAnimScrollX = 0.0
+shader_parameter/_UvAnimRotation = 0.0
+shader_parameter/_UvAnimScrollY = 0.0
+shader_parameter/_DebugMode = 0.0
+shader_parameter/_MToonVersion = 33.0

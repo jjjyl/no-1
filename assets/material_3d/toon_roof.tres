@@ -1,0 +1,39 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://26lp842x0irc"]
+
+[ext_resource type="Shader" uid="uid://bkup7pjbtl3i0" path="res://addons/Godot-MToon-Shader/mtoon.gdshader" id="1"]
+[ext_resource type="Material" uid="uid://cqof3lj2h5rcp" path="res://assets/material_3d/toon_outline.tres" id="2"]
+
+[resource]
+render_priority = 0
+next_pass = ExtResource("2")
+shader = ExtResource("1")
+shader_parameter/_AlphaCutoutEnable = 0.0
+shader_parameter/_Cutoff = 0.5
+shader_parameter/_Color = Color(0.22, 0.18, 0.15, 1)
+shader_parameter/_ShadeColor = Color(0.04, 0.03, 0.03, 1)
+shader_parameter/_MainTex_ST = Vector4(1, 1, 0, 0)
+shader_parameter/_BumpScale = 1.0
+shader_parameter/_ReceiveShadowRate = 1.0
+shader_parameter/_ShadingGradeRate = 1.0
+shader_parameter/_ShadeShift = 0.0
+shader_parameter/_ShadeToony = 0.95
+shader_parameter/_LightColorAttenuation = 0.0
+shader_parameter/_IndirectLightIntensity = 0.05
+shader_parameter/_RimColor = Color(0.96, 0.85, 0.63, 1)
+shader_parameter/_RimLightingMix = 0.0
+shader_parameter/_RimFresnelPower = 5.0
+shader_parameter/_RimLift = 0.0
+shader_parameter/_MatcapColor = Color(0, 0, 0, 1)
+shader_parameter/_EmissionColor = Color(0, 0, 0, 1)
+shader_parameter/_EmissionMultiplier = 1.0
+shader_parameter/_OutlineWidthMode = 1.0
+shader_parameter/_OutlineWidth = 0.3
+shader_parameter/_OutlineScaledMaxDistance = 1.0
+shader_parameter/_OutlineColorMode = 0.0
+shader_parameter/_OutlineColor = Color(0, 0, 0, 1)
+shader_parameter/_OutlineLightingMix = 0.0
+shader_parameter/_UvAnimScrollX = 0.0
+shader_parameter/_UvAnimRotation = 0.0
+shader_parameter/_UvAnimScrollY = 0.0
+shader_parameter/_DebugMode = 0.0
+shader_parameter/_MToonVersion = 33.0

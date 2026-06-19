@@ -8,115 +8,139 @@
 
 | 视角 | 用途 | 移动 | 交互 |
 |---|---|---|---|
-| **2D 俯视** | 大世界导航、区域选择 | ✅ wasd/点击 | 区域触发 |
-| **3D 第一人称** | 大世界观察、房间探索 | ❌ 固定位置 | 自由环视 + 热点点击 |
+| **3D 倾斜桌面** | 大世界导航、区域选择 | ✅ wasd/点击（xz 平面） | 区域触发 + 景观浏览 |
+| **3D 第一人称** | 近距离观察、房间探索 | ❌ 固定位置 | 自由环视 + 热点点击 |
 
-**核心决策**：第一人称不做自由移动（wasd 行走），纯观察。理由：
-- 零素材需求（无碰撞、无 AI 寻路、无地图边界处理）
-- 与节点驱动玩法天然契合
-- 开发量是自由移动的 1/5
-
----
-
-### 三层视角架构
-
-| 层级 | 视角 | 场景 | 交互 | 状态 |
-|---|---|---|---|---|
-| L1 大世界导航 | 2D 俯视 | WorldMap (Node2D) | 移动 + 区域触发 | ✅ 已有 |
-| L2 大世界观察 | 3D 第一人称 | WorldView3D (Node3D) | 固定位置 + 自由环视 | 🆕 新增 |
-| L3 房间探索 | 3D 第一人称 | RoomView (Node3D) | 固定视点 + 自由环视 + 热点 | 🆕 新增 |
-
-L2 和 L3 使用**同一套 3D 视角代码**，仅在数据源和交互层有差异：
-
-| | L2 大世界观察 | L3 房间探索 |
-|---|---|---|
-| 视点位置 | 玩家当前世界坐标 | 房间预设位置 |
-| 场景数据 | 复用 WorldMap 2D 数据 | RoomDef 配置 |
-| 几何体 | Sprite3D Billboard | CSG 几何体 + VRM 角色 |
-| 交互 | 无 | Area3D 热点点击 |
-| 切换方式 | Tab 键按住/松开 | 进入/退出节点 |
-| 退出后 | 回到俯视，位置不变 | 回到俯视，标记节点已探索 |
+**核心决策**：
+1. 大世界默认视角为 **3D 倾斜俯视**（如俯瞰桌面沙盘），不再使用纯 2D 俯视
+2. 第一人称**不做自由移动**，固定视点纯观察
+3. 两个视角共用同一套 Sprite3D 世界数据，只切换摄像机位置和朝向
+4. 后续加入的材质纹理和角色立绘需要透视才能充分展示
 
 ---
 
-### 切换流程
+### 视角架构
 
 ```
-  世界地图俯视（Camera2D）
-    │
-    ├── 按 Tab            → L2 大世界观察（Camera3D）
-    │   松手/再按 Tab      → 回到俯视
-    │
-    └── 进入节点/点击区域  → L3 房间探索（Camera3D + 热点）
-        退出节点/点击返回  → 回到俯视
+同一个 3D 世界（Sprite3D Billboard 构成）
+
+  默认：倾斜桌面视角（Camera3D 斜上方 45°）
+          │
+          ├── wasd 移动玩家
+          ├── 缩放：滚轮拉近拉远
+          └── 旋转：中键拖动旋转桌面角度
+          
+  按 Tab：第一人称视角（Camera3D 降到地面高度）
+          │
+          ├── 鼠标自由环视（Yaw + Pitch）
+          ├── 不移动，松手/再按 Tab 回到倾斜视角
+          └── 用来看地形细节、远处景观、角色立绘
+  
+  进入节点：房间探索（切换场景）
+          │
+          ├── 固定视点 + 自由环视
+          └── 热点点击交互
 ```
 
-**技术要点**：
-- L1 ↔ L2 通过 `Camera2D.MakeCurrent()` / `Camera3D.MakeCurrent()` 切换
-- L1 → L3 场景切换，加载 `RoomView` 场景
-- CanvasLayer（HUD/DialogueUI）始终覆盖在所有视角之上
+| 层级 | 场景 | 摄像机 | 交互 |
+|---|---|---|---|
+| **大世界** | WorldMap (Node3D) | Camera3D 倾斜 45° | 移动 + 缩放 + 旋转 + 区域触发 |
+| **大世界观察** | 同上 | Camera3D 地面高度 | 自由环视，不移动 |
+| **房间探索** | RoomView (Node3D) | Camera3D 预设位置 | 自由环视 + 热点点击 |
 
 ---
 
-### L2 大世界 3D 观察 — Sprite3D Billboard 方案
+### 大世界渲染 — Sprite3D Billboard
 
-**核心思路**：不复刻新素材。现有 WorldMap 的 2D 程序化数据直接映射到 3D 空间。
+所有世界元素用 Sprite3D Billboard 构成，像纸片立牌站在 3D 空间里。透视由 Camera3D 自动提供。
 
-#### 为什么不用 3D 模型重建
-- WorldMap 场景是纯色块程序化生成的（ColorRect、Polygon2D）
-- 移到 3D 只是换了个透视方式，数据完全不变
-- 用 Sprite3D Billboard → Godot 自动处理透视缩放
+#### 为什么 Sprite3D
+
+- 复用现有 WorldMap 程序化数据（颜色、位置、尺寸全部保留）
+- 零新素材开局，后续逐步替换为贴图材质
+- 升级路径清晰：纯色 → 贴图 → 完全替换为 3D 模型
 
 #### 2D → 3D 数据映射
 
-| WorldMap 源数据 | 生成方法 | Sprite3D 映射 | 位置 |
-|---|---|---|---|
-| 天空 | `BuildParallax` far layer | 巨大 Sprite3D 纯色板 | 远处高空 |
-| 太阳 | `BuildParallax` sun | Sprite3D 发光圆 | 极远处 |
-| 山脉剪影 | `BuildParallax` mid layer Polygon2D | Sprite3D 剪影 | 中距 |
-| 龙影 | `BuildParallax` DragonShadow | Sprite3D 动画剪影 | 天边 |
-| 地形底色 | `BuildTerrain` base | 巨型 Sprite3D | 地面 |
-| 区域色块 | `AddZoneRect` ×3 | Sprite3D 方块 | 地面（三个区域位置） |
-| 道路 | `DrawPath` | 长条 Sprite3D | 地面 |
-| 敌人 | `BuildEnemyPlaceholders` ColorRect | Sprite3D 红色标记 | 各区域 |
-| 区域名 | `BuildZoneLabels` Label | Label3D | 悬在各区域上方 |
+| 源数据 | 生成方法 | Sprite3D 位置 |
+|---|---|---|
+| 天空 | `BuildParallax` far | 巨大色板，高空远处 |
+| 太阳 | `BuildParallax` sun | 发光圆，极远处 |
+| 山脉剪影 | `BuildParallax` mid | 剪影，中距山脊线 |
+| 龙影 | `BuildParallax` DragonShadow | 动画剪影，天边 |
+| 地形底色 | `BuildTerrain` base | 巨型色板，铺在地面 |
+| 区域色块 ×3 | `AddZoneRect` | Sprite3D，各区域位置 |
+| 道路 | `DrawPath` | 长条 Sprite3D，地面 |
+| 敌人标记 | `BuildEnemyPlaceholders` | 红色 Sprite3D，各区域 |
+| 区域名 | `BuildZoneLabels` | Label3D，悬在区域上方 |
+| 角色（未来） | VRoid 导出 | Sprite3D 立绘 / VRM 模型 |
 
-#### 纹理生成
+#### 纹理
 
-每个 Sprite3D 的贴图 = 一个 4×4 像素的纯色 `ImageTexture`，颜色直接取源 `ColorRect.Color`。
+- 初期：4×4 纯色 `ImageTexture`，颜色取源 `ColorRect.Color`
+- 后期：替换为材质贴图（草地、沙地、石板等 tile 纹理）
 
-```csharp
-// 伪代码
-ImageTexture ColorTexture(Color c) {
-    var img = Image.Create(4, 4, false, ImageFormat.Rgba8);
-    img.Fill(c);
-    return ImageTexture.CreateFromImage(img);
-}
-```
-
-#### 透视效果
-
-- Camera3D 天然提供近大远小
-- Billboard 确保色块始终正对相机（像纸片立牌）
-- 可以加 WorldEnvironment 雾效让远处自然模糊
-
-#### 工作量
+#### 升级路径
 
 ```
-新增组件： WorldView3D.cs  (~100 行)
-修改：     WorldMap.cs 提取数据访问（不删不改，只加 public getter）
+阶段 1：纯色 Sprite3D（现在）
+阶段 2：Sprite3D + 贴图纹理（加入材质后）
+阶段 3：区域地标用 3D 模型替代（建筑/树木）
+阶段 4：角色以 VRoid VRM 模型站在世界中
 ```
 
 ---
 
-### L3 房间探索 — 固定视点 + 热点交互
+### 房间探索 — 固定视点 + 热点交互
 
-详见"场景系统"章节（待补充）。核心要素：
+场景数据结构（待细化）：
 
-- 视点：固定的 Camera3D 位置，鼠标自由旋转（Yaw + Pitch）
-- 场景：CSG 几何体（墙壁/地板/天花板）+ VRM 角色 + 道具
-- 交互：准星对准 Area3D → 高亮 → 点击触发
-- 房间间切换：走出口 / 点击过渡热点 → 淡出淡入 → 加载下一个房间
+```
+RoomDef {
+    Id, CameraPos, AmbientColor,
+    WallDef[], PropDef[], HotspotDef[],
+    OnEnterEvents[]
+}
+
+HotspotDef {
+    Position, Size, Label,
+    Type: describe/pickup/dialogue/transition/combat/rest
+    Data: 描述文本 / NPC ID / 目标房间 / 物品 ID
+}
+```
+
+核心要素：
+- Camera3D 固定位置，鼠标自由旋转
+- CSG 几何体（墙壁/地板/天花板）+ VRM 角色 + 道具
+- 准星对准 Area3D → 高亮 → 点击触发交互
+- 进出口淡出淡入过渡
+
+---
+
+## 交互系统
+
+### 大世界
+
+| 输入 | 效果 |
+|---|---|
+| wasd / 点击 | 移动玩家 |
+| 滚轮 | 缩放（拉近拉远） |
+| 中键拖动 | 旋转桌面视角 |
+| Tab 按住 | 切换到第一人称观察 |
+| 点击区域标记 | 进入该区域节点 → 切到房间探索 |
+
+### 房间探索
+
+| 输入 | 效果 |
+|---|---|
+| 鼠标移动 | 自由环视 |
+| 悬停 Area3D | 热点高亮 + 显示名称 |
+| 左键点击 | 触发交互 |
+| Esc / 返回按钮 | 退出房间，回到大世界 |
+
+### 全局覆盖层
+
+CanvasLayer（HUD/DialogueUI/CombatUI/SettingMenu）始终在所有视角之上，不受摄像机切换影响。
 
 ---
 
@@ -126,6 +150,7 @@ ImageTexture ColorTexture(Color c) {
 - 渲染：MToon shader（二段光照 + 描边 + 轮廓线）
 - 场景：程序化几何体 + 免费 PBR 贴图 + Toon 光照
 - 人物：VRM 动漫角色
+- 世界：立体绘本风格（Sprite3D + 透视 + 后期待加贴图材质）
 - 引擎：Godot 4
 
 ---
@@ -134,11 +159,42 @@ ImageTexture ColorTexture(Color c) {
 
 ### 工具链
 
-| 层级 | 工具 | 方式 | 导出格式 |
+| 层级 | 工具 | 方式 | 导出 |
 |---|---|---|---|
-| 精细角色（主角/重要NPC） | VRoid Studio | 从零捏 / Booth 预设 | .vrm |
-| 中量角色（次要NPC/路人） | VRoid Hub | 下载成品 → VRoid 微调 | .vrm |
+| 精细角色（主角/重要 NPC） | VRoid Studio | 从零捏 / Booth 预设 | .vrm |
+| 中量角色（次要 NPC/路人） | VRoid Hub | 下载成品 → VRoid 微调 | .vrm |
 | 原型/怪物 | Meshy AI | 文字生成 + 自动 rig | .glb |
+
+### 服装组合
+
+使用 VRoid Studio v2.0+ Dress-Up 功能：
+
+```
+1. 打开穿衣服的角色 A → 左上角 → "Bulk export worn items as XWear"
+2. 打开目标角色 B → Dress-Up 标签 → Add Base Model
+3. Add Costume → 选 clothes.xwear → Auto-fitting
+4. Delete Mesh 修复穿模 → Export VRM
+```
+
+### 建模规格
+
+| 角色类型 | 面数 | 骨骼 | 贴图 | VRoid 导出设置 |
+|---|---|---|---|---|
+| 主角 | ≤ 30,000 | ≤ 80 | 2048 | Reduce Polygons 不勾 |
+| 重要 NPC | ≤ 15,000 | ≤ 60 | 2048 | Reduce Polygons Light |
+| 路人 NPC | ≤ 8,000 | ≤ 50 | 1024 | Reduce Polygons Medium |
+| 怪物 | ≤ 8,000 | ≤ 40 | 1024 | Meshy 默认 |
+
+**骨骼控制**：SpringBone 是性能瓶颈，头发链 ≤ 4 条、每链 ≤ 6 节点、服装物理非必要则关。
+
+**VRoid 导出设置**：
+```
+Format：          VRM 1.0
+Reduce Polygons： 按上表
+Reduce Materials：不勾（破坏 MToon 描边）
+Reduce Bones：    不勾（手动在 Hair Editor 里减）
+Texture：         Default（主角）/ 1/2（NPC）
+```
 
 ### Godot 导入
 
@@ -170,7 +226,9 @@ ImageTexture ColorTexture(Color c) {
 
 ## 后续规划
 
-1. 启用插件，用 VRoid 导出角色验证管线
-2. 搭建第一个 3D 房间原型（固定视点 + 自由环视 + 热点交互）
-3. 实现大世界 Tab 切换第一人称观察（Sprite3D Billboard 映射）
-4. 角色清单：主角 + 首批 NPC
+1. 启用 godot-vrm 插件，用 VRoid 导出角色验证管线
+2. 重构 WorldMap 为 Node3D + Sprite3D Billboard（替换现有 Node2D）
+3. 实现倾斜桌面视角（Camera3D 45° + 缩放 + 旋转）
+4. 实现 Tab 切换第一人称观察
+5. 搭建第一个 3D 房间原型（固定视点 + 自由环视 + 热点交互）
+6. 角色清单：主角 + 首批 NPC
