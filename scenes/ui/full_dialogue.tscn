@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c183wo1q4wk04" path="res://scripts/ui/FullDialogue.cs" id="1_os2gs"]
 
-[node name="FullDialogue" type="Control" node_paths=PackedStringArray("_bg", "_dialogBox", "_nameLabel", "_textLabel", "_hintLabel")]
+[node name="FullDialogue" type="Control" node_paths=PackedStringArray("_bg", "_dialogBox", "_nameLabel", "_textLabel", "_hintLabel", "_portraitArea", "_portraitTex")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,6 +15,8 @@ _dialogBox = NodePath("DialogBox")
 _nameLabel = NodePath("DialogBox/NameLabel")
 _textLabel = NodePath("DialogBox/TextLabel")
 _hintLabel = NodePath("DialogBox/HintLabel")
+_portraitArea = NodePath("PortraitArea")
+_portraitTex = NodePath("PortraitArea/PortraitTex")
 
 [node name="BG" type="ColorRect" parent="."]
 layout_mode = 1
@@ -25,19 +27,37 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.8)
 
-[node name="DialogBox" type="ColorRect" parent="."]
+[node name="PortraitArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -220.0
+
+[node name="PortraitTex" type="TextureRect" parent="PortraitArea"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -495.0
-offset_top = 85.0
-offset_right = 505.0
-offset_bottom = 285.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = -256.0
+offset_top = -256.0
+offset_right = 256.0
+offset_bottom = 256.0
+expand_mode = 1
+stretch_mode = 7
+
+[node name="DialogBox" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -220.0
 color = Color(0.101960786, 0.078431375, 0.1254902, 1)
 
 [node name="HintLabel" type="RichTextLabel" parent="DialogBox"]
@@ -48,9 +68,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -76.0
-offset_top = -190.0
+offset_top = -205.0
 offset_right = -12.0
-offset_bottom = -150.0
+offset_bottom = -170.0
 grow_horizontal = 0
 grow_vertical = 0
 bbcode_enabled = true
@@ -61,43 +81,41 @@ autowrap_mode = 0
 [node name="ColorRect" type="ColorRect" parent="DialogBox"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -332.0
-offset_top = -33.0
-offset_right = -292.0
-offset_bottom = 7.0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = 18.0
+offset_top = 55.0
+offset_right = -18.0
+offset_bottom = 57.0
 grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(16.279999, 0.07999879)
 color = Color(0.556953, 0.556953, 0.556953, 1)
 
 [node name="NameLabel" type="RichTextLabel" parent="DialogBox"]
 custom_minimum_size = Vector2(30, 25)
 layout_mode = 0
 offset_left = 18.0
-offset_top = 23.0
+offset_top = 18.0
 offset_right = 758.0
-offset_bottom = 58.0
+offset_bottom = 53.0
 theme_override_font_sizes/normal_font_size = 22
 bbcode_enabled = true
 
 [node name="TextLabel" type="RichTextLabel" parent="DialogBox"]
 custom_minimum_size = Vector2(740, 100)
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
+anchors_preset = -1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -441.0
-offset_top = -119.0
-offset_right = 459.0
-offset_bottom = -19.0
+offset_left = 18.0
+offset_top = 62.0
+offset_right = -18.0
+offset_bottom = -45.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
 localize_numeral_system = false
 theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true

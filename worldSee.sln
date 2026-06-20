@@ -1,6 +1,6 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "No1", "No1.csproj", "{C3A92989-B6C9-4BE8-B5F6-938C32C50AA7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "worldSee", "worldSee.csproj", "{C3A92989-B6C9-4BE8-B5F6-938C32C50AA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -36,7 +36,7 @@
 	  "conditions": { "companion_not_in_party": "天一" },
 	  "effects": [
 		{ "type": "companion_join", "name": "天一" },
-		{ "type": "dialogue", "speaker": "天一", "text": "断崖风大，站不稳可会掉下去。你跟紧我。", "position": "center" },
+		{ "type": "dialogue", "speaker": "天一", "text": "断崖风大，站不稳可会掉下去。你跟紧我。", "position": "center", "expression": "normal" },
 		{ "type": "status", "text": "[color=cyan]天一加入了队伍！[/color]" }
 	  ]
 	},
@@ -67,7 +67,7 @@
 		  "locks": ["companion"],
 		  "conditions": { "min_cycle": 1, "companion_in_party": "艾薇" },
 		  "effects": [
-			{ "type": "dialogue", "speaker": "艾薇", "text": "它来了——小心！它的魔力太强了，我的治疗可能不够... 但我不会躲。", "position": "center" },
+			{ "type": "dialogue", "speaker": "艾薇", "text": "它来了——小心！它的魔力太强了，我的治疗可能不够... 但我不会躲。", "position": "center", "expression": "angry" },
 			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
 			{ "type": "set_flag", "flag": "cycle:dragon_slain" },
 			{ "type": "status", "text": "[color=orange]击败了巨龙的一波攻势！[/color]" }

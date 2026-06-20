@@ -209,8 +209,8 @@ Texture：         Default（主角）/ 1/2（NPC）
 
 | 项目 | 路径 | VRM | MToon |
 |---|---|---|---|
-| no-1 | `/mnt/d/Godot/no-1/addons/` | v2.0.1 | v3.4.0 |
-| LifeSim | `/mnt/d/Godot/LifeSim/addons/` | v2.0.1 | v3.4.0 |
+| worldSee | `/mnt/d/Godot/worldSee/addons/` | v2.0.1 | v3.4.0 |
+| godot-vrm + MToon | `/mnt/d/Godot/worldSee/addons/` | v2.0.1 | v3.4.0 |
 
 ### 启用步骤
 

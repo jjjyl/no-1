@@ -429,7 +429,8 @@ public class EventManager
 					var spk = e.ContainsKey("speaker") ? e["speaker"].AsString() : "";
 					var txt = GetStr(e, "text");
 					var dlgPos = e.ContainsKey("position") ? e["position"].AsString() : "center";
-					DialogueManager.Instance.ShowFullDialogue(spk, txt, dlgPos);
+					var expr = e.ContainsKey("expression") ? e["expression"].AsString() : null;
+					DialogueManager.Instance.ShowFullDialogue(spk, txt, dlgPos, expr);
 					break;
 				}
 				case "status":

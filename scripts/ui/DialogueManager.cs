@@ -46,16 +46,16 @@ public partial class DialogueManager : Control
 		return banner;
 	}
 
-	public FullDialogue ShowFullDialogue(string speaker, string text, string position = "center")
+	public FullDialogue ShowFullDialogue(string speaker, string text, string position = "center", string portraitExpression = null)
 	{
-		GD.Print($"[DM] ShowFullDialogue: '{speaker}' pos={position}");
+		GD.Print($"[DM] ShowFullDialogue: '{speaker}' pos={position} expr={portraitExpression}");
 		if (_fullDialogueScene == null) { GD.PrintErr("[DM] fullDialogueScene null"); return null!; }
 		var node = _fullDialogueScene.Instantiate();
 		var dlg = node as FullDialogue;
 		if (dlg == null) { GD.PrintErr("[DM] dlg not FullDialogue"); node.QueueFree(); return null!; }
 
 		AddToOverlay(dlg);
-		dlg.Show(speaker, text, position);
+		dlg.Show(speaker, text, position, portraitExpression);
 		return dlg;
 	}
 
