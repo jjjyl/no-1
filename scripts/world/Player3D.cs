@@ -54,10 +54,6 @@ public partial class Player3D : CharacterBody3D
 			if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left))  input.X -= 1;
 			if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right)) input.X += 1;
 		}
-		else if (input.LengthSquared() < 0.01f && (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.D)))
-		{
-			GD.Print($"[Player3D] BLOCKED: IsOverlayOpen=true overlayCount={dm.OverlayCountDebug}");
-		}
 
 		MoveDirection = input.Normalized();
 		Translate(MoveDirection * Speed * dt);

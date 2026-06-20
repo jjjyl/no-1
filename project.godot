@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="No1"
+config/name="worldSee"
 run/main_scene="uid://m1n03v1auvcb"
 config/features=PackedStringArray("4.5", "C#", "Mobile")
 config/icon="res://icon.svg"
@@ -24,7 +24,7 @@ AmbientCG="*res://addons/ambientcg/ambient_cg.gd"
 
 [dotnet]
 
-project/assembly_name="No1"
+project/assembly_name="worldSee"
 
 [editor_plugins]
 

@@ -430,7 +430,9 @@ public class EventManager
 					var txt = GetStr(e, "text");
 					var dlgPos = e.ContainsKey("position") ? e["position"].AsString() : "center";
 					var expr = e.ContainsKey("expression") ? e["expression"].AsString() : null;
-					DialogueManager.Instance.ShowFullDialogue(spk, txt, dlgPos, expr);
+					var entry = e.ContainsKey("entry") ? e["entry"].AsString() : "slide_bottom";
+					var fx = e.ContainsKey("effect") ? e["effect"].AsString() : null;
+					DialogueManager.Instance.ShowFullDialogue(spk, txt, dlgPos, expr, entry, fx);
 					break;
 				}
 				case "status":

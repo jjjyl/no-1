@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c183wo1q4wk04" path="res://scripts/ui/FullDialogue.cs" id="1_os2gs"]
 
-[node name="FullDialogue" type="Control" node_paths=PackedStringArray("_bg", "_dialogBox", "_nameLabel", "_textLabel", "_hintLabel", "_portraitArea", "_portraitTex")]
+[node name="FullDialogue" type="Control" node_paths=PackedStringArray("_bg", "_dialogBox", "_nameLabel", "_textLabel", "_hintLabel", "_portraitArea")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,7 +16,6 @@ _nameLabel = NodePath("DialogBox/NameLabel")
 _textLabel = NodePath("DialogBox/TextLabel")
 _hintLabel = NodePath("DialogBox/HintLabel")
 _portraitArea = NodePath("PortraitArea")
-_portraitTex = NodePath("PortraitArea/PortraitTex")
 
 [node name="BG" type="ColorRect" parent="."]
 layout_mode = 1
@@ -29,31 +28,13 @@ color = Color(0, 0, 0, 0.8)
 
 [node name="PortraitArea" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_bottom = -220.0
 
-[node name="PortraitTex" type="TextureRect" parent="PortraitArea"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -256.0
-offset_top = -256.0
-offset_right = 256.0
-offset_bottom = 256.0
-expand_mode = 1
-stretch_mode = 7
-
 [node name="DialogBox" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -81,10 +62,7 @@ autowrap_mode = 0
 [node name="ColorRect" type="ColorRect" parent="DialogBox"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
-anchor_bottom = 0.0
 offset_left = 18.0
 offset_top = 55.0
 offset_right = -18.0
@@ -106,8 +84,6 @@ bbcode_enabled = true
 custom_minimum_size = Vector2(740, 100)
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.0
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 18.0
