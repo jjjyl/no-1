@@ -298,7 +298,7 @@ public partial class WorldMap3D : Node3D
 		var grass = MakeGroundPlane("GrassBase",
 			new Vector3(WorldW * 0.5f, 0, WorldH * 0.5f),
 			new Vector2(WorldW, WorldH),
-			WorldMaterials.Instance.GrassBase.AlbedoColor);
+			WorldMaterials.Instance.GrassBase);
 		terrain.AddChild(grass);
 
 		// Zone plates
@@ -308,21 +308,16 @@ public partial class WorldMap3D : Node3D
 
 		// Paths between zones
 		Draw3DPath(terrain, _zonePoses[0], _zonePoses[1], 0.6f,
-			WorldMaterials.Instance.Path01.AlbedoColor);
+			WorldMaterials.Instance.Path01);
 		Draw3DPath(terrain, _zonePoses[1], _zonePoses[2], 0.5f,
-			WorldMaterials.Instance.Path12.AlbedoColor);
+			WorldMaterials.Instance.Path12);
 
 		AddChild(terrain);
 	}
 
-	MeshInstance3D MakeGroundPlane(string name, Vector3 pos, Vector2 size, Color color)
+	MeshInstance3D MakeGroundPlane(string name, Vector3 pos, Vector2 size, Material mat)
 	{
 		var mesh = new QuadMesh { Size = size };
-		var mat = new StandardMaterial3D
-		{
-			AlbedoColor = color,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-		};
 		var instance = new MeshInstance3D
 		{
 			Name = name,
@@ -336,14 +331,13 @@ public partial class WorldMap3D : Node3D
 
 	void AddZonePlate(Node parent, int idx, Material mat, float w, float h)
 	{
-		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : Colors.White;
 		var plate = MakeGroundPlane($"Zone_{idx}",
 			_zonePoses[idx] + new Vector3(0, 0.005f, 0),
-			new Vector2(w, h), color);
+			new Vector2(w, h), mat);
 		parent.AddChild(plate);
 	}
 
-	void Draw3DPath(Node parent, Vector3 from, Vector3 to, float width, Color color)
+	void Draw3DPath(Node parent, Vector3 from, Vector3 to, float width, Material mat)
 	{
 		var dir = new Vector3(to.X - from.X, 0, to.Z - from.Z);
 		var len = dir.Length();
@@ -351,11 +345,6 @@ public partial class WorldMap3D : Node3D
 		var angle = Mathf.Atan2(dir.X, dir.Z);
 
 		var mesh = new QuadMesh { Size = new Vector2(len, width) };
-		var mat = new StandardMaterial3D
-		{
-			AlbedoColor = color,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-		};
 		var instance = new MeshInstance3D
 		{
 			Name = "Path",

@@ -82,6 +82,18 @@ public partial class WorldMaterials : Node
 		return mat;
 	}
 
+	static StandardMaterial3D MakeTextured(string name, string path)
+	{
+		var tex = ResourceLoader.Load<Texture2D>(path);
+		var mat = new StandardMaterial3D
+		{
+			AlbedoTexture = tex,
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
+		};
+		mat.ResourceName = name;
+		return mat;
+	}
+
 	static StandardMaterial3D MakeTransparent(string name, float r, float g, float b, float a)
 	{
 		var mat = new StandardMaterial3D
