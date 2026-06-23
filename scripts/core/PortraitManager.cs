@@ -10,12 +10,16 @@ using System.Collections.Generic;
 public static class PortraitManager
 {
 	const string BasePath = "res://assets/portraits/";
-	const int PlaceholderSize = 512;
+	const int PlaceholderSize = 128;
 
 	static readonly Dictionary<string, Color> _defaultColors = new()
 	{
-		["艾薇"] = new(0.3f, 0.7f, 0.4f),
-		["天一"] = new(0.6f, 0.6f, 0.9f),
+		["艾薇"] = Color.Color8(255, 181, 194),
+		["天一"] = Color.Color8(139, 184, 232),
+		["塞拉菲娜"] = Color.Color8(232, 213, 163),
+		["真冬"] = Color.Color8(168, 216, 234),
+		["阿斯特"] = Color.Color8(123, 104, 174),
+		["静"] = Color.Color8(47, 72, 88),
 	};
 
 	static readonly Dictionary<string, ImageTexture> _placeholderCache = new();

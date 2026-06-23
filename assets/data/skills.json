@@ -7,6 +7,18 @@
 	{ "id": "ivy_heal",     "name": "治愈", "owner": "艾薇",   "type": "heal",   "power": 0.5, "cost": 2, "target": "ally_lowest" },
 	{ "id": "ivy_cleanse",  "name": "净化", "owner": "艾薇",   "type": "heal",   "cost": 3, "target": "ally", "remove_debuff": true },
 	{ "id": "tianyi_slash", "name": "剑气", "owner": "天一",   "type": "attack", "damage_type": "physical", "power": 1.3, "cost": 1 },
-	{ "id": "tianyi_grow",  "name": "生长", "owner": "天一",   "type": "heal",   "power": 0.3, "cost": 1, "target": "self" }
+	{ "id": "tianyi_grow",  "name": "生长", "owner": "天一",   "type": "heal",   "power": 0.3, "cost": 1, "target": "self" },
+	{ "id": "serafina_light_heal", "name": "光愈", "owner": "塞拉菲娜", "type": "heal", "power": 0.4, "cost": 3, "target": "ally_all" },
+	{ "id": "serafina_barrier", "name": "圣盾", "owner": "塞拉菲娜", "type": "buff", "effect": "def_flat+3", "cost": 2, "target": "ally_all" },
+	{ "id": "serafina_judgment", "name": "审判", "owner": "塞拉菲娜", "type": "attack", "damage_type": "spirit", "power": 1.5, "cost": 3 },
+	{ "id": "mafuyu_frost_slash", "name": "霜斩", "owner": "真冬", "type": "attack", "damage_type": "physical", "power": 1.1, "cost": 1 },
+	{ "id": "mafuyu_ice_armor", "name": "冰铠", "owner": "真冬", "type": "buff", "effect": "body+3", "cost": 2, "target": "self" },
+	{ "id": "mafuyu_blizzard", "name": "暴风雪", "owner": "真冬", "type": "attack", "damage_type": "spirit", "power": 0.8, "cost": 4, "target": "enemy_all" },
+	{ "id": "aster_star_guide", "name": "星导", "owner": "阿斯特", "type": "buff", "effect": "crit_rate+10", "cost": 2, "target": "ally_all" },
+	{ "id": "aster_astral_shot", "name": "星弹", "owner": "阿斯特", "type": "attack", "damage_type": "spirit", "power": 1.0, "cost": 1 },
+	{ "id": "aster_wish", "name": "祈愿", "owner": "阿斯特", "type": "heal", "power": 0.2, "cost": 2, "target": "ally_all" },
+	{ "id": "sei_shadow_strike", "name": "影袭", "owner": "静", "type": "attack", "damage_type": "physical", "power": 1.4, "cost": 1, "effect": "self_dodge+10" },
+	{ "id": "sei_silence", "name": "封喉", "owner": "静", "type": "attack", "damage_type": "physical", "power": 0.6, "cost": 2, "effect": "enemy_power-3" },
+	{ "id": "sei_fatal_blow", "name": "绝杀", "owner": "静", "type": "attack", "damage_type": "physical", "power": 2.0, "cost": 3, "effect": "self_crit+20" }
   ]
 }

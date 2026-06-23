@@ -1,20 +1,64 @@
 {
-  "companions": [
-	{
-	  "name": "艾薇",
-	  "power": 2,
-	  "body": 8,
-	  "agility": 5,
-	  "heart": 8,
-	  "fortune": 4
-	},
-	{
-	  "name": "天一",
-	  "power": 9,
-	  "body": 3,
-	  "agility": 8,
-	  "heart": 2,
-	  "fortune": 5
-	}
-  ]
+	"companions": [
+		{
+			"name": "艾薇",
+			"portrait_color": "#FFB5C2",
+			"power": 2,
+			"body": 8,
+			"agility": 5,
+			"heart": 8,
+			"fortune": 4,
+			"desc": "存护之加护持有者，温柔而坚韧的治愈者"
+		},
+		{
+			"name": "天一",
+			"portrait_color": "#8BB8E8",
+			"power": 9,
+			"body": 3,
+			"agility": 8,
+			"heart": 2,
+			"fortune": 5,
+			"desc": "剑之加护持有者，寡言而敏锐的剑士"
+		},
+		{
+			"name": "塞拉菲娜",
+			"portrait_color": "#E8D5A3",
+			"power": 3,
+			"body": 4,
+			"agility": 6,
+			"heart": 9,
+			"fortune": 5,
+			"desc": "生命与认知之加护持有者，冷静睿智的魔导师"
+		},
+		{
+			"name": "真冬",
+			"portrait_color": "#A8D8EA",
+			"power": 8,
+			"body": 5,
+			"agility": 7,
+			"heart": 3,
+			"fortune": 4,
+			"desc": "无加护的冰原战士，靠意志驾驭寒霜之力"
+		},
+		{
+			"name": "阿斯特",
+			"portrait_color": "#7B68AE",
+			"power": 5,
+			"body": 5,
+			"agility": 5,
+			"heart": 7,
+			"fortune": 8,
+			"desc": "共鸣之加护持有者，仰望星空的占星术士"
+		},
+		{
+			"name": "静",
+			"portrait_color": "#2F4858",
+			"power": 7,
+			"body": 3,
+			"agility": 9,
+			"heart": 4,
+			"fortune": 4,
+			"desc": "克制——无天资无魔法，凭借判断力与六年荒野经验生存"
+		}
+	]
 }

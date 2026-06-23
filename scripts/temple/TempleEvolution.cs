@@ -30,14 +30,31 @@ public partial class TempleEvolution : Node
 	/// <summary>窗外亮度，冷白 → 暖白</summary>
 	public float WindowBrightness => 0.35f + Completeness * 0.65f;
 
+	// ── 可导出演化阈值 ──
+
+	/// <summary>石板刻痕出现的完整度阈值</summary>
+	[Export] public float GlyphsThreshold = 0.2f;
+
+	/// <summary>后墙门轮廓出现的完整度阈值</summary>
+	[Export] public float BackWallThreshold = 0.4f;
+
+	/// <summary>引导者人形轮廓出现的完整度阈值</summary>
+	[Export] public float GuideThreshold = 0.2f;
+
+	/// <summary>碎片计数上限（完全由碎片驱动）</summary>
+	[Export] public int MaxFragmentCount = 50;
+
+	/// <summary>轮回计数上限（完全由轮回驱动）</summary>
+	[Export] public int MaxEffectiveCycle = 10;
+
 	/// <summary>石板刻痕是否可见</summary>
-	public bool SlabGlyphsVisible => Completeness > 0.2f;
+	public bool SlabGlyphsVisible => Completeness > GlyphsThreshold;
 
 	/// <summary>后墙是否出现门轮廓（通往静室）</summary>
-	public bool BackWallDoorHint => Completeness > 0.4f;
+	public bool BackWallDoorHint => Completeness > BackWallThreshold;
 
 	/// <summary>引导者是否有人形轮廓（而非纯粒子）</summary>
-	public bool GuideHasForm => Completeness > 0.2f;
+	public bool GuideHasForm => Completeness > GuideThreshold;
 
 	// ── 计算 ──
 
@@ -64,15 +81,34 @@ public partial class TempleEvolution : Node
 		_lastCycleCount = cm.CurrentCycle;
 
 		// 碎片权重 0.7，轮回权重 0.3
-		// 50 碎片 = 完全由碎片驱动
-		// 10 轮回 = 完全由轮回驱动
-		float fragmentFactor = Mathf.Clamp(cm.FragmentCount / 50f, 0f, 1f);
-		float cycleFactor = Mathf.Clamp(cm.CurrentCycle / 10f, 0f, 1f);
+		float fragmentFactor = Mathf.Clamp(cm.FragmentCount / (float)MaxFragmentCount, 0f, 1f);
+		float cycleFactor = Mathf.Clamp(cm.CurrentCycle / (float)MaxEffectiveCycle, 0f, 1f);
 
 		Completeness = fragmentFactor * 0.7f + cycleFactor * 0.3f;
 
 		GD.Print(
 			$"[TempleEvolution] fragment={cm.FragmentCount} cycle={cm.CurrentCycle} " +
 			$"fFactor={fragmentFactor:F2} cFactor={cycleFactor:F2} completeness={Completeness:F3}");
+	}
+
+	// ── 演化挂钩（由 Temple3D 每帧触发）──
+
+	/// <summary>检查石板刻痕演化。在完整度超过 GlyphsThreshold 时激活。</summary>
+	public void UpdateSlabGlyphs(float completeness)
+	{
+		// TODO: Replace slab glyphs with evolved patterns at completeness threshold
+		// GD.Print($"[TempleEvolution] Glyphs check: {completeness:F2} >= {GlyphsThreshold}");
+	}
+
+	/// <summary>检查后墙演化。在完整度超过 BackWallThreshold 时淡化后墙。</summary>
+	public void UpdateBackWall(float completeness)
+	{
+		// TODO: Fade back wall to reveal deeper temple areas
+	}
+
+	/// <summary>检查引导者形态演化。在完整度超过 GuideThreshold 时推进粒子→灵体→人形。</summary>
+	public void UpdateGuideForm(float completeness)
+	{
+		// TODO: Evolve guide light form (particle → wisp → figure)
 	}
 }

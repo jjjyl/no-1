@@ -222,6 +222,12 @@ public partial class Temple3D : Node3D
 		var env = _worldEnv.Environment;
 		env.FogDensity = _evolution.FogDensity;
 		env.AmbientLightColor = _evolution.AmbientLight;
+
+		// 演化视觉效果检查（随完整度推进）
+		float comp = _evolution.Completeness;
+		_evolution.UpdateSlabGlyphs(comp);
+		_evolution.UpdateBackWall(comp);
+		_evolution.UpdateGuideForm(comp);
 	}
 
 	void OnBlessingSelected(BlessingType type)
@@ -243,6 +249,6 @@ public partial class Temple3D : Node3D
 		cm.EnterWorld();
 
 		Input.MouseMode = Input.MouseModeEnum.Visible;
-		GameManager.Instance.GoToScene("res://scenes/world/world_map.tscn");
+		GameManager.Instance.GoToScene(GameManager.SceneWorld);
 	}
 }

@@ -1,4 +1,5 @@
 namespace No1.World;
+using System.Collections.Generic;
 using Godot;
 using No1.Core;
 using No1.UI;
@@ -10,21 +11,46 @@ using No1.UI;
 /// </summary>
 public partial class WorldMap3D : Node3D
 {
-	// ── World size in meters (2D 2000×1500px mapped at 0.01 scale) ──
-	const float WorldW = 20f;
-	const float WorldH = 15f;
+	// ── World scale ──
 	const float Scale2D = 0.01f; // pixels → meters
 
-	// ── Zone data (names must match EventManager location keys) ──
-	static readonly string[] _zoneNames = { "林地边缘", "废矿入口", "断崖台地" };
+	// ── World config ──
+	[Export] public float WorldWidth = 20f;
+	[Export] public float WorldHeight = 15f;
 
-	// 2D pixel coords → 3D XZ (pixel * 0.01)
-	static readonly Vector3[] _zonePoses =
-	{
-		new(4f,    0, 12f),       // 林地边缘 — 左下
-		new(10f,   0, 8f),        // 废矿入口 — 中央
-		new(10f,   0, 3.5f),      // 断崖台地 — 上方
-	};
+	// ── Camera ──
+	[Export] public float CameraDistance = 15f;
+	[Export] public float CameraPitch = 45f;
+	[Export] public float CameraZoomMin = 5f;
+	[Export] public float CameraZoomMax = 40f;
+	[Export] public float CameraZoomStep = 1.5f;
+	[Export] public float CameraFollowSpeed = 5f;
+	[Export] public float CameraRotateSensitivity = 0.3f;
+	[Export] public float FirstPersonSensitivity = 0.15f;
+
+	// ── Terrain ──
+	[Export] public float ZoneDefaultWidth = 4.2f;
+	[Export] public float ZoneDefaultHeight = 3.2f;
+	[Export] public float PathWidth = 0.5f;
+
+	// ── Decorations ──
+	[Export] public int TreeCount = 60;
+	[Export] public int RockCount = 25;
+	[Export] public int RuinCount = 8;
+	[Export] public int ScatterCount = 20;
+	[Export] public int DecorationSeed = 42;
+
+	// ── Enemy ──
+	[Export] public int EnemyDotCount = 3;
+
+	// ── Data paths ──
+	public const string MapNodesDataPath = "res://assets/data/map_nodes.json";
+
+	// ── Zone data (loaded from map_nodes.json at runtime) ──
+	List<string> _zoneNames = new();
+	List<Vector3> _zonePoses = new();
+	List<int[]> _zoneConnections = new();
+	bool _zoneDataLoaded;
 
 	// ── Runtime state ──
 	Player3D _player;
@@ -36,9 +62,7 @@ public partial class WorldMap3D : Node3D
 	ITerrainProvider _terrain;
 
 	// Camera control
-	float _cameraDistance = 15f;
 	float _cameraYaw;    // horizontal rotation around world center
-	float _cameraPitch = 45f; // angle from horizontal
 	bool _middleDragging;
 	Vector2 _dragStart;
 
@@ -49,8 +73,85 @@ public partial class WorldMap3D : Node3D
 	float _savedCamDistance;
 	float _savedCamYaw;
 
+	// ═══════════════════════════════════════════════════════════════
+	//  Zone data loading — reads map_nodes.json at runtime
+	// ═══════════════════════════════════════════════════════════════
+
+	bool LoadZoneData()
+	{
+		var file = FileAccess.Open(MapNodesDataPath, FileAccess.ModeFlags.Read);
+		if (file == null) return false;
+
+		try
+		{
+			var dict = Json.ParseString(file.GetAsText()).AsGodotDictionary();
+			var arr = dict["nodes"].AsGodotArray();
+			for (int i = 0; i < arr.Count; i++)
+			{
+				var d = arr[i].AsGodotDictionary();
+				_zoneNames.Add(d["name"].AsString());
+
+				var pos3d = d["pos_3d"].AsGodotDictionary();
+				float x = (float)pos3d["x"].AsDouble();
+				float z = (float)pos3d["z"].AsDouble();
+				_zonePoses.Add(new Vector3(x, 0, z));
+
+				var conns = d["connections"].AsGodotArray();
+				var arr2 = new int[conns.Count];
+				for (int j = 0; j < conns.Count; j++)
+					arr2[j] = (int)conns[j].AsDouble();
+				_zoneConnections.Add(arr2);
+			}
+			_zoneDataLoaded = true;
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
+	void LoadFallbackZones()
+	{
+		_zoneNames = new() { "林地边缘", "废矿入口", "断崖台地" };
+		_zonePoses = new() { new(4, 0, 12), new(10, 0, 8), new(10, 0, 3.5f) };
+		_zoneConnections = new() { new[] { 0, 1 }, new[] { 0, 1, 2 }, new[] { 1, 2 } };
+		_zoneDataLoaded = true;
+	}
+
+	StandardMaterial3D GetZoneMaterial(string zoneName)
+	{
+		var m = WorldMaterials.Instance;
+		return zoneName switch
+		{
+			"林地边缘" => m.ZoneForest,
+			"废矿入口" => m.ZoneMine,
+			"断崖台地" => m.ZoneCliff,
+			"古战场" => m.ZoneBattlefield,
+			"结晶洞穴" => m.ZoneCrystal,
+			"荒原边缘" => m.ZoneWasteland,
+			"忘却之塔" => m.ZoneTower,
+			"圣泉" => m.ZoneSpring,
+			_ => m.ZoneForest
+		};
+	}
+
+	StandardMaterial3D GetPathMaterial(int pathIndex)
+	{
+		var m = WorldMaterials.Instance;
+		return (pathIndex % 3) switch
+		{
+			0 => m.Path01,
+			1 => m.Path12,
+			_ => m.Path34
+		};
+	}
+
 	public override void _Ready()
 	{
+		if (!LoadZoneData())
+			LoadFallbackZones();
+
 		_currentZone = CycleManager.Instance.CurrentNodeIndex;
 		_terrain = new FlatTerrainProvider();
 
@@ -123,21 +224,21 @@ public partial class WorldMap3D : Node3D
 		// Desktop: smooth follow
 		var targetPos = _player.GlobalPosition;
 		_cameraPivot.GlobalPosition = _cameraPivot.GlobalPosition.Lerp(
-			targetPos, delta * 5f);
+			targetPos, delta * CameraFollowSpeed);
 
 		UpdateCameraTransform();
 	}
 
 	void UpdateCameraTransform()
 	{
-		float pitchRad = Mathf.DegToRad(_cameraPitch);
+		float pitchRad = Mathf.DegToRad(CameraPitch);
 		float yawRad = Mathf.DegToRad(_cameraYaw);
 
 		float x = Mathf.Cos(pitchRad) * Mathf.Sin(yawRad);
 		float y = Mathf.Sin(pitchRad);
 		float z = Mathf.Cos(pitchRad) * Mathf.Cos(yawRad);
 
-		_camera.Position = new Vector3(x, y, z) * _cameraDistance;
+		_camera.Position = new Vector3(x, y, z) * CameraDistance;
 		_camera.LookAt(_cameraPivot.GlobalPosition, Vector3.Up);
 	}
 
@@ -147,7 +248,7 @@ public partial class WorldMap3D : Node3D
 
 		if (_firstPerson)
 		{
-			_savedCamDistance = _cameraDistance;
+			_savedCamDistance = CameraDistance;
 			_savedCamYaw = _cameraYaw;
 			_fpYaw = _cameraYaw;
 			_fpPitch = 0f;
@@ -156,7 +257,7 @@ public partial class WorldMap3D : Node3D
 		}
 		else
 		{
-			_cameraDistance = _savedCamDistance;
+			CameraDistance = _savedCamDistance;
 			_cameraYaw = _savedCamYaw;
 			_cameraPivot.RotationDegrees = Vector3.Zero;
 			_camera.RotationDegrees = Vector3.Zero;
@@ -178,8 +279,8 @@ public partial class WorldMap3D : Node3D
 		// ── First-person mouse look ──
 		if (_firstPerson && e is InputEventMouseMotion mm)
 		{
-			_fpYaw   -= mm.Relative.X * 0.15f;
-			_fpPitch -= mm.Relative.Y * 0.15f;
+		_fpYaw   -= mm.Relative.X * FirstPersonSensitivity;
+		_fpPitch -= mm.Relative.Y * FirstPersonSensitivity;
 			_fpPitch  = Mathf.Clamp(_fpPitch, -89f, 89f);
 			return;
 		}
@@ -190,9 +291,9 @@ public partial class WorldMap3D : Node3D
 		if (e is InputEventMouseButton mb)
 		{
 			if (mb.ButtonIndex == MouseButton.WheelUp)
-				_cameraDistance = Mathf.Clamp(_cameraDistance - 1.5f, 5f, 40f);
+				CameraDistance = Mathf.Clamp(CameraDistance - CameraZoomStep, CameraZoomMin, CameraZoomMax);
 			else if (mb.ButtonIndex == MouseButton.WheelDown)
-				_cameraDistance = Mathf.Clamp(_cameraDistance + 1.5f, 5f, 40f);
+				CameraDistance = Mathf.Clamp(CameraDistance + CameraZoomStep, CameraZoomMin, CameraZoomMax);
 
 			if (mb.ButtonIndex == MouseButton.Middle)
 			{
@@ -202,7 +303,7 @@ public partial class WorldMap3D : Node3D
 		}
 
 		if (e is InputEventMouseMotion mm2 && _middleDragging)
-			_cameraYaw -= mm2.Relative.X * 0.3f;
+			_cameraYaw -= mm2.Relative.X * CameraRotateSensitivity;
 
 		// Let player handle left-click (don't consume here)
 	}
@@ -217,7 +318,7 @@ public partial class WorldMap3D : Node3D
 
 		// Sky — huge backdrop, far behind
 		AddBillboard(layer, "Sky",
-			new Vector3(WorldW * 0.5f, WorldH * 0.3f, -12f),
+			new Vector3(WorldWidth * 0.5f, WorldHeight * 0.3f, -12f),
 			new Vector2(30, 18),
 			WorldMaterials.Instance.Sky);
 
@@ -281,7 +382,7 @@ public partial class WorldMap3D : Node3D
 
 			shadow.Position = new Vector3(-6f, shadow.Position.Y, shadow.Position.Z);
 			var tween = CreateTween();
-			tween.TweenProperty(shadow, "position:x", WorldW + 3f, 12f);
+			tween.TweenProperty(shadow, "position:x", WorldWidth + 3f, 12f);
 			await ToSignal(tween, "finished");
 		}
 	}
@@ -296,21 +397,30 @@ public partial class WorldMap3D : Node3D
 
 		// Grass base — large plane at Y=0
 		var grass = MakeGroundPlane("GrassBase",
-			new Vector3(WorldW * 0.5f, 0, WorldH * 0.5f),
-			new Vector2(WorldW, WorldH),
+			new Vector3(WorldWidth * 0.5f, 0, WorldHeight * 0.5f),
+			new Vector2(WorldWidth, WorldHeight),
 			WorldMaterials.Instance.GrassBase);
 		terrain.AddChild(grass);
 
-		// Zone plates
-		AddZonePlate(terrain, 0, WorldMaterials.Instance.ZoneForest, 4.2f, 3.2f);
-		AddZonePlate(terrain, 1, WorldMaterials.Instance.ZoneMine, 4.2f, 3.2f);
-		AddZonePlate(terrain, 2, WorldMaterials.Instance.ZoneCliff, 4.5f, 3.0f);
+		// Zone plates — one per zone from loaded data
+		for (int i = 0; i < _zoneNames.Count; i++)
+		{
+			float zw = ZoneDefaultWidth, zh = ZoneDefaultHeight;
+			if (_zoneNames[i] == "断崖台地") { zw = 4.5f; zh = 3.0f; }
+			AddZonePlate(terrain, i, GetZoneMaterial(_zoneNames[i]), zw, zh);
+		}
 
-		// Paths between zones
-		Draw3DPath(terrain, _zonePoses[0], _zonePoses[1], 0.6f,
-			WorldMaterials.Instance.Path01);
-		Draw3DPath(terrain, _zonePoses[1], _zonePoses[2], 0.5f,
-			WorldMaterials.Instance.Path12);
+		// Paths between connected zones (only each pair once, j > i)
+		int pathIdx = 0;
+		for (int i = 0; i < _zoneConnections.Count; i++)
+		{
+			foreach (int j in _zoneConnections[i])
+			{
+				if (j > i)
+				Draw3DPath(terrain, _zonePoses[i], _zonePoses[j], PathWidth,
+					GetPathMaterial(pathIdx++));
+			}
+		}
 
 		AddChild(terrain);
 	}
@@ -364,12 +474,12 @@ public partial class WorldMap3D : Node3D
 	{
 		var deco = new Node3D { Name = "Decorations" };
 		var rng = new RandomNumberGenerator();
-		rng.Seed = 42; // fixed seed → same layout every time; vary per cycle later
+		rng.Seed = (ulong)DecorationSeed; // fixed seed → same layout every time; vary per cycle later
 
 		var mats = WorldMaterials.Instance;
 
 		// Trees — clusters near forest zone (zone 0)
-		for (int i = 0; i < 25; i++)
+		for (int i = 0; i < TreeCount; i++)
 		{
 			float dx = (rng.Randf() - 0.3f) * 8f;
 			float dz = (rng.Randf() - 0.7f) * 8f;
@@ -377,7 +487,7 @@ public partial class WorldMap3D : Node3D
 		}
 
 		// Rocks — near mine zone (zone 1)
-		for (int i = 0; i < 15; i++)
+		for (int i = 0; i < RockCount; i++)
 		{
 			float dx = (rng.Randf() - 0.5f) * 6f;
 			float dz = (rng.Randf() - 0.5f) * 6f;
@@ -385,7 +495,7 @@ public partial class WorldMap3D : Node3D
 		}
 
 		// Ruins — near cliff zone (zone 2)
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < RuinCount; i++)
 		{
 			float dx = (rng.Randf() - 0.5f) * 5f;
 			float dz = (rng.Randf() - 0.5f) * 5f;
@@ -393,10 +503,10 @@ public partial class WorldMap3D : Node3D
 		}
 
 		// Scattered decorations across the world
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < ScatterCount; i++)
 		{
-			float x = rng.RandfRange(1f, WorldW - 1f);
-			float z = rng.RandfRange(1f, WorldH - 1f);
+			float x = rng.RandfRange(1f, WorldWidth - 1f);
+			float z = rng.RandfRange(1f, WorldHeight - 1f);
 			float type = rng.Randf();
 			if (type < 0.5f)
 				MakeTree(deco, new Vector3(x, 0, z), rng.RandfRange(0.4f, 0.9f), mats.DecoTree);
@@ -469,7 +579,7 @@ public partial class WorldMap3D : Node3D
 	void BuildZoneTriggers()
 	{
 		var triggers = new Node3D { Name = "Triggers" };
-		for (int i = 0; i < _zonePoses.Length; i++)
+		for (int i = 0; i < _zonePoses.Count; i++)
 		{
 			var area = new Area3D
 			{
@@ -603,7 +713,7 @@ public partial class WorldMap3D : Node3D
 
 	void BuildZoneLabels()
 	{
-		for (int i = 0; i < _zonePoses.Length; i++)
+		for (int i = 0; i < _zonePoses.Count; i++)
 		{
 			var label = new Label3D
 			{
@@ -645,7 +755,7 @@ public partial class WorldMap3D : Node3D
 		btn.Pressed += () =>
 		{
 			CycleManager.Instance.ReturnToTemple();
-			GameManager.Instance.GoToScene("res://scenes/temple/temple.tscn");
+			GameManager.Instance.GoToScene(GameManager.SceneTemple);
 		};
 		canvas.AddChild(btn);
 		AddChild(canvas);

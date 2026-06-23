@@ -18,7 +18,7 @@ public partial class MapUI : Control
 		_returnBtn.Pressed += () =>
 		{
 			CycleManager.Instance.ReturnToTemple();
-			GameManager.Instance.GoToScene("res://scenes/temple/temple.tscn");
+			GameManager.Instance.GoToScene(GameManager.SceneTemple);
 		};
 
 		_nodes = MapNodeData.LoadAll();

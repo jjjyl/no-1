@@ -12,27 +12,58 @@ public partial class WorldMaterials : Node
 	public static WorldMaterials Instance { get; private set; }
 
 	// ── Ground ──
+	[Export]
 	public StandardMaterial3D GrassBase    { get; private set; }
+	[Export]
 	public StandardMaterial3D ZoneForest   { get; private set; }
+	[Export]
 	public StandardMaterial3D ZoneMine     { get; private set; }
+	[Export]
 	public StandardMaterial3D ZoneCliff    { get; private set; }
+	[Export]
 	public StandardMaterial3D Path01       { get; private set; }
+	[Export]
 	public StandardMaterial3D Path12       { get; private set; }
+	[Export]
+	public StandardMaterial3D ZoneBattlefield { get; private set; }
+	[Export]
+	public StandardMaterial3D ZoneCrystal    { get; private set; }
+	[Export]
+	public StandardMaterial3D ZoneWasteland  { get; private set; }
+	[Export]
+	public StandardMaterial3D ZoneTower      { get; private set; }
+	[Export]
+	public StandardMaterial3D ZoneSpring     { get; private set; }
+	[Export]
+	public StandardMaterial3D Path34         { get; private set; }
 
 	// ── Decorations ──
+	[Export]
 	public StandardMaterial3D DecoTree    { get; private set; }
+	[Export]
 	public StandardMaterial3D DecoRock    { get; private set; }
+	[Export]
 	public StandardMaterial3D DecoRuin    { get; private set; }
 
 	// ── Background ──
+	[Export]
 	public StandardMaterial3D Sky         { get; private set; }
+	[Export]
 	public StandardMaterial3D Sun         { get; private set; }
+	[Export]
 	public StandardMaterial3D Mountain    { get; private set; }
+	[Export]
 	public StandardMaterial3D DragonShadow { get; private set; }
 
 	// ── Decor ──
+	[Export]
 	public StandardMaterial3D EnemyDot   { get; private set; }
+	[Export]
 	public StandardMaterial3D PlayerBody { get; private set; }
+	[Export]
+	public StandardMaterial3D CompanionDot { get; private set; }
+	[Export]
+	public StandardMaterial3D ShopMarker   { get; private set; }
 
 	public override void _EnterTree()
 	{
@@ -48,12 +79,18 @@ public partial class WorldMaterials : Node
 	void BuildAll()
 	{
 		// Ground
-		GrassBase  = MakeGroundWithNoise();
-		ZoneForest = MakeFlat("ZoneForest", 0.14f, 0.33f, 0.14f);
-		ZoneMine   = MakeFlat("ZoneMine", 0.28f, 0.25f, 0.22f);
-		ZoneCliff  = MakeFlat("ZoneCliff", 0.38f, 0.33f, 0.18f);
-		Path01     = MakeFlat("Path01", 0.42f, 0.33f, 0.18f);
-		Path12     = MakeFlat("Path12", 0.38f, 0.30f, 0.15f);
+		GrassBase        = MakeGroundWithNoise();
+		ZoneForest       = MakeFlat("ZoneForest", 0.14f, 0.33f, 0.14f);
+		ZoneMine         = MakeFlat("ZoneMine", 0.28f, 0.25f, 0.22f);
+		ZoneCliff        = MakeFlat("ZoneCliff", 0.38f, 0.33f, 0.18f);
+		Path01           = MakeFlat("Path01", 0.42f, 0.33f, 0.18f);
+		Path12           = MakeFlat("Path12", 0.38f, 0.30f, 0.15f);
+		ZoneBattlefield  = MakeFlat("ZoneBattlefield", 0.35f, 0.30f, 0.22f);
+		ZoneCrystal      = MakeFlat("ZoneCrystal", 0.40f, 0.45f, 0.55f);
+		ZoneWasteland    = MakeFlat("ZoneWasteland", 0.30f, 0.20f, 0.15f);
+		ZoneTower        = MakeFlat("ZoneTower", 0.18f, 0.16f, 0.24f);
+		ZoneSpring       = MakeFlat("ZoneSpring", 0.18f, 0.38f, 0.35f);
+		Path34           = MakeFlat("Path34", 0.40f, 0.32f, 0.20f);
 
 		// Background
 		Sky         = MakeFlat("Sky", 0.18f, 0.28f, 0.45f);
@@ -62,8 +99,10 @@ public partial class WorldMaterials : Node
 		DragonShadow = MakeTransparent("DragonShadow", 0, 0, 0, 0.25f);
 
 		// Decor
-		EnemyDot   = MakeFlat("EnemyDot", 0.8f, 0.3f, 0.3f);
-		PlayerBody = MakeFlat("PlayerBody", 0.3f, 0.5f, 0.9f);
+		EnemyDot     = MakeFlat("EnemyDot", 0.8f, 0.3f, 0.3f);
+		PlayerBody   = MakeFlat("PlayerBody", 0.3f, 0.5f, 0.9f);
+		CompanionDot = MakeFlat("CompanionDot", 0.15f, 0.55f, 0.50f);
+		ShopMarker   = MakeFlat("ShopMarker", 0.9f, 0.75f, 0.2f);
 
 		// Decorations
 		DecoTree = MakeFlat("DecoTree", 0.15f, 0.40f, 0.10f);

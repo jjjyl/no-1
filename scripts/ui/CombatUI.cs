@@ -27,8 +27,13 @@ public partial class CombatUI : Control
 	const float GaugeMax = 100f;
 	float _escapeGauge;
 	ProgressBar _escapeGaugeBar;
-	const float EscapeGaugeMax = 300f;
+	[Export] float EscapeThreshold = 300f;
 	[Export] float GaugeMultiplier = 10f;
+
+	// ── Scene paths ──
+	public const string SceneCombat = "res://scenes/combat/combat.tscn";
+	public const string SceneTemple = "res://scenes/temple/temple_3d.tscn";
+
 	string _queuedAction = "atk";
 	int _defBonus, _dodgeBonus;
 	bool _waiting, _done, _blocking;
@@ -90,12 +95,12 @@ public partial class CombatUI : Control
 		_continueBtn.Pressed += () =>
 		{
 			CycleManager.Instance.SkipStartEvents = true;
-			GameManager.Instance.GoToScene("res://scenes/world/world_map.tscn");
+			GameManager.Instance.GoToScene(GameManager.SceneWorld);
 		};
 		_templeBtn.Pressed += () =>
 		{
 			CycleManager.Instance.ReturnToTemple();
-			GameManager.Instance.GoToScene("res://scenes/temple/temple.tscn");
+			GameManager.Instance.GoToScene(GameManager.SceneTemple);
 		};
 		_atkBtn.Pressed += () => QueueAction("atk");
 		_atkBtn.Icon = Icon("attack"); _atkBtn.ExpandIcon = true;
@@ -477,12 +482,12 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		if (!_waiting && !_targeting && !_done)
 		{
 			_escapeGauge += _player.Speed * GaugeMultiplier * 5f * dt; // 10x for testing
-			if (_escapeGauge >= EscapeGaugeMax)
+			if (_escapeGauge >= EscapeThreshold)
 			{
-				_escapeGauge = EscapeGaugeMax;
+				_escapeGauge = EscapeThreshold;
 				_escapeBtn.Disabled = false;
 			}
-			if (_escapeGaugeBar != null) _escapeGaugeBar.Value = _escapeGauge / EscapeGaugeMax * 100;
+			if (_escapeGaugeBar != null) _escapeGaugeBar.Value = _escapeGauge / EscapeThreshold * 100;
 		}
 
 		if (!_waiting && !_targeting)
@@ -960,7 +965,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 	void TryEscape()
 	{
-		if (_escapeGauge < EscapeGaugeMax) return;
+		if (_escapeGauge < EscapeThreshold) return;
 		_escapeGauge = 0;
 		_escapeBtn.Disabled = true;
 		if (_escapeGaugeBar != null) _escapeGaugeBar.Value = 0;
@@ -1397,7 +1402,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		_resultLabel.Text = "[center][b]你被击败了[/b][/center]";
 		await ToSignal(GetTree().CreateTimer(1.5f), "timeout");
 		CycleManager.Instance.OnDeath();
-		GameManager.Instance.GoToScene("res://scenes/temple/temple.tscn");
+		GameManager.Instance.GoToScene(GameManager.SceneTemple);
 	}
 
 	void UpdateDisplay()

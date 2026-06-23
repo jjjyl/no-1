@@ -5,17 +5,31 @@
 		{ "id": "energy_elixir", "name": "精力药",     "description": "恢复30点精力。",           "type": "consumable", "rarity": 2, "effect": "restore_energy:30" },
 		{ "id": "full_heal_herb","name": "全愈草",     "description": "完全恢复生命与精力。",     "type": "consumable", "rarity": 4, "effect": "heal_all" },
 		{ "id": "severe_heal",   "name": "重伤药",     "description": "恢复10点重伤。",           "type": "consumable", "rarity": 3, "effect": "heal_severe:10" },
+		{ "id": "fragment_elixir","name": "记忆露",    "description": "使用后获得一个记忆碎片。", "type": "consumable", "rarity": 5, "effect": "grant_fragment:1" },
+		{ "id": "campfire_kit",  "name": "篝火套件",   "description": "可以在任意安全地点扎营。", "type": "consumable", "rarity": 3, "effect": "allow_camp" },
 
 		{ "id": "iron_sword",    "name": "铁剑",       "description": "力量 +2",                 "type": "equipment", "rarity": 1, "slot": "weapon",    "modifiers": { "power": 2 } },
 		{ "id": "spirit_staff",  "name": "灵杖",       "description": "心 +3",                   "type": "equipment", "rarity": 2, "slot": "weapon",    "modifiers": { "heart": 3 } },
 		{ "id": "flame_blade",   "name": "炎刃",       "description": "力量 +3，暴击 +5",        "type": "equipment", "rarity": 3, "slot": "weapon",    "modifiers": { "power": 3, "crit_rate": 5 } },
+		{ "id": "frost_blade",   "name": "霜刃",       "description": "力+2 敏+2，剑身常覆寒霜", "type": "equipment", "rarity": 2, "slot": "weapon",    "modifiers": { "power": 2, "agility": 2 } },
+		{ "id": "shadow_dagger", "name": "影匕",       "description": "敏+3 暴击+3，刃薄如蝉翼", "type": "equipment", "rarity": 2, "slot": "weapon",    "modifiers": { "agility": 3, "crit_rate": 3 } },
+		{ "id": "star_bow",      "name": "星弓",       "description": "心+2 运+2，弓弦由星光编织", "type": "equipment", "rarity": 2, "slot": "weapon",  "modifiers": { "heart": 2, "fortune": 2 } },
+		{ "id": "holy_staff",    "name": "圣杖",       "description": "心+4，杖头镶嵌净化水晶",   "type": "equipment", "rarity": 3, "slot": "weapon",    "modifiers": { "heart": 4 } },
 
 		{ "id": "leather_armor", "name": "皮甲",       "description": "体 +2",                   "type": "equipment", "rarity": 1, "slot": "armor",     "modifiers": { "body": 2 } },
 		{ "id": "silver_mail",   "name": "银铠",       "description": "体 +2，物理减伤 +2",      "type": "equipment", "rarity": 2, "slot": "armor",     "modifiers": { "body": 2, "def_flat": 2 } },
 		{ "id": "shadow_robe",   "name": "影衣",       "description": "敏 +3，闪避 +8",          "type": "equipment", "rarity": 3, "slot": "armor",     "modifiers": { "agility": 3, "dodge": 8 } },
+		{ "id": "ice_mail",      "name": "冰铠",       "description": "体+3 敏+1，锻造时注入了冰元素", "type": "equipment", "rarity": 2, "slot": "armor", "modifiers": { "body": 3, "agility": 1 } },
+		{ "id": "witch_robe",    "name": "魔女袍",     "description": "心+2 闪避+5，布料轻盈如无物", "type": "equipment", "rarity": 2, "slot": "armor", "modifiers": { "heart": 2, "dodge": 5 } },
+		{ "id": "heavy_plate",   "name": "重甲",       "description": "体+4 速度-2，旧时代的军用装备", "type": "equipment", "rarity": 3, "slot": "armor", "modifiers": { "body": 4, "speed": -2 } },
 
 		{ "id": "lucky_charm",   "name": "幸运符",     "description": "运 +3",                   "type": "equipment", "rarity": 1, "slot": "accessory", "modifiers": { "fortune": 3 } },
 		{ "id": "energy_ring",   "name": "精力戒指",   "description": "精力上限 +10",            "type": "equipment", "rarity": 2, "slot": "accessory", "modifiers": { "energy_max": 10 } },
-		{ "id": "speed_boots",   "name": "疾风靴",     "description": "敏 +2，速度 +3",          "type": "equipment", "rarity": 2, "slot": "accessory", "modifiers": { "agility": 2, "speed": 3 } }
+		{ "id": "speed_boots",   "name": "疾风靴",     "description": "敏 +2，速度 +3",          "type": "equipment", "rarity": 2, "slot": "accessory", "modifiers": { "agility": 2, "speed": 3 } },
+		{ "id": "guardian_ring", "name": "守护戒",     "description": "体+3，刻有古老守护符文",   "type": "equipment", "rarity": 2, "slot": "accessory", "modifiers": { "body": 3 } },
+		{ "id": "wind_cloak",    "name": "风衣",       "description": "闪避+10，披上后身轻如风",  "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "dodge": 10 } },
+		{ "id": "phoenix_feather","name": "凤凰羽",    "description": "心+2，死亡时自动复活一次", "type": "equipment", "rarity": 4, "slot": "accessory", "modifiers": { "heart": 2, "auto_revive": 1 } },
+		{ "id": "shadow_eye",    "name": "暗瞳",       "description": "暴击+10，佩戴后能看见弱点", "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "crit_rate": 10 } },
+		{ "id": "traveler_belt", "name": "旅人带",     "description": "速+2，一条磨损的旧皮带",   "type": "equipment", "rarity": 1, "slot": "accessory", "modifiers": { "speed": 2 } }
 	]
 }
