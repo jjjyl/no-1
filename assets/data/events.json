@@ -1,661 +1,2435 @@
 {
-  "events": [
-	{
-	  "id": "normal_encounter",
-	  "category": "world",
-	  "location": "*",
-	  "conditions": { "random": 0.4, "blessing_mod": "encounter_rate" },
-	  "effects": [
-		{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" }
-	  ]
-	},
-
-	{
-	  "id": "ivy_join",
-	  "name": "艾薇相遇",
-	  "category": "minor_conditional",
-	  "location": "废矿入口",
-	  "one_shot": true,
-	  "priority": 100,
-	  "conditions": { "companion_not_in_party": "艾薇" },
-	  "effects": [
-		{ "type": "companion_join", "name": "艾薇" },
-		{ "type": "message", "speaker": "艾薇", "text": "你是新来的旅人？这废矿可不安全，一起走吧。", "position": "top", "auto_hide": 3 },
-		{ "type": "grant_item", "item_id": "small_potion", "amount": 3, "target": "艾薇" },
-		{ "type": "status", "text": "[color=cyan]艾薇加入了队伍！[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "tianyi_join",
-	  "name": "天一相遇",
-	  "category": "minor_conditional",
-	  "location": "断崖台地",
-	  "one_shot": true,
-	  "priority": 100,
-	  "conditions": { "companion_not_in_party": "天一" },
-	  "effects": [
-		{ "type": "companion_join", "name": "天一" },
-		{ "type": "dialogue", "speaker": "天一", "text": "断崖风大，站不稳可会掉下去。你跟紧我。", "position": "center", "expression": "normal", "entry": "fade_in" },
-		{ "type": "status", "text": "[color=cyan]天一加入了队伍！[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "dragon-threat",
-	  "name": "巨龙的威胁",
-	  "category": "world",
-	  "location": "林地边缘",
-	  "one_shot": false,
-	  "priority": 200,
-	  "layers": [
+	"events": [
 		{
-		  "level": "shallow",
-		  "name": "远处目睹",
-		  "locks": [],
-		  "conditions": { "flag_not_set": "cycle:dragon_slain" },
-		  "effects": [
-			{ "type": "message", "text": "天空暗了下来。一个巨大的黑影从云层中掠过，遮住了太阳。", "position": "top", "auto_hide": 4 },
-			{ "type": "message", "text": "地面上的动物四散奔逃。那是巨龙——古代魔力种。", "position": "middle", "auto_hide": 3 },
-			{ "type": "status", "text": "[color=yellow]远处有巨龙的身影...[/color]" }
-		  ]
+			"id": "normal_encounter",
+			"category": "world",
+			"location": "*",
+			"conditions": {
+				"random": 0.4,
+				"blessing_mod": "encounter_rate"
+			},
+			"effects": [
+				{
+					"type": "combat",
+					"enemy": "res://scenes/characters/base_mob.tscn"
+				}
+			]
 		},
 		{
-		  "level": "middle",
-		  "name": "正面迎战",
-		  "one_shot": true,
-		  "locks": ["companion"],
-		  "conditions": { "min_cycle": 1, "companion_in_party": "艾薇" },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "艾薇", "text": "它来了——小心！它的魔力太强了，我的治疗可能不够... 但我不会躲。", "position": "center", "expression": "angry", "effect": "shake" },
-			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
-			{ "type": "set_flag", "flag": "cycle:dragon_slain" },
-			{ "type": "status", "text": "[color=orange]击败了巨龙的一波攻势！[/color]" }
-		  ]
+			"id": "ivy_join",
+			"name": "艾薇相遇",
+			"category": "minor_conditional",
+			"location": "废矿入口",
+			"one_shot": true,
+			"priority": 100,
+			"conditions": {
+				"companion_not_in_party": "艾薇"
+			},
+			"effects": [
+				{
+					"type": "companion_join",
+					"name": "艾薇"
+				},
+				{
+					"type": "message",
+					"speaker": "艾薇",
+					"text": "你是新来的旅人？这废矿可不安全，一起走吧。",
+					"position": "top",
+					"auto_hide": 3
+				},
+				{
+					"type": "grant_item",
+					"item_id": "small_potion",
+					"amount": 3,
+					"target": "艾薇"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]艾薇加入了队伍！[/color]"
+				}
+			]
 		},
 		{
-		  "level": "deep",
-		  "name": "守护林地",
-		  "one_shot": true,
-		  "locks": ["fragment", "prerequisite"],
-		  "conditions": {
-			"min_cycle": 3,
-			"companion_in_party": "艾薇",
-			"min_favor": { "companion": "艾薇", "value": 40 },
-			"flag_set": "cycle:dragon_slain"
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "艾薇", "text": "这次——这次不一样。我感觉到了。我要保护好这个地方。", "position": "center" },
-			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
-			{ "type": "set_flag", "flag": "event:dragon-threat:deep_done" },
-			{ "type": "message", "speaker": "艾薇", "text": "我们...赢了？林地还在。", "position": "top", "auto_hide": 4 },
-			{ "type": "status", "text": "[color=green]守护了林地！艾薇的羁绊加深了。[/color]" }
-		  ],
-		  "shrine_unlocks": ["dragon_power_boost"]
+			"id": "tianyi_join",
+			"name": "天一相遇",
+			"category": "minor_conditional",
+			"location": "断崖台地",
+			"one_shot": true,
+			"priority": 100,
+			"conditions": {
+				"companion_not_in_party": "天一"
+			},
+			"effects": [
+				{
+					"type": "companion_join",
+					"name": "天一"
+				},
+				{
+					"type": "dialogue",
+					"speaker": "天一",
+					"text": "断崖风大，站不稳可会掉下去。你跟紧我。",
+					"position": "center",
+					"expression": "normal",
+					"entry": "fade_in"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]天一加入了队伍！[/color]"
+				}
+			]
+		},
+		{
+			"id": "dragon-threat",
+			"name": "巨龙的威胁",
+			"category": "world",
+			"location": "林地边缘",
+			"one_shot": false,
+			"priority": 200,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "远处目睹",
+					"locks": [],
+					"conditions": {
+						"flag_not_set": "cycle:dragon_slain"
+					},
+					"effects": [
+						{
+							"type": "message",
+							"text": "天空暗了下来。一个巨大的黑影从云层中掠过，遮住了太阳。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "地面上的动物四散奔逃。那是巨龙——古代魔力种。",
+							"position": "middle",
+							"auto_hide": 3
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]远处有巨龙的身影...[/color]"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "正面迎战",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 1,
+						"companion_in_party": "艾薇"
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "艾薇",
+							"text": "它来了——小心！它的魔力太强了，我的治疗可能不够... 但我不会躲。",
+							"position": "center",
+							"expression": "angry",
+							"effect": "shake"
+						},
+						{
+							"type": "combat",
+							"enemy": "res://scenes/characters/base_mob.tscn"
+						},
+						{
+							"type": "set_flag",
+							"flag": "cycle:dragon_slain"
+						},
+						{
+							"type": "status",
+							"text": "[color=orange]击败了巨龙的一波攻势！[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "守护林地",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"companion_in_party": "艾薇",
+						"min_favor": {
+							"companion": "艾薇",
+							"value": 40
+						},
+						"flag_set": "cycle:dragon_slain"
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "艾薇",
+							"text": "这次——这次不一样。我感觉到了。我要保护好这个地方。",
+							"position": "center"
+						},
+						{
+							"type": "combat",
+							"enemy": "res://scenes/characters/base_mob.tscn"
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:dragon-threat:deep_done"
+						},
+						{
+							"type": "message",
+							"speaker": "艾薇",
+							"text": "我们...赢了？林地还在。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "status",
+							"text": "[color=green]守护了林地！艾薇的羁绊加深了。[/color]"
+						}
+					],
+					"shrine_unlocks": [
+						"dragon_power_boost"
+					]
+				}
+			]
+		},
+		{
+			"id": "first_awakening",
+			"name": "初次苏醒",
+			"category": "milestone",
+			"location": "林地边缘",
+			"one_shot": true,
+			"priority": 250,
+			"conditions": {
+				"account_flag_not_set": "first_awakening_done"
+			},
+			"effects": [
+				{
+					"type": "dialogue",
+					"speaker": "引导者",
+					"text": "你又一次醒来了。和之前每一次一样。\n\n但这一次——你感觉到有什么不同。",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "first_awakening_done"
+				}
+			]
+		},
+		{
+			"id": "return_awakening",
+			"name": "再度苏醒",
+			"category": "milestone",
+			"location": "林地边缘",
+			"priority": 240,
+			"conditions": {
+				"account_flag_set": "first_awakening_done"
+			},
+			"effects": [
+				{
+					"type": "dialogue",
+					"speaker": "引导者",
+					"text": "你回来了。世界在等待。",
+					"position": "center"
+				}
+			]
+		},
+		{
+			"id": "hermit-encounter",
+			"name": "独居者",
+			"category": "minor_conditional",
+			"location": "*",
+			"priority": 50,
+			"conditions": {
+				"random": 0.15
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "路边一间歪斜的小屋飘出炊烟。有人在。",
+					"position": "bottom",
+					"auto_hide": 3
+				},
+				{
+					"type": "status",
+					"text": "[color=gray]路边有户人家...[/color]"
+				}
+			]
+		},
+		{
+			"id": "serafina_join",
+			"name": "塞拉菲娜相遇",
+			"category": "minor_conditional",
+			"location": "圣泉",
+			"one_shot": true,
+			"priority": 100,
+			"conditions": {
+				"companion_not_in_party": "塞拉菲娜"
+			},
+			"effects": [
+				{
+					"type": "companion_join",
+					"name": "塞拉菲娜"
+				},
+				{
+					"type": "dialogue",
+					"speaker": "塞拉菲娜",
+					"text": "泉水映出了你的影子...但不是你认识的那个自己。我一直在等能同时看到两个影子的人。",
+					"position": "center",
+					"expression": "normal",
+					"entry": "fade_in"
+				},
+				{
+					"type": "grant_item",
+					"item_id": "spring_water",
+					"amount": 1,
+					"target": "塞拉菲娜"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]塞拉菲娜加入了队伍！[/color]"
+				}
+			]
+		},
+		{
+			"id": "mafuyu_join",
+			"name": "真冬相遇",
+			"category": "minor_conditional",
+			"location": "荒原边缘",
+			"one_shot": true,
+			"priority": 100,
+			"conditions": {
+				"companion_not_in_party": "真冬"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "寒风中站着一个披着冰霜的人影，她手中的刀刃没有魔法——只有意志凝结的冰。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "companion_join",
+					"name": "真冬"
+				},
+				{
+					"type": "dialogue",
+					"speaker": "真冬",
+					"text": "冷吗？冷就对了。冷说明你还活着。",
+					"position": "center",
+					"expression": "normal",
+					"entry": "fade_in"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]真冬加入了队伍！[/color]"
+				}
+			]
+		},
+		{
+			"id": "aster_join",
+			"name": "阿斯特相遇",
+			"category": "minor_conditional",
+			"location": "忘却之塔",
+			"one_shot": true,
+			"priority": 100,
+			"conditions": {
+				"companion_not_in_party": "阿斯特"
+			},
+			"effects": [
+				{
+					"type": "companion_join",
+					"name": "阿斯特"
+				},
+				{
+					"type": "dialogue",
+					"speaker": "阿斯特",
+					"text": "塔顶的星图和三百年前一模一样。我在找一颗会说话的星——你见过吗？",
+					"position": "center",
+					"expression": "normal",
+					"entry": "fade_in"
+				},
+				{
+					"type": "grant_item",
+					"item_id": "star_chart",
+					"amount": 1,
+					"target": "阿斯特"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]阿斯特加入了队伍！[/color]"
+				}
+			]
+		},
+		{
+			"id": "sei_join",
+			"name": "静相遇",
+			"category": "minor_conditional",
+			"location": "古战场",
+			"one_shot": true,
+			"priority": 100,
+			"conditions": {
+				"companion_not_in_party": "静"
+			},
+			"effects": [
+				{
+					"type": "companion_join",
+					"name": "静"
+				},
+				{
+					"type": "dialogue",
+					"speaker": "静",
+					"text": "别出声。这片废墟里有东西在动——不是魔种。",
+					"position": "center",
+					"expression": "normal",
+					"entry": "fade_in"
+				},
+				{
+					"type": "message",
+					"text": "她的手里没有武器，但她的眼神让你知道——她不需要。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]静加入了队伍！[/color]"
+				}
+			]
+		},
+		{
+			"id": "ancient-battlefield",
+			"name": "古战场的记忆",
+			"category": "world",
+			"location": "古战场",
+			"one_shot": false,
+			"priority": 90,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "目睹幻影",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "暮色笼罩着古战场。残破的旗帜在风中轻响，似乎还能听见千年前的号角。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "你看到一个半透明的身影从废墟中走出，手持断剑，望向远方。那不是敌人——是一个倒在战场上的战士。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:ancient-battlefield:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "触摸记忆",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:ancient-battlefield:shallow_seen"
+					},
+					"effects": [
+						{
+							"type": "message",
+							"text": "你的同伴停下脚步，神情凝重。她也看到了那些幻影——不是幽灵，是这个世界不愿遗忘的东西。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "你伸出手，触碰了那道幻影。一瞬间，痛苦、恐惧、忠诚、遗憾——千万人的情感涌进你的意识。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:ancient-battlefield:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你触碰了古战场的记忆...[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "理解真相",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:ancient-battlefield:middle_done",
+						"min_favor": {
+							"companion": "静",
+							"value": 30
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "静",
+							"text": "这片战场埋葬的不是敌人。双方都是同一片土地上的人——被魔粒的诱惑分裂了。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "幻影汇聚成一片光幕。你看到了真相：这不是外敌入侵的战场，而是兄弟姐妹之间的内战。魔粒放大了人心中的裂痕。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:ancient-battlefield:deep_done"
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "lore:ancient_civil_war"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]你理解了古战场的真相。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "crystal-cave",
+			"name": "结晶的真相",
+			"category": "world",
+			"location": "结晶洞穴",
+			"one_shot": false,
+			"priority": 90,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "晶石的低语",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "洞穴深处，晶石发出柔和的蓝光。走近一看，光芒中竟然隐约流动着文字般的纹路。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "这些晶石在记录什么——像是这个世界的历史，被封存在矿物的记忆里。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:crystal-cave:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "魔法共鸣",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:crystal-cave:shallow_seen"
+					},
+					"effects": [
+						{
+							"type": "message",
+							"text": "你触碰了一块发光的晶石。霎时间，魔法共鸣穿透了你的身体——你的意识被拉进了另一段时空。",
+							"position": "top",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "你看到了旧时代的末日：天空被撕裂，大地喷涌出黑雾。人们没有逃跑——他们在唱歌。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "歌声中，晶石从地面生长出来，封存了最后的记忆。这不是灾难的记录，是遗言。",
+							"position": "bottom",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:crystal-cave:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]晶石向你展示了旧时代的终结...[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "选择的真相",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:crystal-cave:middle_done",
+						"min_favor": {
+							"companion": "塞拉菲娜",
+							"value": 40
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "塞拉菲娜",
+							"text": "你看到了吗？魔粒不是从天而降的灾难...是那个时代的人们主动召唤来的。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "最后的晶石打开了一扇光门。门后是一片纯白的空间——旧时代的学者们聚集在那里，做出了改变一切的决定。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "魔粒不是污染。它是旧人类用来对抗某种更古老威胁的武器。他们选择了这种力量，尽管知道代价。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:crystal-cave:deep_done"
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "lore:mana_particles_truth"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]你理解了魔粒的真正起源。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "tower-memory",
+			"name": "塔顶的星空",
+			"category": "world",
+			"location": "忘却之塔",
+			"one_shot": false,
+			"priority": 90,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "相同的符文",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "你抬头望向塔身——上面刻满了密密麻麻的符文。这些符号和神殿墙壁上的图案一模一样。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "塔和神殿之间有什么联系？这座塔似乎比神殿更古老。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:tower-memory:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "古老的守护者",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:tower-memory:shallow_seen"
+					},
+					"effects": [
+						{
+							"type": "message",
+							"text": "你踏上塔的阶梯。每走一步，空气中的魔力就浓重一分。在你接近塔顶时，一道光纹浮现——一个由符文构成的守卫拦住了去路。",
+							"position": "top",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "它不是敌人。它在等待——等待能读懂符文的人。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "combat",
+							"enemy": "res://scenes/characters/base_mob.tscn"
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:tower-memory:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]击败了符文守卫。塔顶的路开放了。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "星图的秘密",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:tower-memory:middle_done",
+						"companion_in_party": "阿斯特",
+						"min_favor": {
+							"companion": "阿斯特",
+							"value": 30
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "阿斯特",
+							"text": "这张星图...天哪，我看明白了。神殿不是起点——神殿是终点。所有的路都通向神殿，因为神殿是旧世界最后建造的东西。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "塔顶的穹顶上绘制着完整的星图。阿斯特指着其中一颗星——那是神殿的位置。所有符文路线都汇聚于一点。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "神殿不是起源，是旧人类留给未来的最后一个信标。他们把所有知识都封存在那里，等待能破解循环的人。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:tower-memory:deep_done"
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "lore:shrine_is_endpoint"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]阿斯特解读了星图——神殿是终点，不是起点。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "spring-healing",
+			"name": "圣泉的赐福",
+			"category": "world",
+			"location": "圣泉",
+			"one_shot": false,
+			"priority": 90,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "治愈之水",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "圣泉的水泛着柔和的银光。你将手伸入水中——温暖的能量从指尖蔓延到全身。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "伤口愈合了，疲惫消散了。这片泉水蕴含着古老的净化之力。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "heal_player"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]圣泉治愈了你所有的伤势。[/color]"
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:spring-healing:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "泉水的记忆",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:spring-healing:shallow_seen",
+						"companion_in_party": "塞拉菲娜"
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "塞拉菲娜",
+							"text": "这泉水比你想的更古老。它记得每一个来过这里的人——包括来过很多次的你。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "塞拉菲娜轻轻触碰水面。涟漪中浮现出模糊的面孔——你认出了自己，但穿着不同的衣服，带着不同的表情。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "那是过去的你。每一次循环，你都来过这眼泉水。有些循环里你独自一人，有些循环里有人陪着你。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:spring-healing:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]圣泉映出了你过去的循环...[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "forest_spirits",
+			"name": "林间微光",
+			"category": "minor_conditional",
+			"location": "林地边缘",
+			"priority": 40,
+			"conditions": {
+				"random": 0.15
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "树丛间浮动着点点微光，像萤火虫但更安静。它们绕着你转了一圈，然后消散在夜色里。",
+					"position": "top",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "fallen_traveler",
+			"name": "倒下的旅人",
+			"category": "minor_conditional",
+			"location": "林地边缘",
+			"priority": 40,
+			"conditions": {
+				"random": 0.1
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "路边躺着一个破旧的背包，旁边散落着几页笔记。纸张已经被雨水浸透，字迹模糊难辨。背包的主人已经不在了。",
+					"position": "top",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "wild_herbs",
+			"name": "野生药草",
+			"category": "minor_conditional",
+			"location": "林地边缘",
+			"priority": 45,
+			"conditions": {
+				"random": 0.2
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "一片野生的药草丛在树荫下静静生长。银叶草、月光菇、还有几种你叫不出名字的草药。大自然的药房总是慷慨。",
+					"position": "top",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "mine_collapse_rumble",
+			"name": "矿道塌陷",
+			"category": "minor_conditional",
+			"location": "废矿入口",
+			"priority": 40,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "脚下的地面突然一震——远处传来矿道塌陷的闷响。废弃的矿道正在慢慢崩塌，迟早会彻底封闭。",
+					"position": "bottom",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "old_equipment",
+			"name": "废弃的工具",
+			"category": "minor_conditional",
+			"location": "废矿入口",
+			"priority": 40,
+			"conditions": {
+				"random": 0.15
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "角落的碎石堆里露出一把锈迹斑斑的矿镐。握柄上刻着名字——磨损太严重了，只能看出一个「林」字。",
+					"position": "top",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "miners_ghost",
+			"name": "矿工的残影",
+			"category": "minor_conditional",
+			"location": "废矿入口",
+			"priority": 40,
+			"conditions": {
+				"random": 0.08
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "矿道深处，你隐约听到了敲击声——像是有人在用镐头凿石头。但声音来自一条已经被封死的旧矿道。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "message",
+					"text": "矿工的执念还留在这里。他们知道自己死在矿下了吗？",
+					"position": "bottom",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "cliff_eagle",
+			"name": "崖顶之鹰",
+			"category": "minor_conditional",
+			"location": "断崖台地",
+			"priority": 40,
+			"conditions": {
+				"random": 0.15
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "一只巨大的山鹰从崖壁上一跃而起，翅展足有三米宽。它在断崖上空盘旋了一圈，然后向远方的山脉飞去。",
+					"position": "top",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "distant_storm",
+			"name": "远方的风暴",
+			"category": "minor_conditional",
+			"location": "断崖台地",
+			"priority": 35,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "站在崖边，你看到了远方地平线上凝聚的黑色云层。闪电偶尔划破天际，撕裂了昏暗的天空。那场风暴正在靠近。",
+					"position": "top",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "wasteland_bones",
+			"name": "荒原遗骨",
+			"category": "minor_conditional",
+			"location": "荒原边缘",
+			"priority": 40,
+			"conditions": {
+				"random": 0.15
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "风沙吹开了一层薄土，露出半截巨大的肋骨。这不是魔种的骨头——它的结构太精细了。某种古老的生物曾经在这片荒原上漫步。",
+					"position": "top",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "old_road_sign",
+			"name": "旧路标",
+			"category": "minor_conditional",
+			"location": "荒原边缘",
+			"priority": 35,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "一块倾斜的木制路标被沙土埋了大半。上面刻着模糊的字迹，依稀能辨认出「前方三十里——圣泉」。这条路曾经是朝圣者的必经之路。",
+					"position": "top",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "spring_whisper",
+			"name": "泉边低语",
+			"category": "minor_conditional",
+			"location": "圣泉",
+			"priority": 35,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "泉水边缘的石头上刻着一行字，字迹已经被水冲刷得模糊了。你俯身辨认：「请记得——水记得一切。」",
+					"position": "top",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "tower_echo",
+			"name": "塔中回声",
+			"category": "minor_conditional",
+			"location": "忘却之塔",
+			"priority": 35,
+			"conditions": {
+				"random": 0.1
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "你踏进塔内，脚步声在空旷的塔心中回荡。回声传回来的时候——那不是你的脚步声。节奏变了。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "message",
+					"text": "这座塔在模仿你。或者说，它在记录你。每一次循环，你的脚步声都留在了这座塔里。",
+					"position": "bottom",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "cycle_3_intro",
+			"name": "第三次苏醒",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": true,
+			"priority": 230,
+			"conditions": {
+				"min_cycle": 3,
+				"account_flag_not_set": "cycle_3_intro_done"
+			},
+			"effects": [
+				{
+					"type": "dialogue",
+					"speaker": "引导者",
+					"text": "第三次了...你开始记得了吗？这个世界在重复自己，但你不一样了——你带着之前的记忆回来了。",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "message",
+					"text": "模糊的碎片在你脑海中闪烁：一条你没走过的路，一个你还没见过的人，一句你好像听过的话。",
+					"position": "middle",
+					"auto_hide": 5
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "cycle_3_intro_done"
+				},
+				{
+					"type": "status",
+					"text": "[color=yellow]你开始记得了...这个世界并非第一次见到你。[/color]"
+				}
+			]
+		},
+		{
+			"id": "cycle_5_dragon",
+			"name": "巨龙的完全苏醒",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": false,
+			"priority": 220,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "世界的震颤",
+					"locks": [],
+					"conditions": {
+						"min_cycle": 5,
+						"account_flag_not_set": "cycle_5_dragon:shallow_done"
+					},
+					"effects": [
+						{
+							"type": "message",
+							"text": "大地在颤抖——不是地震，而是某种庞然大物的心跳。空气变得粘稠，每一次呼吸都带着远古魔力的焦灼。",
+							"position": "top",
+							"auto_hide": 5
+						},
+						{
+							"type": "message",
+							"text": "巨龙完全苏醒了。不是之前那种半梦半醒的威胁——这一次，它是清醒的，而且它在寻找什么。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "cycle_5_dragon:shallow_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=orange]巨龙完全苏醒——世界感到了它的存在。[/color]"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "龙的低语",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 5,
+						"account_flag_set": "cycle_5_dragon:shallow_done",
+						"companion_in_party": "艾薇",
+						"min_favor": {
+							"companion": "艾薇",
+							"value": 50
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "艾薇",
+							"text": "停下——你听到了吗？龙在说话。不是咆哮...是语言。它在用古老的语言重复同一个词。",
+							"position": "center",
+							"expression": "worried",
+							"effect": "shake"
+						},
+						{
+							"type": "message",
+							"text": "那个词穿过空间直接烙进你的意识里。你听不懂龙语，但你知道它的意思：「回来。」",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "combat",
+							"enemy": "res://scenes/characters/base_mob.tscn"
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "cycle_5_dragon:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=orange]击退了巨龙的一波攻击。但它在呼唤什么？[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "龙的真相",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 7,
+						"account_flag_set": "lore:mana_particles_truth",
+						"companion_in_party": "艾薇",
+						"min_favor": {
+							"companion": "艾薇",
+							"value": 70
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "艾薇",
+							"text": "我明白了...龙不是在攻击我们。它在求我们。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "巨龙的全貌展现在你面前。它不是一个怪物——它是旧时代所有痛苦和悔恨的集合体。魔粒的暴走制造了它，而现在它想被释放。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "message",
+							"text": "它在循环中一次又一次被杀死，一次又一次重生。它不是在循环——它是被困在了循环里，和你一样。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "cycle_5_dragon:deep_done"
+						},
+						{
+							"type": "set_account_flag",
+							"flag": "lore:dragon_truth"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]你理解了巨龙的真相。它和你一样，是这个循环的囚徒。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "fragment_threshold_5",
+			"name": "碎片的共鸣",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": true,
+			"priority": 210,
+			"conditions": {
+				"account_flag_set": "fragment_milestone_5_reached",
+				"account_flag_not_set": "fragment_threshold_5_done"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "你收集的记忆碎片开始发出微弱的共鸣。它们在你的背包里轻轻振动，像是一群想说话的声音。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "message",
+					"text": "五个碎片——来自不同地方、不同时代。但它们指向同一个方向：神殿。",
+					"position": "middle",
+					"auto_hide": 4
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "fragment_threshold_5_done"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]碎片开始共振...它们都指向神殿。[/color]"
+				}
+			]
+		},
+		{
+			"id": "fragment_threshold_10",
+			"name": "记忆的拼图",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": true,
+			"priority": 210,
+			"conditions": {
+				"account_flag_set": "fragment_milestone_10_reached",
+				"account_flag_not_set": "fragment_threshold_10_done"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "十个碎片。它们拼出的图案越来越清晰了。你看到了完整的历史——旧人类的崛起、魔粒的发现、以及那场改变一切的决断。",
+					"position": "top",
+					"auto_hide": 5
+				},
+				{
+					"type": "message",
+					"text": "神殿的位置已经明确了。旧人类在那里留下了打破循环的方法。但碎片还缺了一块——最重要的一块。",
+					"position": "middle",
+					"auto_hide": 5
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "fragment_threshold_10_done"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]十枚碎片拼出了旧世界的轮廓。神殿的方法就在其中——但还有最关键的一块缺失。[/color]"
+				}
+			]
+		},
+		{
+			"id": "cliff_ruins",
+			"name": "崖边古遗址",
+			"category": "minor_conditional",
+			"location": "断崖台地",
+			"priority": 40,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "断崖边缘露出一截残垣——上面刻满了与神殿相同的符文。这里曾经是神殿的一部分吗？",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "status",
+					"text": "[color=gray]发现了古遗址...[/color]"
+				}
+			]
+		},
+		{
+			"id": "battlefield_flowers",
+			"name": "战场的花",
+			"category": "minor_conditional",
+			"location": "古战场",
+			"priority": 45,
+			"conditions": {
+				"random": 0.18
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "锈蚀的兵器堆之间，竟然开着一小片白色野花。它们从哪里得到的养分？也许是从那些未安息的灵魂里。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "status",
+					"text": "[color=white]战场上开着花...[/color]"
+				}
+			]
+		},
+		{
+			"id": "battlefield_echo",
+			"name": "刀剑的回声",
+			"category": "minor_conditional",
+			"location": "古战场",
+			"priority": 40,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "一阵风吹过古战场，地面上散落的碎铁片相互碰撞，发出清脆的金属声。像是千年前的刀剑还在交击。",
+					"position": "top",
+					"auto_hide": 3
+				},
+				{
+					"type": "message",
+					"text": "那声音有节奏——不是随机的碰撞。是某种语言吗？",
+					"position": "middle",
+					"auto_hide": 4
+				}
+			]
+		},
+		{
+			"id": "battlefield_moon",
+			"name": "古战场之月",
+			"category": "minor_conditional",
+			"location": "古战场",
+			"priority": 40,
+			"conditions": {
+				"random": 0.12
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "月光洒在古战场上，地面浮现出半透明的人影。他们穿着旧时代的军服，向着同一个方向行礼。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "message",
+					"text": "人影们忽然转过头看向你，然后——消散了。但他们眼中没有敌意，只有疲惫。",
+					"position": "middle",
+					"auto_hide": 5
+				},
+				{
+					"type": "status",
+					"text": "[color=gray]月光下的幻影消散了...[/color]"
+				}
+			]
+		},
+		{
+			"id": "crystal_chime",
+			"name": "晶石的和声",
+			"category": "minor_conditional",
+			"location": "结晶洞穴",
+			"priority": 45,
+			"conditions": {
+				"random": 0.15
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "洞穴里的一簇晶石突然同时发光，发出轻微的鸣响——不同大小的晶石发出不同的音高，构成一段简短的和声。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "message",
+					"text": "像是一句代码。或者一句问候。",
+					"position": "middle",
+					"auto_hide": 3
+				}
+			]
+		},
+		{
+			"id": "crystal_reflection",
+			"name": "镜中倒影",
+			"category": "minor_conditional",
+			"location": "结晶洞穴",
+			"priority": 40,
+			"conditions": {
+				"random": 0.1
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "一块巨大的镜面晶石吸引了你的注意。走近一看，里面映出的不是洞穴——是一个人，穿着不同的装备，站在不同的地方。",
+					"position": "top",
+					"auto_hide": 5
+				},
+				{
+					"type": "message",
+					"text": "那是你。但不是现在的你。是过去的循环中某一世的你。",
+					"position": "middle",
+					"auto_hide": 5
+				},
+				{
+					"type": "status",
+					"text": "[color=yellow]晶石映出了过去的你...[/color]"
+				}
+			]
+		},
+		{
+			"id": "ivy_serafina_healing",
+			"name": "治愈者的对话",
+			"category": "minor_conditional",
+			"location": "圣泉",
+			"one_shot": true,
+			"priority": 80,
+			"conditions": {
+				"companion_in_party": "艾薇"
+			},
+			"effects": [
+				{
+					"type": "dialogue",
+					"speaker": "艾薇",
+					"text": "这泉水能治愈伤势，却治不了记忆。有些伤痕太深了。",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "message",
+					"text": "塞拉菲娜从泉边站起身来——她似乎早就在这里了。她的目光穿过泉水，看向你。",
+					"position": "middle",
+					"auto_hide": 4
+				},
+				{
+					"type": "dialogue",
+					"speaker": "塞拉菲娜",
+					"text": "治愈不是为了遗忘。是为了能带着那些伤痕继续走下去。这才是存护的真正意义，不是吗？",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]两位治愈者的对话让你若有所思...[/color]"
+				}
+			]
+		},
+		{
+			"id": "sei_tianyi_serious",
+			"name": "无言之交",
+			"category": "minor_conditional",
+			"location": "古战场",
+			"one_shot": true,
+			"priority": 80,
+			"conditions": {
+				"companion_in_party": "静"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "静停在了一面残破的军旗前。天一也停下了脚步——不是因为旗子，是因为静的表情。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "dialogue",
+					"speaker": "静",
+					"text": "这面旗的主人没有加护。他是靠训练活下来的——和现在的我一样。",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "dialogue",
+					"speaker": "天一",
+					"text": "...剑不会问握剑的人有没有加护。它只听你的手。",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "status",
+					"text": "[color=cyan]静和天一在沉默中达成了一种理解。[/color]"
+				}
+			]
+		},
+		{
+			"id": "mysterious_merchant",
+			"name": "神秘商人",
+			"category": "minor_conditional",
+			"location": "*",
+			"priority": 50,
+			"conditions": {
+				"random": 0.08,
+				"flag_not_set": "cycle:merchant_met"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "路旁停着一辆破旧的推车，上面堆满了奇奇怪怪的物品。推车旁坐着一个戴斗篷的人，看不清面孔。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "message",
+					"text": "'不是每次都能遇到我。想看看货吗？都是好东西。'",
+					"position": "middle",
+					"auto_hide": 4
+				},
+				{
+					"type": "set_flag",
+					"flag": "cycle:merchant_met"
+				},
+				{
+					"type": "status",
+					"text": "[color=#ffcc44]神秘商人出现了。[/color]"
+				}
+			]
+		},
+		{
+			"id": "felix_encounter",
+			"name": "菲利克斯",
+			"category": "minor_conditional",
+			"location": "废矿入口",
+			"priority": 50,
+			"conditions": {
+				"random": 0.08,
+				"flag_not_set": "cycle:felix_met"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "矿洞口站着一个戴眼镜的年轻人，正用锤子敲打一块矿石样本。他的背包里塞满了笔记和样本瓶。",
+					"position": "top",
+					"auto_hide": 4
+				},
+				{
+					"type": "dialogue",
+					"speaker": "菲利克斯",
+					"text": "啊，你也是来研究魔粒的吗？别被它的外表骗了——这东西不是矿石，是旧时代的记忆结晶。",
+					"position": "center",
+					"entry": "fade_in"
+				},
+				{
+					"type": "set_flag",
+					"flag": "cycle:felix_met"
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "felix_encountered"
+				},
+				{
+					"type": "status",
+					"text": "[color=#ffcc44]遇到了研究者菲利克斯。[/color]"
+				}
+			]
+		},
+		{
+			"id": "cycle_7_revelation",
+			"name": "第七次觉醒",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": true,
+			"priority": 230,
+			"conditions": {
+				"min_cycle": 7,
+				"account_flag_not_set": "cycle_7_revelation_done"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "第七次了。你站在世界的入口，但这一次——你不再感到陌生。空气中弥漫着一种熟悉感，像是回到了一个很久没回的家。",
+					"position": "top",
+					"auto_hide": 5
+				},
+				{
+					"type": "message",
+					"text": "你知道哪里有危险，哪条路通向哪里。不是因为你走过——是因为你的身体记得。",
+					"position": "middle",
+					"auto_hide": 5
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "cycle_7_revelation_done"
+				},
+				{
+					"type": "status",
+					"text": "[color=#aaaaff]第七次轮回——身体开始记住这个世界。[/color]"
+				}
+			]
+		},
+		{
+			"id": "cycle_10_fate",
+			"name": "命运的交叉点",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": true,
+			"priority": 230,
+			"conditions": {
+				"min_cycle": 10,
+				"account_flag_not_set": "cycle_10_fate_done"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "第十个轮回开始了。这一次，你的所有同伴似乎都有了一种奇怪的共鸣——他们看你的眼神变了。",
+					"position": "top",
+					"auto_hide": 5
+				},
+				{
+					"type": "message",
+					"text": "不是陌生人的眼神。是认得你的眼神。即便他们从来没有在这个轮回里见过你。",
+					"position": "middle",
+					"auto_hide": 5
+				},
+				{
+					"type": "message",
+					"text": "既视感不再只是你一个人的体验。它开始蔓延到了他们身上。",
+					"position": "bottom",
+					"auto_hide": 5
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "cycle_10_fate_done"
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "dejavu_spreading"
+				},
+				{
+					"type": "status",
+					"text": "[color=#ffaaff]第十次轮回——既视感开始影响同伴。[/color]"
+				}
+			]
+		},
+		{
+			"id": "cycle_15_truth",
+			"name": "第十五次轮回——真相浮现",
+			"category": "milestone",
+			"location": "*",
+			"one_shot": true,
+			"priority": 230,
+			"conditions": {
+				"min_cycle": 15,
+				"account_flag_not_set": "cycle_15_truth_done"
+			},
+			"effects": [
+				{
+					"type": "message",
+					"text": "第十五次。记忆不再是碎片——它开始拼成完整的画面。你看到了神殿建造的那一刻。你看到了选择魔粒的人们脸上的表情。",
+					"position": "top",
+					"auto_hide": 6
+				},
+				{
+					"type": "message",
+					"text": "神殿不是起点。它是终点。是旧人类留给未来的最后一个信息，等待能走到这里的人。",
+					"position": "middle",
+					"auto_hide": 6
+				},
+				{
+					"type": "message",
+					"text": "你明白了——轮回不是诅咒。是一次又一次的机会，直到你准备好理解一切。",
+					"position": "bottom",
+					"auto_hide": 6
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "cycle_15_truth_done"
+				},
+				{
+					"type": "set_account_flag",
+					"flag": "truth:shrine_is_endpoint"
+				},
+				{
+					"type": "status",
+					"text": "[color=#ffffff]真相浮现——神殿是终点，不是起点。[/color]"
+				}
+			]
+		},
+		{
+			"id": "ivy_deep_story",
+			"name": "艾薇：存护的初心",
+			"category": "world",
+			"location": "圣泉",
+			"one_shot": false,
+			"priority": 85,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "泉边的回忆",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "艾薇跪在圣泉边，看着水面。她的表情不是在祈祷——是在回忆。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "'你知道我为什么选择成为治疗者吗？'她轻声问。但她似乎不是在问你。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:ivy_deep_story:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "存护的代价",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:ivy_deep_story:shallow_seen",
+						"companion_in_party": "艾薇",
+						"min_favor": {
+							"companion": "艾薇",
+							"value": 25
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "艾薇",
+							"text": "我小时候，村子被魔种袭击了。镇上唯一的治疗者救了我，但她自己没能活下来。从那天起，我就决定了——我要成为能保护别人的人。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "存护加护不是因为她生来强大。是因为她选择强大——为了不再让任何人替她牺牲。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:ivy_deep_story:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你理解了艾薇的存护之志。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "存护的真谛",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:ivy_deep_story:middle_done",
+						"companion_in_party": "艾薇",
+						"min_favor": {
+							"companion": "艾薇",
+							"value": 45
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "艾薇",
+							"text": "在世界意志眼里，加护是一种'看见'。它看见我的决心，所以给了我存护的力量。不是因为我是被选中的——是因为我选择了。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "往前走就会被看见。艾薇的存护加护，是她三年零七个月每一天都在坚持的答案。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:ivy_deep_story:deep_done"
+						},
+						{
+							"type": "set_flag",
+							"flag": "lore:ivy_story_complete"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]艾薇的故事——存护不是天赋，是选择。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "tianyi_deep_story",
+			"name": "天一：沉默的守剑人",
+			"category": "world",
+			"location": "断崖台地",
+			"one_shot": false,
+			"priority": 85,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "崖边的守剑人",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "天一站在断崖边缘，一动不动。风从他的剑鞘旁呼啸而过——他的手始终没有离开剑柄。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "他不说话。但风吹过剑刃时发出的轻鸣，像是替他发出了声音。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:tianyi_deep_story:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "剑下的决意",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:tianyi_deep_story:shallow_seen",
+						"companion_in_party": "天一",
+						"min_favor": {
+							"companion": "天一",
+							"value": 25
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "天一",
+							"text": "...这片崖底。五年前，我和姐姐被魔种追上。她把我推上崖壁，然后跳了下去——用自己引开了追兵。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "天一的声音很轻，像是这些话从来没有被说出来过。'从那天起我就决定了——不再说话。说话会分心。分心会让剑变慢。'",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:tianyi_deep_story:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你理解了天一的沉默从何而来。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "剑加护的真相",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:tianyi_deep_story:middle_done",
+						"companion_in_party": "天一",
+						"min_favor": {
+							"companion": "天一",
+							"value": 45
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "天一",
+							"text": "后来我才知道——剑加护不是我有多强。是世界意志看见了我握剑的每一个夜晚。不是给了我一把好剑...是让我能用它守住剩下的人。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "剑加护——不是天赋，是五年来每一个不说话的夜晚，每一次对着断崖挥剑的时候，世界在注视他。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:tianyi_deep_story:deep_done"
+						},
+						{
+							"type": "set_flag",
+							"flag": "lore:tianyi_story_complete"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]天一的故事——剑加护是沉默与坚持的回响。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "serafina_deep_story",
+			"name": "塞拉菲娜：双影的真相",
+			"category": "world",
+			"location": "结晶洞穴",
+			"one_shot": false,
+			"priority": 85,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "晶石中的双影",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "塞拉菲娜站在一块巨大的晶石前，专注地看着里面。她不是在看倒影——她的眼神像是在寻找什么。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "'有时候，晶石会映出两个影子。'她轻声说。'一个在这里，一个在上一世。'",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:serafina_deep_story:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "双影的诅咒",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:serafina_deep_story:shallow_seen",
+						"companion_in_party": "塞拉菲娜",
+						"min_favor": {
+							"companion": "塞拉菲娜",
+							"value": 25
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "塞拉菲娜",
+							"text": "我的认知加护让我能看到轮回的痕迹。这不是天赋——是负担。每次在泉水里，在晶石前，我都能看到两个人：一个是现在的我，一个是上一次循环里失败的自己。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "她的声音平静，但每个字都像是从很深的地方挖出来的。认知加护不是给了她答案——是给了她永远重复的问题。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:serafina_deep_story:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你理解了塞拉菲娜的认知诅咒。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "在轮回中寻找",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:serafina_deep_story:middle_done",
+						"companion_in_party": "塞拉菲娜",
+						"min_favor": {
+							"companion": "塞拉菲娜",
+							"value": 45
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "塞拉菲娜",
+							"text": "但这就是我一直在找你的原因。每一次循环里，你的影子总是有两个——一个在此世，一个也在上一世。你不是普通的旅人。你是那个会记得的人。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "认知加护让她看到每个人身上的轮回痕迹。而你的痕迹——比别人都深。不是因为你是特殊的。是因为你选择了不断的返回。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:serafina_deep_story:deep_done"
+						},
+						{
+							"type": "set_flag",
+							"flag": "lore:serafina_story_complete"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]塞拉菲娜的故事——认知是为了找到该找的人。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "mafuyu_deep_story",
+			"name": "真冬：无加护者的路",
+			"category": "world",
+			"location": "荒原边缘",
+			"one_shot": false,
+			"priority": 85,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "荒原上的孤影",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "真冬独自站在荒原的劲风中，任由冰粒拍打她的脸颊。她没有开启任何护盾——不是因为不需要，是因为她没有。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "但她站得比任何有加护的人都稳。",
+							"position": "middle",
+							"auto_hide": 3
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:mafuyu_deep_story:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "无加护者的觉醒",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:mafuyu_deep_story:shallow_seen",
+						"companion_in_party": "真冬",
+						"min_favor": {
+							"companion": "真冬",
+							"value": 25
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "真冬",
+							"text": "我出生在没有加护的聚落里。我们被称为'被世界抛弃的人'。但我不接受。如果世界不给我力量，我就用自己的意志重塑魔粒——让它为我结冰。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "真冬伸出手，掌心凝结出一片冰晶。那不是魔法的光芒——是纯粹的意志力，把魔粒强行重塑成了冰的形态。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:mafuyu_deep_story:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你理解了真冬的冰从何而来——不是加护，是意志。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "另一种被看见",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:mafuyu_deep_story:middle_done",
+						"companion_in_party": "真冬",
+						"min_favor": {
+							"companion": "真冬",
+							"value": 45
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "真冬",
+							"text": "后来我才明白——无加护不是诅咒，是另一种'被看见'。世界给了我空无一物的双手，然后看着我用这双手结出冰来。不是施舍——是承认。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "世界意志看见了她拒绝被定义的样子，给了她最冷的东西——然后看着她把它变成了自己的力量。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:mafuyu_deep_story:deep_done"
+						},
+						{
+							"type": "set_flag",
+							"flag": "lore:mafuyu_story_complete"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]真冬的故事——无加护不是抛弃，是另一种承认。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "aster_deep_story",
+			"name": "阿斯特：星辰的回应",
+			"category": "world",
+			"location": "忘却之塔",
+			"one_shot": false,
+			"priority": 85,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "塔顶的仰望",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "阿斯特仰着头站在塔顶，星图在他眼中缓缓流转。他的共鸣加护让他能感受到星辰的'情绪'——儘管从来没有人能听懂他在說什麼。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "'每一颗星都在讲一个故事。'他自语般地说。'我在找那颗会回应的星。'",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:aster_deep_story:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "共鸣的代价",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:aster_deep_story:shallow_seen",
+						"companion_in_party": "阿斯特",
+						"min_favor": {
+							"companion": "阿斯特",
+							"value": 25
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "阿斯特",
+							"text": "我从小就能和星星'对话'——不，不是对话，是共鸣。每一颗星都有一种情绪，一种频率。我可以调整自己的频率去感受它们...但每次调整都会剥掉一层我自己的意识。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "共鸣加护不是免费的能力。每一次与星辰的共鸣，阿斯特都会失去一部分'自己'。他越接近星辰，就越不像是人类。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:aster_deep_story:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你理解了共鸣加护的代价。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "不是星辰，是这个世界",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:aster_deep_story:middle_done",
+						"companion_in_party": "阿斯特",
+						"min_favor": {
+							"companion": "阿斯特",
+							"value": 45
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "阿斯特",
+							"text": "我找了二十年的星星。但后来我站在塔顶，看着这张星图——才发现我一直弄错了。共鸣的对象从来不是天上的星星。是这座塔。是神殿。是这个世界的每一块土地。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "阿斯特指着塔顶穹顶上的星图。那颗他一直寻找的、会回应的星——不是在天上，是在这张图画的正中央。那是神殿的位置。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:aster_deep_story:deep_done"
+						},
+						{
+							"type": "set_flag",
+							"flag": "lore:aster_story_complete"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]阿斯特的故事——他一直在找的星，是这个世界。[/color]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"id": "sei_deep_story",
+			"name": "静：荒野六年",
+			"category": "world",
+			"location": "古战场",
+			"one_shot": false,
+			"priority": 85,
+			"layers": [
+				{
+					"level": "shallow",
+					"name": "猎手的步伐",
+					"locks": [],
+					"effects": [
+						{
+							"type": "message",
+							"text": "静在废墟间穿行，步伐无声。她的每一个落脚点都精准地选择在不会踩碎任何枯枝的位置——这已经成了她的本能。",
+							"position": "top",
+							"auto_hide": 4
+						},
+						{
+							"type": "message",
+							"text": "六年。她在荒野里独自活了六年。没有魔法，没有加护——只有判断力。沉默比任何护盾都强。",
+							"position": "middle",
+							"auto_hide": 4
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:sei_deep_story:shallow_seen"
+						}
+					]
+				},
+				{
+					"level": "middle",
+					"name": "六年前的那个夜晚",
+					"one_shot": true,
+					"locks": [
+						"companion"
+					],
+					"conditions": {
+						"min_cycle": 2,
+						"flag_set": "event:sei_deep_story:shallow_seen",
+						"companion_in_party": "静",
+						"min_favor": {
+							"companion": "静",
+							"value": 25
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "静",
+							"text": "六年前魔种毀了我的聚落。我躲在粮仓里，捂着自己的嘴巴，听着外面每一个人倒下的声音。",
+							"position": "center",
+							"entry": "fade_in"
+						},
+						{
+							"type": "message",
+							"text": "她的语气平静得像在复述别人的故事。'第二天我走出来的时候，整个聚落只剩我一个人。那年我十二岁。'",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:sei_deep_story:middle_done"
+						},
+						{
+							"type": "status",
+							"text": "[color=yellow]你理解了静的荒野从何而来。[/color]"
+						}
+					]
+				},
+				{
+					"level": "deep",
+					"name": "不被定义的人",
+					"one_shot": true,
+					"locks": [
+						"fragment",
+						"prerequisite"
+					],
+					"conditions": {
+						"min_cycle": 3,
+						"flag_set": "event:sei_deep_story:middle_done",
+						"companion_in_party": "静",
+						"min_favor": {
+							"companion": "静",
+							"value": 45
+						}
+					},
+					"effects": [
+						{
+							"type": "dialogue",
+							"speaker": "静",
+							"text": "我没有加护，不是世界遗忘了我——是我拒绝了被任何力量定义。我不想被贴标签。而世界...",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "她停顿了一下。在荒野六年的沉默中，这是她说过的最长的一段话。",
+							"position": "middle",
+							"auto_hide": 5
+						},
+						{
+							"type": "dialogue",
+							"speaker": "静",
+							"text": "世界听见了我的选择。所以它给了我最纯粹的东西：可能性。没有加护就是最大的加护——因为没有界限。",
+							"position": "center"
+						},
+						{
+							"type": "message",
+							"text": "克制——不是因为她没有力量。是因为她选择了不被力量定义。而世界尊重了她的选择。",
+							"position": "middle",
+							"auto_hide": 6
+						},
+						{
+							"type": "set_flag",
+							"flag": "event:sei_deep_story:deep_done"
+						},
+						{
+							"type": "set_flag",
+							"flag": "lore:sei_story_complete"
+						},
+						{
+							"type": "status",
+							"text": "[color=green]静的故事——选择不被定义的人，拥有最大的可能性。[/color]"
+						}
+					]
+				}
+			]
 		}
-	  ]
-	},
-
-	{
-	  "id": "first_awakening",
-	  "name": "初次苏醒",
-	  "category": "milestone",
-	  "location": "林地边缘",
-	  "one_shot": true,
-	  "priority": 250,
-	  "conditions": { "account_flag_not_set": "first_awakening_done" },
-	  "effects": [
-		{ "type": "dialogue", "speaker": "引导者", "text": "你又一次醒来了。和之前每一次一样。\n\n但这一次——你感觉到有什么不同。", "position": "center", "entry": "fade_in" },
-		{ "type": "set_account_flag", "flag": "first_awakening_done" }
-	  ]
-	},
-
-	{
-	  "id": "return_awakening",
-	  "name": "再度苏醒",
-	  "category": "milestone",
-	  "location": "林地边缘",
-	  "priority": 240,
-	  "conditions": { "account_flag_set": "first_awakening_done" },
-	  "effects": [
-		{ "type": "dialogue", "speaker": "引导者", "text": "你回来了。世界在等待。", "position": "center" }
-	  ]
-	},
-
-	{
-	  "id": "hermit-encounter",
-	  "name": "独居者",
-	  "category": "minor_conditional",
-	  "location": "*",
-	  "priority": 50,
-	  "conditions": { "random": 0.15 },
-	  "effects": [
-		{ "type": "message", "text": "路边一间歪斜的小屋飘出炊烟。有人在。", "position": "bottom", "auto_hide": 3 },
-		{ "type": "status", "text": "[color=gray]路边有户人家...[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "serafina_join",
-	  "name": "塞拉菲娜相遇",
-	  "category": "minor_conditional",
-	  "location": "圣泉",
-	  "one_shot": true,
-	  "priority": 100,
-	  "conditions": { "companion_not_in_party": "塞拉菲娜" },
-	  "effects": [
-		{ "type": "companion_join", "name": "塞拉菲娜" },
-		{ "type": "dialogue", "speaker": "塞拉菲娜", "text": "泉水映出了你的影子...但不是你认识的那个自己。我一直在等能同时看到两个影子的人。", "position": "center", "expression": "normal", "entry": "fade_in" },
-		{ "type": "grant_item", "item_id": "spring_water", "amount": 1, "target": "塞拉菲娜" },
-		{ "type": "status", "text": "[color=cyan]塞拉菲娜加入了队伍！[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "mafuyu_join",
-	  "name": "真冬相遇",
-	  "category": "minor_conditional",
-	  "location": "荒原边缘",
-	  "one_shot": true,
-	  "priority": 100,
-	  "conditions": { "companion_not_in_party": "真冬" },
-	  "effects": [
-		{ "type": "message", "text": "寒风中站着一个披着冰霜的人影，她手中的刀刃没有魔法——只有意志凝结的冰。", "position": "top", "auto_hide": 4 },
-		{ "type": "companion_join", "name": "真冬" },
-		{ "type": "dialogue", "speaker": "真冬", "text": "冷吗？冷就对了。冷说明你还活着。", "position": "center", "expression": "normal", "entry": "fade_in" },
-		{ "type": "status", "text": "[color=cyan]真冬加入了队伍！[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "aster_join",
-	  "name": "阿斯特相遇",
-	  "category": "minor_conditional",
-	  "location": "忘却之塔",
-	  "one_shot": true,
-	  "priority": 100,
-	  "conditions": { "companion_not_in_party": "阿斯特" },
-	  "effects": [
-		{ "type": "companion_join", "name": "阿斯特" },
-		{ "type": "dialogue", "speaker": "阿斯特", "text": "塔顶的星图和三百年前一模一样。我在找一颗会说话的星——你见过吗？", "position": "center", "expression": "normal", "entry": "fade_in" },
-		{ "type": "grant_item", "item_id": "star_chart", "amount": 1, "target": "阿斯特" },
-		{ "type": "status", "text": "[color=cyan]阿斯特加入了队伍！[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "sei_join",
-	  "name": "静相遇",
-	  "category": "minor_conditional",
-	  "location": "古战场",
-	  "one_shot": true,
-	  "priority": 100,
-	  "conditions": { "companion_not_in_party": "静" },
-	  "effects": [
-		{ "type": "companion_join", "name": "静" },
-		{ "type": "dialogue", "speaker": "静", "text": "别出声。这片废墟里有东西在动——不是魔种。", "position": "center", "expression": "normal", "entry": "fade_in" },
-		{ "type": "message", "text": "她的手里没有武器，但她的眼神让你知道——她不需要。", "position": "top", "auto_hide": 4 },
-		{ "type": "status", "text": "[color=cyan]静加入了队伍！[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "ancient-battlefield",
-	  "name": "古战场的记忆",
-	  "category": "world",
-	  "location": "古战场",
-	  "one_shot": false,
-	  "priority": 90,
-	  "layers": [
-		{
-		  "level": "shallow",
-		  "name": "目睹幻影",
-		  "locks": [],
-		  "effects": [
-			{ "type": "message", "text": "暮色笼罩着古战场。残破的旗帜在风中轻响，似乎还能听见千年前的号角。", "position": "top", "auto_hide": 4 },
-			{ "type": "message", "text": "你看到一个半透明的身影从废墟中走出，手持断剑，望向远方。那不是敌人——是一个倒在战场上的战士。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:ancient-battlefield:shallow_seen" }
-		  ]
-		},
-		{
-		  "level": "middle",
-		  "name": "触摸记忆",
-		  "one_shot": true,
-		  "locks": ["companion"],
-		  "conditions": { "min_cycle": 2, "flag_set": "event:ancient-battlefield:shallow_seen" },
-		  "effects": [
-			{ "type": "message", "text": "你的同伴停下脚步，神情凝重。她也看到了那些幻影——不是幽灵，是这个世界不愿遗忘的东西。", "position": "top", "auto_hide": 4 },
-			{ "type": "message", "text": "你伸出手，触碰了那道幻影。一瞬间，痛苦、恐惧、忠诚、遗憾——千万人的情感涌进你的意识。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:ancient-battlefield:middle_done" },
-			{ "type": "status", "text": "[color=yellow]你触碰了古战场的记忆...[/color]" }
-		  ]
-		},
-		{
-		  "level": "deep",
-		  "name": "理解真相",
-		  "one_shot": true,
-		  "locks": ["fragment", "prerequisite"],
-		  "conditions": {
-			"min_cycle": 3,
-			"flag_set": "event:ancient-battlefield:middle_done",
-			"min_favor": { "companion": "静", "value": 30 }
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "静", "text": "这片战场埋葬的不是敌人。双方都是同一片土地上的人——被魔粒的诱惑分裂了。", "position": "center" },
-			{ "type": "message", "text": "幻影汇聚成一片光幕。你看到了真相：这不是外敌入侵的战场，而是兄弟姐妹之间的内战。魔粒放大了人心中的裂痕。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:ancient-battlefield:deep_done" },
-			{ "type": "set_account_flag", "flag": "lore:ancient_civil_war" },
-			{ "type": "status", "text": "[color=green]你理解了古战场的真相。[/color]" }
-		  ]
-		}
-	  ]
-	},
-
-	{
-	  "id": "crystal-cave",
-	  "name": "结晶的真相",
-	  "category": "world",
-	  "location": "结晶洞穴",
-	  "one_shot": false,
-	  "priority": 90,
-	  "layers": [
-		{
-		  "level": "shallow",
-		  "name": "晶石的低语",
-		  "locks": [],
-		  "effects": [
-			{ "type": "message", "text": "洞穴深处，晶石发出柔和的蓝光。走近一看，光芒中竟然隐约流动着文字般的纹路。", "position": "top", "auto_hide": 4 },
-			{ "type": "message", "text": "这些晶石在记录什么——像是这个世界的历史，被封存在矿物的记忆里。", "position": "middle", "auto_hide": 4 },
-			{ "type": "set_flag", "flag": "event:crystal-cave:shallow_seen" }
-		  ]
-		},
-		{
-		  "level": "middle",
-		  "name": "魔法共鸣",
-		  "one_shot": true,
-		  "locks": ["companion"],
-		  "conditions": { "min_cycle": 2, "flag_set": "event:crystal-cave:shallow_seen" },
-		  "effects": [
-			{ "type": "message", "text": "你触碰了一块发光的晶石。霎时间，魔法共鸣穿透了你的身体——你的意识被拉进了另一段时空。", "position": "top", "auto_hide": 5 },
-			{ "type": "message", "text": "你看到了旧时代的末日：天空被撕裂，大地喷涌出黑雾。人们没有逃跑——他们在唱歌。", "position": "middle", "auto_hide": 5 },
-			{ "type": "message", "text": "歌声中，晶石从地面生长出来，封存了最后的记忆。这不是灾难的记录，是遗言。", "position": "bottom", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:crystal-cave:middle_done" },
-			{ "type": "status", "text": "[color=yellow]晶石向你展示了旧时代的终结...[/color]" }
-		  ]
-		},
-		{
-		  "level": "deep",
-		  "name": "选择的真相",
-		  "one_shot": true,
-		  "locks": ["fragment", "prerequisite"],
-		  "conditions": {
-			"min_cycle": 3,
-			"flag_set": "event:crystal-cave:middle_done",
-			"min_favor": { "companion": "塞拉菲娜", "value": 40 }
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "塞拉菲娜", "text": "你看到了吗？魔粒不是从天而降的灾难...是那个时代的人们主动召唤来的。", "position": "center" },
-			{ "type": "message", "text": "最后的晶石打开了一扇光门。门后是一片纯白的空间——旧时代的学者们聚集在那里，做出了改变一切的决定。", "position": "middle", "auto_hide": 5 },
-			{ "type": "message", "text": "魔粒不是污染。它是旧人类用来对抗某种更古老威胁的武器。他们选择了这种力量，尽管知道代价。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:crystal-cave:deep_done" },
-			{ "type": "set_account_flag", "flag": "lore:mana_particles_truth" },
-			{ "type": "status", "text": "[color=green]你理解了魔粒的真正起源。[/color]" }
-		  ]
-		}
-	  ]
-	},
-
-	{
-	  "id": "tower-memory",
-	  "name": "塔顶的星空",
-	  "category": "world",
-	  "location": "忘却之塔",
-	  "one_shot": false,
-	  "priority": 90,
-	  "layers": [
-		{
-		  "level": "shallow",
-		  "name": "相同的符文",
-		  "locks": [],
-		  "effects": [
-			{ "type": "message", "text": "你抬头望向塔身——上面刻满了密密麻麻的符文。这些符号和神殿墙壁上的图案一模一样。", "position": "top", "auto_hide": 4 },
-			{ "type": "message", "text": "塔和神殿之间有什么联系？这座塔似乎比神殿更古老。", "position": "middle", "auto_hide": 4 },
-			{ "type": "set_flag", "flag": "event:tower-memory:shallow_seen" }
-		  ]
-		},
-		{
-		  "level": "middle",
-		  "name": "古老的守护者",
-		  "one_shot": true,
-		  "locks": ["companion"],
-		  "conditions": { "min_cycle": 2, "flag_set": "event:tower-memory:shallow_seen" },
-		  "effects": [
-			{ "type": "message", "text": "你踏上塔的阶梯。每走一步，空气中的魔力就浓重一分。在你接近塔顶时，一道光纹浮现——一个由符文构成的守卫拦住了去路。", "position": "top", "auto_hide": 5 },
-			{ "type": "message", "text": "它不是敌人。它在等待——等待能读懂符文的人。", "position": "middle", "auto_hide": 4 },
-			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
-			{ "type": "set_flag", "flag": "event:tower-memory:middle_done" },
-			{ "type": "status", "text": "[color=yellow]击败了符文守卫。塔顶的路开放了。[/color]" }
-		  ]
-		},
-		{
-		  "level": "deep",
-		  "name": "星图的秘密",
-		  "one_shot": true,
-		  "locks": ["fragment", "prerequisite"],
-		  "conditions": {
-			"min_cycle": 3,
-			"flag_set": "event:tower-memory:middle_done",
-			"companion_in_party": "阿斯特",
-			"min_favor": { "companion": "阿斯特", "value": 30 }
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "阿斯特", "text": "这张星图...天哪，我看明白了。神殿不是起点——神殿是终点。所有的路都通向神殿，因为神殿是旧世界最后建造的东西。", "position": "center" },
-			{ "type": "message", "text": "塔顶的穹顶上绘制着完整的星图。阿斯特指着其中一颗星——那是神殿的位置。所有符文路线都汇聚于一点。", "position": "middle", "auto_hide": 5 },
-			{ "type": "message", "text": "神殿不是起源，是旧人类留给未来的最后一个信标。他们把所有知识都封存在那里，等待能破解循环的人。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:tower-memory:deep_done" },
-			{ "type": "set_account_flag", "flag": "lore:shrine_is_endpoint" },
-			{ "type": "status", "text": "[color=green]阿斯特解读了星图——神殿是终点，不是起点。[/color]" }
-		  ]
-		}
-	  ]
-	},
-
-	{
-	  "id": "spring-healing",
-	  "name": "圣泉的赐福",
-	  "category": "world",
-	  "location": "圣泉",
-	  "one_shot": false,
-	  "priority": 90,
-	  "layers": [
-		{
-		  "level": "shallow",
-		  "name": "治愈之水",
-		  "locks": [],
-		  "effects": [
-			{ "type": "message", "text": "圣泉的水泛着柔和的银光。你将手伸入水中——温暖的能量从指尖蔓延到全身。", "position": "top", "auto_hide": 4 },
-			{ "type": "message", "text": "伤口愈合了，疲惫消散了。这片泉水蕴含着古老的净化之力。", "position": "middle", "auto_hide": 4 },
-			{ "type": "heal_player" },
-			{ "type": "status", "text": "[color=green]圣泉治愈了你所有的伤势。[/color]" },
-			{ "type": "set_flag", "flag": "event:spring-healing:shallow_seen" }
-		  ]
-		},
-		{
-		  "level": "middle",
-		  "name": "泉水的记忆",
-		  "one_shot": true,
-		  "locks": ["companion"],
-		  "conditions": {
-			"min_cycle": 2,
-			"flag_set": "event:spring-healing:shallow_seen",
-			"companion_in_party": "塞拉菲娜"
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "塞拉菲娜", "text": "这泉水比你想的更古老。它记得每一个来过这里的人——包括来过很多次的你。", "position": "center", "entry": "fade_in" },
-			{ "type": "message", "text": "塞拉菲娜轻轻触碰水面。涟漪中浮现出模糊的面孔——你认出了自己，但穿着不同的衣服，带着不同的表情。", "position": "middle", "auto_hide": 5 },
-			{ "type": "message", "text": "那是过去的你。每一次循环，你都来过这眼泉水。有些循环里你独自一人，有些循环里有人陪着你。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_flag", "flag": "event:spring-healing:middle_done" },
-			{ "type": "status", "text": "[color=yellow]圣泉映出了你过去的循环...[/color]" }
-		  ]
-		}
-	  ]
-	},
-
-	{
-	  "id": "forest_spirits",
-	  "name": "林间微光",
-	  "category": "minor_conditional",
-	  "location": "林地边缘",
-	  "priority": 40,
-	  "conditions": { "random": 0.15 },
-	  "effects": [
-		{ "type": "message", "text": "树丛间浮动着点点微光，像萤火虫但更安静。它们绕着你转了一圈，然后消散在夜色里。", "position": "top", "auto_hide": 3 }
-	  ]
-	},
-
-	{
-	  "id": "fallen_traveler",
-	  "name": "倒下的旅人",
-	  "category": "minor_conditional",
-	  "location": "林地边缘",
-	  "priority": 40,
-	  "conditions": { "random": 0.10 },
-	  "effects": [
-		{ "type": "message", "text": "路边躺着一个破旧的背包，旁边散落着几页笔记。纸张已经被雨水浸透，字迹模糊难辨。背包的主人已经不在了。", "position": "top", "auto_hide": 4 }
-	  ]
-	},
-
-	{
-	  "id": "wild_herbs",
-	  "name": "野生药草",
-	  "category": "minor_conditional",
-	  "location": "林地边缘",
-	  "priority": 45,
-	  "conditions": { "random": 0.20 },
-	  "effects": [
-		{ "type": "message", "text": "一片野生的药草丛在树荫下静静生长。银叶草、月光菇、还有几种你叫不出名字的草药。大自然的药房总是慷慨。", "position": "top", "auto_hide": 3 }
-	  ]
-	},
-
-	{
-	  "id": "mine_collapse_rumble",
-	  "name": "矿道塌陷",
-	  "category": "minor_conditional",
-	  "location": "废矿入口",
-	  "priority": 40,
-	  "conditions": { "random": 0.12 },
-	  "effects": [
-		{ "type": "message", "text": "脚下的地面突然一震——远处传来矿道塌陷的闷响。废弃的矿道正在慢慢崩塌，迟早会彻底封闭。", "position": "bottom", "auto_hide": 3 }
-	  ]
-	},
-
-	{
-	  "id": "old_equipment",
-	  "name": "废弃的工具",
-	  "category": "minor_conditional",
-	  "location": "废矿入口",
-	  "priority": 40,
-	  "conditions": { "random": 0.15 },
-	  "effects": [
-		{ "type": "message", "text": "角落的碎石堆里露出一把锈迹斑斑的矿镐。握柄上刻着名字——磨损太严重了，只能看出一个「林」字。", "position": "top", "auto_hide": 3 }
-	  ]
-	},
-
-	{
-	  "id": "miners_ghost",
-	  "name": "矿工的残影",
-	  "category": "minor_conditional",
-	  "location": "废矿入口",
-	  "priority": 40,
-	  "conditions": { "random": 0.08 },
-	  "effects": [
-		{ "type": "message", "text": "矿道深处，你隐约听到了敲击声——像是有人在用镐头凿石头。但声音来自一条已经被封死的旧矿道。", "position": "top", "auto_hide": 4 },
-		{ "type": "message", "text": "矿工的执念还留在这里。他们知道自己死在矿下了吗？", "position": "bottom", "auto_hide": 4 }
-	  ]
-	},
-
-	{
-	  "id": "cliff_eagle",
-	  "name": "崖顶之鹰",
-	  "category": "minor_conditional",
-	  "location": "断崖台地",
-	  "priority": 40,
-	  "conditions": { "random": 0.15 },
-	  "effects": [
-		{ "type": "message", "text": "一只巨大的山鹰从崖壁上一跃而起，翅展足有三米宽。它在断崖上空盘旋了一圈，然后向远方的山脉飞去。", "position": "top", "auto_hide": 3 }
-	  ]
-	},
-
-	{
-	  "id": "distant_storm",
-	  "name": "远方的风暴",
-	  "category": "minor_conditional",
-	  "location": "断崖台地",
-	  "priority": 35,
-	  "conditions": { "random": 0.12 },
-	  "effects": [
-		{ "type": "message", "text": "站在崖边，你看到了远方地平线上凝聚的黑色云层。闪电偶尔划破天际，撕裂了昏暗的天空。那场风暴正在靠近。", "position": "top", "auto_hide": 4 }
-	  ]
-	},
-
-	{
-	  "id": "wasteland_bones",
-	  "name": "荒原遗骨",
-	  "category": "minor_conditional",
-	  "location": "荒原边缘",
-	  "priority": 40,
-	  "conditions": { "random": 0.15 },
-	  "effects": [
-		{ "type": "message", "text": "风沙吹开了一层薄土，露出半截巨大的肋骨。这不是魔种的骨头——它的结构太精细了。某种古老的生物曾经在这片荒原上漫步。", "position": "top", "auto_hide": 4 }
-	  ]
-	},
-
-	{
-	  "id": "old_road_sign",
-	  "name": "旧路标",
-	  "category": "minor_conditional",
-	  "location": "荒原边缘",
-	  "priority": 35,
-	  "conditions": { "random": 0.12 },
-	  "effects": [
-		{ "type": "message", "text": "一块倾斜的木制路标被沙土埋了大半。上面刻着模糊的字迹，依稀能辨认出「前方三十里——圣泉」。这条路曾经是朝圣者的必经之路。", "position": "top", "auto_hide": 4 }
-	  ]
-	},
-
-	{
-	  "id": "spring_whisper",
-	  "name": "泉边低语",
-	  "category": "minor_conditional",
-	  "location": "圣泉",
-	  "priority": 35,
-	  "conditions": { "random": 0.12 },
-	  "effects": [
-		{ "type": "message", "text": "泉水边缘的石头上刻着一行字，字迹已经被水冲刷得模糊了。你俯身辨认：「请记得——水记得一切。」", "position": "top", "auto_hide": 3 }
-	  ]
-	},
-
-	{
-	  "id": "tower_echo",
-	  "name": "塔中回声",
-	  "category": "minor_conditional",
-	  "location": "忘却之塔",
-	  "priority": 35,
-	  "conditions": { "random": 0.10 },
-	  "effects": [
-		{ "type": "message", "text": "你踏进塔内，脚步声在空旷的塔心中回荡。回声传回来的时候——那不是你的脚步声。节奏变了。", "position": "top", "auto_hide": 4 },
-		{ "type": "message", "text": "这座塔在模仿你。或者说，它在记录你。每一次循环，你的脚步声都留在了这座塔里。", "position": "bottom", "auto_hide": 4 }
-	  ]
-	},
-
-	{
-	  "id": "cycle_3_intro",
-	  "name": "第三次苏醒",
-	  "category": "milestone",
-	  "location": "*",
-	  "one_shot": true,
-	  "priority": 230,
-	  "conditions": { "min_cycle": 3, "account_flag_not_set": "cycle_3_intro_done" },
-	  "effects": [
-		{ "type": "dialogue", "speaker": "引导者", "text": "第三次了...你开始记得了吗？这个世界在重复自己，但你不一样了——你带着之前的记忆回来了。", "position": "center", "entry": "fade_in" },
-		{ "type": "message", "text": "模糊的碎片在你脑海中闪烁：一条你没走过的路，一个你还没见过的人，一句你好像听过的话。", "position": "middle", "auto_hide": 5 },
-		{ "type": "set_account_flag", "flag": "cycle_3_intro_done" },
-		{ "type": "status", "text": "[color=yellow]你开始记得了...这个世界并非第一次见到你。[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "cycle_5_dragon",
-	  "name": "巨龙的完全苏醒",
-	  "category": "milestone",
-	  "location": "*",
-	  "one_shot": false,
-	  "priority": 220,
-	  "layers": [
-		{
-		  "level": "shallow",
-		  "name": "世界的震颤",
-		  "locks": [],
-		  "conditions": { "min_cycle": 5, "account_flag_not_set": "cycle_5_dragon:shallow_done" },
-		  "effects": [
-			{ "type": "message", "text": "大地在颤抖——不是地震，而是某种庞然大物的心跳。空气变得粘稠，每一次呼吸都带着远古魔力的焦灼。", "position": "top", "auto_hide": 5 },
-			{ "type": "message", "text": "巨龙完全苏醒了。不是之前那种半梦半醒的威胁——这一次，它是清醒的，而且它在寻找什么。", "position": "middle", "auto_hide": 5 },
-			{ "type": "set_account_flag", "flag": "cycle_5_dragon:shallow_done" },
-			{ "type": "status", "text": "[color=orange]巨龙完全苏醒——世界感到了它的存在。[/color]" }
-		  ]
-		},
-		{
-		  "level": "middle",
-		  "name": "龙的低语",
-		  "one_shot": true,
-		  "locks": ["companion"],
-		  "conditions": {
-			"min_cycle": 5,
-			"account_flag_set": "cycle_5_dragon:shallow_done",
-			"companion_in_party": "艾薇",
-			"min_favor": { "companion": "艾薇", "value": 50 }
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "艾薇", "text": "停下——你听到了吗？龙在说话。不是咆哮...是语言。它在用古老的语言重复同一个词。", "position": "center", "expression": "worried", "effect": "shake" },
-			{ "type": "message", "text": "那个词穿过空间直接烙进你的意识里。你听不懂龙语，但你知道它的意思：「回来。」", "position": "middle", "auto_hide": 5 },
-			{ "type": "combat", "enemy": "res://scenes/characters/base_mob.tscn" },
-			{ "type": "set_account_flag", "flag": "cycle_5_dragon:middle_done" },
-			{ "type": "status", "text": "[color=orange]击退了巨龙的一波攻击。但它在呼唤什么？[/color]" }
-		  ]
-		},
-		{
-		  "level": "deep",
-		  "name": "龙的真相",
-		  "one_shot": true,
-		  "locks": ["fragment", "prerequisite"],
-		  "conditions": {
-			"min_cycle": 7,
-			"account_flag_set": "cycle_5_dragon:middle_done",
-			"companion_in_party": "艾薇",
-			"min_favor": { "companion": "艾薇", "value": 70 },
-			"account_flag_set": "lore:mana_particles_truth"
-		  },
-		  "effects": [
-			{ "type": "dialogue", "speaker": "艾薇", "text": "我明白了...龙不是在攻击我们。它在求我们。", "position": "center" },
-			{ "type": "message", "text": "巨龙的全貌展现在你面前。它不是一个怪物——它是旧时代所有痛苦和悔恨的集合体。魔粒的暴走制造了它，而现在它想被释放。", "position": "middle", "auto_hide": 6 },
-			{ "type": "message", "text": "它在循环中一次又一次被杀死，一次又一次重生。它不是在循环——它是被困在了循环里，和你一样。", "position": "middle", "auto_hide": 6 },
-			{ "type": "set_account_flag", "flag": "cycle_5_dragon:deep_done" },
-			{ "type": "set_account_flag", "flag": "lore:dragon_truth" },
-			{ "type": "status", "text": "[color=green]你理解了巨龙的真相。它和你一样，是这个循环的囚徒。[/color]" }
-		  ]
-		}
-	  ]
-	},
-
-	{
-	  "id": "fragment_threshold_5",
-	  "name": "碎片的共鸣",
-	  "category": "milestone",
-	  "location": "*",
-	  "one_shot": true,
-	  "priority": 210,
-	  "conditions": { "account_flag_set": "fragment_milestone_5_reached", "account_flag_not_set": "fragment_threshold_5_done" },
-	  "effects": [
-		{ "type": "message", "text": "你收集的记忆碎片开始发出微弱的共鸣。它们在你的背包里轻轻振动，像是一群想说话的声音。", "position": "top", "auto_hide": 4 },
-		{ "type": "message", "text": "五个碎片——来自不同地方、不同时代。但它们指向同一个方向：神殿。", "position": "middle", "auto_hide": 4 },
-		{ "type": "set_account_flag", "flag": "fragment_threshold_5_done" },
-		{ "type": "status", "text": "[color=cyan]碎片开始共振...它们都指向神殿。[/color]" }
-	  ]
-	},
-
-	{
-	  "id": "fragment_threshold_10",
-	  "name": "记忆的拼图",
-	  "category": "milestone",
-	  "location": "*",
-	  "one_shot": true,
-	  "priority": 210,
-	  "conditions": { "account_flag_set": "fragment_milestone_10_reached", "account_flag_not_set": "fragment_threshold_10_done" },
-	  "effects": [
-		{ "type": "message", "text": "十个碎片。它们拼出的图案越来越清晰了。你看到了完整的历史——旧人类的崛起、魔粒的发现、以及那场改变一切的决断。", "position": "top", "auto_hide": 5 },
-		{ "type": "message", "text": "神殿的位置已经明确了。旧人类在那里留下了打破循环的方法。但碎片还缺了一块——最重要的一块。", "position": "middle", "auto_hide": 5 },
-		{ "type": "set_account_flag", "flag": "fragment_threshold_10_done" },
-		{ "type": "status", "text": "[color=cyan]十枚碎片拼出了旧世界的轮廓。神殿的方法就在其中——但还有最关键的一块缺失。[/color]" }
-	  ]
-	}
-  ]
+	]
 }

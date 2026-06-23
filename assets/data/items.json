@@ -7,6 +7,9 @@
 		{ "id": "severe_heal",   "name": "重伤药",     "description": "恢复10点重伤。",           "type": "consumable", "rarity": 3, "effect": "heal_severe:10" },
 		{ "id": "fragment_elixir","name": "记忆露",    "description": "使用后获得一个记忆碎片。", "type": "consumable", "rarity": 5, "effect": "grant_fragment:1" },
 		{ "id": "campfire_kit",  "name": "篝火套件",   "description": "可以在任意安全地点扎营。", "type": "consumable", "rarity": 3, "effect": "allow_camp" },
+		{ "id": "spring_water",  "name": "圣泉水",     "description": "蕴含净化之力的泉水，恢复全部擦伤。", "type": "consumable", "rarity": 3, "effect": "heal_bruise:999" },
+		{ "id": "antidote_herb", "name": "解毒草",     "description": "清除中毒状态。",           "type": "consumable", "rarity": 2, "effect": "remove_poison" },
+		{ "id": "power_elixir",  "name": "力量药剂",   "description": "恢复20点精力。",           "type": "consumable", "rarity": 2, "effect": "restore_energy:20" },
 
 		{ "id": "iron_sword",    "name": "铁剑",       "description": "力量 +2",                 "type": "equipment", "rarity": 1, "slot": "weapon",    "modifiers": { "power": 2 } },
 		{ "id": "spirit_staff",  "name": "灵杖",       "description": "心 +3",                   "type": "equipment", "rarity": 2, "slot": "weapon",    "modifiers": { "heart": 3 } },
@@ -15,6 +18,9 @@
 		{ "id": "shadow_dagger", "name": "影匕",       "description": "敏+3 暴击+3，刃薄如蝉翼", "type": "equipment", "rarity": 2, "slot": "weapon",    "modifiers": { "agility": 3, "crit_rate": 3 } },
 		{ "id": "star_bow",      "name": "星弓",       "description": "心+2 运+2，弓弦由星光编织", "type": "equipment", "rarity": 2, "slot": "weapon",  "modifiers": { "heart": 2, "fortune": 2 } },
 		{ "id": "holy_staff",    "name": "圣杖",       "description": "心+4，杖头镶嵌净化水晶",   "type": "equipment", "rarity": 3, "slot": "weapon",    "modifiers": { "heart": 4 } },
+		{ "id": "dragon_fang_blade","name": "龙牙刃",  "description": "力+4 暴击+10。由龙牙锻造的利刃。",  "type": "equipment", "rarity": 4, "slot": "weapon",    "modifiers": { "power": 4, "crit_rate": 10 } },
+		{ "id": "ancient_sword", "name": "古剑",       "description": "力+3 运+2。锈迹下藏着旧时代的锋芒。", "type": "equipment", "rarity": 3, "slot": "weapon",    "modifiers": { "power": 3, "fortune": 2 } },
+		{ "id": "hunter_knife",  "name": "猎刀",       "description": "敏+2 运+1。轻便的猎刀，适合野外生存。", "type": "equipment", "rarity": 2, "slot": "weapon",    "modifiers": { "agility": 2, "fortune": 1 } },
 
 		{ "id": "leather_armor", "name": "皮甲",       "description": "体 +2",                   "type": "equipment", "rarity": 1, "slot": "armor",     "modifiers": { "body": 2 } },
 		{ "id": "silver_mail",   "name": "银铠",       "description": "体 +2，物理减伤 +2",      "type": "equipment", "rarity": 2, "slot": "armor",     "modifiers": { "body": 2, "def_flat": 2 } },
@@ -22,6 +28,8 @@
 		{ "id": "ice_mail",      "name": "冰铠",       "description": "体+3 敏+1，锻造时注入了冰元素", "type": "equipment", "rarity": 2, "slot": "armor", "modifiers": { "body": 3, "agility": 1 } },
 		{ "id": "witch_robe",    "name": "魔女袍",     "description": "心+2 闪避+5，布料轻盈如无物", "type": "equipment", "rarity": 2, "slot": "armor", "modifiers": { "heart": 2, "dodge": 5 } },
 		{ "id": "heavy_plate",   "name": "重甲",       "description": "体+4 速度-2，旧时代的军用装备", "type": "equipment", "rarity": 3, "slot": "armor", "modifiers": { "body": 4, "speed": -2 } },
+		{ "id": "dragon_scale",  "name": "龙鳞甲",     "description": "体+5 速-1。龙鳞制成的重甲，防御力极高但沉重。", "type": "equipment", "rarity": 4, "slot": "armor",     "modifiers": { "body": 5, "speed": -1 } },
+		{ "id": "hermit_robe",   "name": "隐者袍",     "description": "心+3 闪避+8。隐世之人留下的轻便长袍。",  "type": "equipment", "rarity": 2, "slot": "armor",     "modifiers": { "heart": 3, "dodge": 8 } },
 
 		{ "id": "lucky_charm",   "name": "幸运符",     "description": "运 +3",                   "type": "equipment", "rarity": 1, "slot": "accessory", "modifiers": { "fortune": 3 } },
 		{ "id": "energy_ring",   "name": "精力戒指",   "description": "精力上限 +10",            "type": "equipment", "rarity": 2, "slot": "accessory", "modifiers": { "energy_max": 10 } },
@@ -30,6 +38,10 @@
 		{ "id": "wind_cloak",    "name": "风衣",       "description": "闪避+10，披上后身轻如风",  "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "dodge": 10 } },
 		{ "id": "phoenix_feather","name": "凤凰羽",    "description": "心+2，死亡时自动复活一次", "type": "equipment", "rarity": 4, "slot": "accessory", "modifiers": { "heart": 2, "auto_revive": 1 } },
 		{ "id": "shadow_eye",    "name": "暗瞳",       "description": "暴击+10，佩戴后能看见弱点", "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "crit_rate": 10 } },
-		{ "id": "traveler_belt", "name": "旅人带",     "description": "速+2，一条磨损的旧皮带",   "type": "equipment", "rarity": 1, "slot": "accessory", "modifiers": { "speed": 2 } }
+		{ "id": "traveler_belt", "name": "旅人带",     "description": "速+2，一条磨损的旧皮带",   "type": "equipment", "rarity": 1, "slot": "accessory", "modifiers": { "speed": 2 } },
+		{ "id": "star_chart",    "name": "星图",       "description": "心+2 运+3。阿斯特绘制的星位图，标注了神殿的位置。", "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "heart": 2, "fortune": 3 } },
+		{ "id": "resonance_stone","name": "共鸣石",    "description": "心+2 运+2。能与魔粒产生微弱共鸣的晶石。",   "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "heart": 2, "fortune": 2 } },
+		{ "id": "time_hourglass","name": "时光沙漏",   "description": "速+3 闪避+5。沙粒倒流时，时间似乎也变慢了。", "type": "equipment", "rarity": 3, "slot": "accessory", "modifiers": { "speed": 3, "dodge": 5 } },
+		{ "id": "unyielding_badge","name": "不屈之证", "description": "体+3，死亡时自动复活一次。",                  "type": "equipment", "rarity": 4, "slot": "accessory", "modifiers": { "body": 3, "auto_revive": 1 } }
 	]
 }

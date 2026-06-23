@@ -1,47 +1,227 @@
 {
-  "events": [
-    {
-      "id": "battle_start_test",
-      "trigger": { "type": "on_battle_start" },
-      "effects": [
-        { "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#ffcc44]战斗事件系统已加载。[/color][/b]" }
-      ],
-      "once": true
-    },
-    {
-      "id": "ivy_heal_boost",
-      "trigger": { "type": "on_skill_used", "source": "艾薇", "skill": "ivy_heal" },
-      "conditions": [
-        { "type": "favor_above", "target": "艾薇", "value": 10 },
-        { "type": "hp_below", "target": "player", "value": 0.4 }
-      ],
-      "effects": [
-        { "type": "show_dialogue", "speaker": "艾薇", "text": "[b]因为是你……我还能再努力一次！[/b]" },
-        { "type": "force_action", "actor": "艾薇", "skill_id": "ivy_heal", "target": "player" }
-      ],
-      "once": true
-    },
-    {
-      "id": "tianyi_crit_boost",
-      "trigger": { "type": "on_damage_dealt", "source": "天一", "min": 20 },
-      "effects": [
-        { "type": "show_dialogue", "speaker": "天一", "text": "[b]哼，不过如此！[/b]" },
-        { "type": "log_event", "text": "天一的剑气划破了空气" }
-      ],
-      "once": false
-    },
-    {
-      "id": "enemy_reinforce",
-      "trigger": { "type": "on_enemy_defeated" },
-      "conditions": [
-        { "type": "enemy_count", "value": 1, "op": "lte" },
-        { "type": "round", "value": 3, "op": "gte" }
-      ],
-      "effects": [
-        { "type": "show_dialogue", "speaker": "系统", "text": "[b][color=red]黑暗中涌出更多魔种！[/color][/b]" },
-        { "type": "add_enemy", "enemy_id": "base_mob", "count": 2 }
-      ],
-      "once": true
-    }
-  ]
+	"events": [
+		{
+			"id": "battle_start_test",
+			"trigger": { "type": "on_battle_start" },
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#ffcc44]战斗事件系统已加载。[/color][/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "ivy_heal_boost",
+			"trigger": { "type": "on_skill_used", "source": "艾薇", "skill": "ivy_heal" },
+			"conditions": [
+				{ "type": "favor_above", "target": "艾薇", "value": 10 },
+				{ "type": "hp_below", "target": "player", "value": 0.4 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "艾薇", "text": "[b]因为是你……我还能再努力一次！[/b]" },
+				{ "type": "force_action", "actor": "艾薇", "skill_id": "ivy_heal", "target": "player" }
+			],
+			"once": true
+		},
+		{
+			"id": "tianyi_crit_boost",
+			"trigger": { "type": "on_damage_dealt", "source": "天一", "min": 20 },
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "天一", "text": "[b]哼，不过如此！[/b]" },
+				{ "type": "log_event", "text": "天一的剑气划破了空气" }
+			],
+			"once": false
+		},
+		{
+			"id": "enemy_reinforce",
+			"trigger": { "type": "on_enemy_defeated" },
+			"conditions": [
+				{ "type": "enemy_count", "value": 1, "op": "lte" },
+				{ "type": "round", "value": 3, "op": "gte" }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=red]黑暗中涌出更多魔种！[/color][/b]" },
+				{ "type": "add_enemy", "enemy_id": "base_mob", "count": 2 }
+			],
+			"once": true
+		},
+		{
+			"id": "ivy_cleanse_boost",
+			"trigger": { "type": "on_skill_used", "source": "艾薇", "skill": "ivy_cleanse" },
+			"conditions": [
+				{ "type": "favor_above", "target": "艾薇", "value": 15 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "艾薇", "text": "[b]这次净化比以往更强...因为我比以往更相信你！[/b]" },
+				{ "type": "log_event", "text": "艾薇的净化之力增强了" }
+			],
+			"once": false
+		},
+		{
+			"id": "tianyi_grow_reaction",
+			"trigger": { "type": "on_skill_used", "source": "天一", "skill": "tianyi_grow" },
+			"conditions": [
+				{ "type": "hp_below", "target": "天一", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "天一", "text": "[b]这点伤...不算什么。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "serafina_judgment_crit",
+			"trigger": { "type": "on_damage_dealt", "source": "塞拉菲娜", "min": 25 },
+			"conditions": [
+				{ "type": "favor_above", "target": "塞拉菲娜", "value": 15 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "塞拉菲娜", "text": "[b]光会穿透一切黑暗。[/b]" },
+				{ "type": "log_event", "text": "塞拉菲娜的审判撕裂了战场" }
+			],
+			"once": false
+		},
+		{
+			"id": "mafuyu_blizzard_fury",
+			"trigger": { "type": "on_skill_used", "source": "真冬", "skill": "mafuyu_blizzard" },
+			"conditions": [
+				{ "type": "enemy_count", "value": 3, "op": "gte" }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "真冬", "text": "[b]冻住你们全部。[/b]" },
+				{ "type": "log_event", "text": "暴风雪席卷了战场" }
+			],
+			"once": false
+		},
+		{
+			"id": "aster_star_guide_boost",
+			"trigger": { "type": "on_skill_used", "source": "阿斯特", "skill": "aster_star_guide" },
+			"conditions": [
+				{ "type": "round", "value": 3, "op": "gte" }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "阿斯特", "text": "[b]星辰回应了我们——继续！[/b]" },
+				{ "type": "log_event", "text": "星导的力量增强了" }
+			],
+			"once": true
+		},
+		{
+			"id": "sei_shadow_flank",
+			"trigger": { "type": "on_damage_dealt", "source": "静", "skill": "sei_shadow_strike", "min": 30 },
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "静", "text": "[b]你根本没看到我。[/b]" },
+				{ "type": "log_event", "text": "静的影袭击中了要害" }
+			],
+			"once": false
+		},
+		{
+			"id": "ivy_low_hp",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "hp_below", "target": "艾薇", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "艾薇", "text": "[b]我还不能倒下...还有人需要我。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "tianyi_low_hp",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "hp_below", "target": "天一", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "天一", "text": "[b]剑还在手中。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "serafina_low_hp",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "hp_below", "target": "塞拉菲娜", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "塞拉菲娜", "text": "[b]双影在呼唤我...但不是现在。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "mafuyu_low_hp",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "hp_below", "target": "真冬", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "真冬", "text": "[b]不靠加护...我靠意志。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "aster_low_hp",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "hp_below", "target": "阿斯特", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "阿斯特", "text": "[b]星图还没有画完...我不能在这里停下。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "sei_low_hp",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "hp_below", "target": "静", "value": 0.3 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "静", "text": "[b]六年荒野...这点伤不算什么。[/b]" }
+			],
+			"once": true
+		},
+		{
+			"id": "battle_victory",
+			"trigger": { "type": "on_enemy_defeated" },
+			"conditions": [
+				{ "type": "enemy_count", "value": 0, "op": "eq" }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#88cc88]战斗胜利。[/color][/b]" },
+				{ "type": "log_event", "text": "所有敌人被击败" }
+			],
+			"once": false
+		},
+		{
+			"id": "boss_encounter",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#ff6644]空气中弥漫着远古的压迫感...[/color][/b]" },
+				{ "type": "log_event", "text": "强敌出现" }
+			],
+			"once": true
+		},
+		{
+			"id": "ancient_guardian_awaken",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#aaaacc]符文守卫睁开了眼睛——它已经等了一千年。[/color][/b]" },
+				{ "type": "log_event", "text": "古代守卫苏醒" }
+			],
+			"once": true
+		},
+		{
+			"id": "ivy_tianyi_combo",
+			"trigger": { "type": "on_battle_start" },
+			"conditions": [
+				{ "type": "favor_above", "target": "艾薇", "value": 15 },
+				{ "type": "favor_above", "target": "天一", "value": 15 }
+			],
+			"effects": [
+				{ "type": "show_dialogue", "speaker": "艾薇", "text": "[b]天一，和上次一样。[/b]" },
+				{ "type": "show_dialogue", "speaker": "天一", "text": "[b]嗯。[/b]" },
+				{ "type": "log_event", "text": "艾薇和天一交换了一个默契的眼神" }
+			],
+			"once": false
+		}
+	]
 }
