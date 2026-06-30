@@ -43,23 +43,17 @@ public partial class WorldMap3D : Node3D
 	// ── Enemy ──
 	[Export] public int EnemyDotCount = 3;
 
-	// ── Data paths ──
-	public const string MapNodesDataPath = "res://assets/data/map_nodes.json";
-
-	// ── Zone data (loaded from map_nodes.json at runtime) ──
-	List<string> _zoneNames = new();
-	List<Vector3> _zonePoses = new();
-	List<int[]> _zoneConnections = new();
-	bool _zoneDataLoaded;
+	// ── WorldData-driven architecture ──
+	WorldData _worldData;
+	ChunkManager _chunkManager;
+	List<RegionNode> _regionNodes = new();
 
 	// ── Runtime state ──
 	Player3D _player;
 	Camera3D _camera;
 	int _currentZone = -1;
 	bool _combatPending;
-	bool _started;
 	Node3D _cameraPivot;
-	ITerrainProvider _terrain;
 
 	// Camera control
 	float _cameraYaw;    // horizontal rotation around world center
@@ -73,119 +67,58 @@ public partial class WorldMap3D : Node3D
 	float _savedCamDistance;
 	float _savedCamYaw;
 
-	// ═══════════════════════════════════════════════════════════════
-	//  Zone data loading — reads map_nodes.json at runtime
-	// ═══════════════════════════════════════════════════════════════
-
-	bool LoadZoneData()
-	{
-		var file = FileAccess.Open(MapNodesDataPath, FileAccess.ModeFlags.Read);
-		if (file == null) return false;
-
-		try
-		{
-			var dict = Json.ParseString(file.GetAsText()).AsGodotDictionary();
-			var arr = dict["nodes"].AsGodotArray();
-			for (int i = 0; i < arr.Count; i++)
-			{
-				var d = arr[i].AsGodotDictionary();
-				_zoneNames.Add(d["name"].AsString());
-
-				var pos3d = d["pos_3d"].AsGodotDictionary();
-				float x = (float)pos3d["x"].AsDouble();
-				float z = (float)pos3d["z"].AsDouble();
-				_zonePoses.Add(new Vector3(x, 0, z));
-
-				var conns = d["connections"].AsGodotArray();
-				var arr2 = new int[conns.Count];
-				for (int j = 0; j < conns.Count; j++)
-					arr2[j] = (int)conns[j].AsDouble();
-				_zoneConnections.Add(arr2);
-			}
-			_zoneDataLoaded = true;
-			return true;
-		}
-		catch
-		{
-			return false;
-		}
-	}
-
-	void LoadFallbackZones()
-	{
-		_zoneNames = new() { "林地边缘", "废矿入口", "断崖台地" };
-		_zonePoses = new() { new(4, 0, 12), new(10, 0, 8), new(10, 0, 3.5f) };
-		_zoneConnections = new() { new[] { 0, 1 }, new[] { 0, 1, 2 }, new[] { 1, 2 } };
-		_zoneDataLoaded = true;
-	}
-
-	StandardMaterial3D GetZoneMaterial(string zoneName)
-	{
-		var m = WorldMaterials.Instance;
-		return zoneName switch
-		{
-			"林地边缘" => m.ZoneForest,
-			"废矿入口" => m.ZoneMine,
-			"断崖台地" => m.ZoneCliff,
-			"古战场" => m.ZoneBattlefield,
-			"结晶洞穴" => m.ZoneCrystal,
-			"荒原边缘" => m.ZoneWasteland,
-			"忘却之塔" => m.ZoneTower,
-			"圣泉" => m.ZoneSpring,
-			_ => m.ZoneForest
-		};
-	}
-
-	StandardMaterial3D GetPathMaterial(int pathIndex)
-	{
-		var m = WorldMaterials.Instance;
-		return (pathIndex % 3) switch
-		{
-			0 => m.Path01,
-			1 => m.Path12,
-			_ => m.Path34
-		};
-	}
-
 	public override void _Ready()
 	{
-		if (!LoadZoneData())
-			LoadFallbackZones();
+		GD.Print("[WorldMap3D] _Ready start");
+		_worldData = GameManager.CurrentWorldData;
+		if (_worldData == null)
+		{
+			GD.PrintErr("[WorldMap3D] No WorldData! Cannot build world.");
+			BuildCamera();
+			BuildReturnButton();
+			return;
+		}
 
-		_currentZone = CycleManager.Instance.CurrentNodeIndex;
-		_terrain = new FlatTerrainProvider();
+		GD.Print($"[WorldMap3D] WorldData loaded: seed={_worldData.Seed}, regions={_worldData.Regions?.Length ?? 0}");
+		_currentZone = CycleManager.Instance.CurrentRegionIndex;
 
 		var mats = new WorldMaterials();
 		AddChild(mats);
 
+		var terrainNode = new Node3D { Name = "Terrain" };
+		AddChild(terrainNode);
+		_chunkManager = new ChunkManager { Name = "ChunkManager" };
+		AddChild(_chunkManager);
+		_chunkManager.Init(_worldData, terrainNode);
+
 		BuildParallax();
-		BuildTerrain();
-		ScatterDecorations();
-		BuildZoneTriggers();
+		GD.Print("[WorldMap3D] Parallax done");
+		BuildParticles();
+		GD.Print("[WorldMap3D] Particles done");
+		BuildRegions();
+		GD.Print("[WorldMap3D] Regions done");
 		BuildEnemyPlaceholders();
+		GD.Print("[WorldMap3D] EnemyPlaceholders done");
 		BuildShopNPC();
 		BuildCamera();
+		GD.Print("[WorldMap3D] Camera done");
 		BuildPlayer();
+		GD.Print($"[WorldMap3D] Player at {_player.GlobalPosition}");
+		_chunkManager.Player = _player;
 		BuildReturnButton();
-		BuildZoneLabels();
+		GD.Print("[WorldMap3D] _Ready complete");
 	}
 
 	public override void _Process(double delta)
 	{
-		if (!_started)
-		{
-			_started = true;
-			TriggerStartZone();
-		}
-
 		UpdateCamera((float)delta);
 
 		if (!_combatPending) return;
 		if (DialogueManager.IsFullDialogueActive()) return;
 
 		_combatPending = false;
-		GameManager.Instance.GoToScene("res://scenes/combat/combat.tscn");
-		CycleManager.Instance.PendingEnemyScene = null;
+		CycleManager.Instance.LastWorldPosition = _player?.GlobalPosition ?? Vector3.Zero;
+		GameManager.Instance.GoToScene(GameManager.SceneCombat);
 		CycleManager.Instance.PendingBattleEvents = "res://assets/data/battle_events.json";
 	}
 
@@ -315,43 +248,99 @@ public partial class WorldMap3D : Node3D
 	void BuildParallax()
 	{
 		var layer = new Node3D { Name = "Parallax" };
+		var rng = new RandomNumberGenerator();
+		rng.Seed = 1234;
 
-		// Sky — huge backdrop, far behind
-		AddBillboard(layer, "Sky",
-			new Vector3(WorldWidth * 0.5f, WorldHeight * 0.3f, -12f),
-			new Vector2(30, 18),
-			WorldMaterials.Instance.Sky);
-
-		// Sun — upper right
-		AddBillboard(layer, "Sun",
-			new Vector3(15f, 10f, -11f),
-			new Vector2(1.8f, 1.8f),
-			WorldMaterials.Instance.Sun);
-
-		// Mountains — 10 triangle silhouettes spread across horizon
-		for (int i = 0; i < 10; i++)
+		// Layer 0 (z=-15): Full-screen sky gradient
+		var skyTexW = 256; var skyTexH = 128;
+		var skyTex = MakeSkyGradientTexture(skyTexW, skyTexH);
+		float skyPixelSize = Mathf.Max(WorldWidth * 2f / skyTexW, WorldHeight * 2f / skyTexH);
+		var skySprite = new Sprite3D
 		{
-			float mx = i * 2.3f + ((i * 137) % 60) * 0.01f;
-			float mh = 0.8f + ((i * 73) % 100) * 0.01f;
-			float mw = 0.8f + ((i * 53) % 60) * 0.01f;
+			Name = "SkyGradient",
+			Texture = TryLoadTexture("res://assets/texture/world/sky_gradient.png") ?? skyTex,
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = new Vector3(WorldWidth * 0.5f, WorldHeight * 0.45f, -15f),
+			PixelSize = skyPixelSize,
+			Modulate = Colors.White
+		};
+		layer.AddChild(skySprite);
 
-			var mountain = new Sprite3D
+		// Layer 1 (z=-12): Pixel-art clouds
+		int cloudCount = rng.RandiRange(3, 5);
+		for (int i = 0; i < cloudCount; i++)
+		{
+			float cx = rng.RandfRange(1f, WorldWidth - 1f);
+			float cy = rng.RandfRange(WorldHeight * 0.55f, WorldHeight * 0.85f);
+			float cs = rng.RandfRange(0.5f, 1.3f);
+			var cloudTex = MakePixelCloudTexture();
+			var cloud = new Sprite3D
 			{
-				Texture = MakeTriangleTexture((int)(mw * 200), (int)(mh * 200),
-					WorldMaterials.Instance.Mountain.AlbedoColor),
+				Name = $"Cloud_{i}",
+				Texture = TryLoadTexture("res://assets/texture/world/cloud.png") ?? cloudTex,
 				Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-				Position = new Vector3(mx, 3.5f, -6f),
-				PixelSize = 0.005f
+				Position = new Vector3(cx, cy, -12f),
+				PixelSize = 0.008f * cs,
+				Modulate = new Color(1f, 1f, 1f, 0.85f)
 			};
-			mountain.Name = $"Mountain_{i}";
-			layer.AddChild(mountain);
+			layer.AddChild(cloud);
 		}
 
-		// Dragon shadow — animated billboard
-		var dragon = AddBillboard(layer, "DragonShadow",
-			new Vector3(-5f, 5f, -5f),
-			new Vector2(3.5f, 0.5f),
-			WorldMaterials.Instance.DragonShadow);
+		// Layer 2 (z=-8): Far mountain range with snow caps
+		var farMtnTex = MakeMountainRangeTexture(256, 48,
+			new Color(0.22f, 0.27f, 0.38f),
+			new Color(0.92f, 0.93f, 0.98f), 701);
+		var farMountains = new Sprite3D
+		{
+			Name = "FarMountains",
+			Texture = TryLoadTexture("res://assets/texture/world/mountain_far.png") ?? farMtnTex,
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = new Vector3(WorldWidth * 0.5f, WorldHeight * 0.18f, -8f),
+			PixelSize = 0.009f,
+			Modulate = Colors.White
+		};
+		layer.AddChild(farMountains);
+
+		// Layer 3 (z=-5): Near mountain range — darker, slightly lower
+		var nearMtnTex = MakeMountainRangeTexture(256, 40,
+			new Color(0.15f, 0.17f, 0.25f),
+			new Color(0.78f, 0.80f, 0.88f), 149);
+		var nearMountains = new Sprite3D
+		{
+			Name = "NearMountains",
+			Texture = TryLoadTexture("res://assets/texture/world/mountain_near.png") ?? nearMtnTex,
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = new Vector3(WorldWidth * 0.5f, WorldHeight * 0.13f, -5f),
+			PixelSize = 0.009f,
+			Modulate = Colors.White
+		};
+		layer.AddChild(nearMountains);
+
+		// Sun — pixel-art sun with dithered edges, upper right
+		var sunTex = MakePixelSunTexture(32);
+		var sun = new Sprite3D
+		{
+			Name = "Sun",
+			Texture = TryLoadTexture("res://assets/texture/world/sun.png") ?? sunTex,
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = new Vector3(WorldWidth - 2.5f, WorldHeight - 1.8f, -13f),
+			PixelSize = 0.005f,
+			Modulate = Colors.White
+		};
+		layer.AddChild(sun);
+
+		// Layer 4 (z=-4): Dragon shadow — pixel-art winged silhouette
+		var dragonTex = MakeDragonSilhouetteTexture(64, 20);
+		var dragon = new Sprite3D
+		{
+			Name = "DragonShadow",
+			Texture = TryLoadTexture("res://assets/texture/world/dragon_shadow.png") ?? dragonTex,
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = new Vector3(-5f, 5f, -4f),
+			PixelSize = 0.006f,
+			Modulate = new Color(0, 0, 0, 0.35f)
+		};
+		layer.AddChild(dragon);
 		AnimateDragon(dragon);
 
 		AddChild(layer);
@@ -388,271 +377,304 @@ public partial class WorldMap3D : Node3D
 	}
 
 	// ═══════════════════════════════════════════════════════════════
-	//  Terrain — ground plane + zone plates + paths
+	//  Terrain — now driven by ChunkManager (data-driven from WorldData)
 	// ═══════════════════════════════════════════════════════════════
 
-	void BuildTerrain()
+	// ═══════════════════════════════════════════════════════════════
+	//  Region nodes — data-driven from WorldData.Regions
+	// ═══════════════════════════════════════════════════════════════
+
+	void BuildRegions()
 	{
-		var terrain = new Node3D { Name = "Terrain" };
-
-		// Grass base — large plane at Y=0
-		var grass = MakeGroundPlane("GrassBase",
-			new Vector3(WorldWidth * 0.5f, 0, WorldHeight * 0.5f),
-			new Vector2(WorldWidth, WorldHeight),
-			WorldMaterials.Instance.GrassBase);
-		terrain.AddChild(grass);
-
-		// Zone plates — one per zone from loaded data
-		for (int i = 0; i < _zoneNames.Count; i++)
+		var regionsParent = new Node3D { Name = "Regions" };
+		for (int i = 0; i < _worldData.Regions.Length; i++)
 		{
-			float zw = ZoneDefaultWidth, zh = ZoneDefaultHeight;
-			if (_zoneNames[i] == "断崖台地") { zw = 4.5f; zh = 3.0f; }
-			AddZonePlate(terrain, i, GetZoneMaterial(_zoneNames[i]), zw, zh);
-		}
-
-		// Paths between connected zones (only each pair once, j > i)
-		int pathIdx = 0;
-		for (int i = 0; i < _zoneConnections.Count; i++)
-		{
-			foreach (int j in _zoneConnections[i])
+			var rn = new RegionNode();
+			rn.Initialize(_worldData.Regions[i], i);
+			rn.CombatPending += () =>
 			{
-				if (j > i)
-				Draw3DPath(terrain, _zonePoses[i], _zonePoses[j], PathWidth,
-					GetPathMaterial(pathIdx++));
-			}
+				if (CycleManager.Instance.SkipStartEvents)
+				{
+					CycleManager.Instance.SkipStartEvents = false;
+					return;
+				}
+				_combatPending = true;
+			};
+			regionsParent.AddChild(rn);
+			_regionNodes.Add(rn);
 		}
-
-		AddChild(terrain);
-	}
-
-	MeshInstance3D MakeGroundPlane(string name, Vector3 pos, Vector2 size, Material mat)
-	{
-		var mesh = new QuadMesh { Size = size };
-		var instance = new MeshInstance3D
-		{
-			Name = name,
-			Mesh = mesh,
-			Position = pos,
-			RotationDegrees = new Vector3(-90, 0, 0),
-			MaterialOverride = mat
-		};
-		return instance;
-	}
-
-	void AddZonePlate(Node parent, int idx, Material mat, float w, float h)
-	{
-		var plate = MakeGroundPlane($"Zone_{idx}",
-			_zonePoses[idx] + new Vector3(0, 0.005f, 0),
-			new Vector2(w, h), mat);
-		parent.AddChild(plate);
-	}
-
-	void Draw3DPath(Node parent, Vector3 from, Vector3 to, float width, Material mat)
-	{
-		var dir = new Vector3(to.X - from.X, 0, to.Z - from.Z);
-		var len = dir.Length();
-		var mid = from + dir * 0.5f;
-		var angle = Mathf.Atan2(dir.X, dir.Z);
-
-		var mesh = new QuadMesh { Size = new Vector2(len, width) };
-		var instance = new MeshInstance3D
-		{
-			Name = "Path",
-			Mesh = mesh,
-			Position = mid + new Vector3(0, 0.003f, 0),
-			RotationDegrees = new Vector3(-90, Mathf.RadToDeg(angle), 0),
-			MaterialOverride = mat
-		};
-		parent.AddChild(instance);
-	}
-
-	// ═══════════════════════════════════════════════════════════════
-	//  Decorations — random Sprite3D trees/rocks/ruins
-	// ═══════════════════════════════════════════════════════════════
-
-	void ScatterDecorations()
-	{
-		var deco = new Node3D { Name = "Decorations" };
-		var rng = new RandomNumberGenerator();
-		rng.Seed = (ulong)DecorationSeed; // fixed seed → same layout every time; vary per cycle later
-
-		var mats = WorldMaterials.Instance;
-
-		// Trees — clusters near forest zone (zone 0)
-		for (int i = 0; i < TreeCount; i++)
-		{
-			float dx = (rng.Randf() - 0.3f) * 8f;
-			float dz = (rng.Randf() - 0.7f) * 8f;
-			MakeTree(deco, new Vector3(4f + dx, 0, 12f + dz), rng.RandfRange(0.6f, 1.3f), mats.DecoTree);
-		}
-
-		// Rocks — near mine zone (zone 1)
-		for (int i = 0; i < RockCount; i++)
-		{
-			float dx = (rng.Randf() - 0.5f) * 6f;
-			float dz = (rng.Randf() - 0.5f) * 6f;
-			MakeRock(deco, new Vector3(10f + dx, 0, 8f + dz), rng.RandfRange(0.3f, 0.8f), mats.DecoRock);
-		}
-
-		// Ruins — near cliff zone (zone 2)
-		for (int i = 0; i < RuinCount; i++)
-		{
-			float dx = (rng.Randf() - 0.5f) * 5f;
-			float dz = (rng.Randf() - 0.5f) * 5f;
-			MakeRuin(deco, new Vector3(10f + dx, 0, 3.5f + dz), mats.DecoRuin);
-		}
-
-		// Scattered decorations across the world
-		for (int i = 0; i < ScatterCount; i++)
-		{
-			float x = rng.RandfRange(1f, WorldWidth - 1f);
-			float z = rng.RandfRange(1f, WorldHeight - 1f);
-			float type = rng.Randf();
-			if (type < 0.5f)
-				MakeTree(deco, new Vector3(x, 0, z), rng.RandfRange(0.4f, 0.9f), mats.DecoTree);
-			else
-				MakeRock(deco, new Vector3(x, 0, z), rng.RandfRange(0.2f, 0.5f), mats.DecoRock);
-		}
-
-		AddChild(deco);
+		AddChild(regionsParent);
 	}
 
 	void MakeTree(Node parent, Vector3 pos, float scale, Material mat)
 	{
 		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : Colors.Green;
+		float rotDeg = (GD.Randi() % 20) - 10;
 
-		// Trunk — brown rectangle
-		var trunk = new Sprite3D
+		var sprite = new Sprite3D
 		{
-			Texture = MakeColorTexture(new Color(0.25f, 0.18f, 0.10f), 4, 16),
+			Texture = TryLoadTexture("res://assets/texture/world/deco_tree.png") ?? MakePixelTreeTexture(color),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.3f * scale, 0),
-			PixelSize = 0.03f * scale,
-			Modulate = new Color(0.25f, 0.18f, 0.10f)
+			Position = pos + new Vector3(0, 0.50f * scale, 0),
+			PixelSize = 0.030f * scale,
+			Modulate = Colors.White,
+			RotationDegrees = new Vector3(0, rotDeg, 0)
 		};
-		parent.AddChild(trunk);
-
-		// Canopy — green triangle
-		var canopy = new Sprite3D
-		{
-			Texture = MakeTriangleTexture(24, 18, color),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.8f * scale, 0),
-			PixelSize = 0.025f * scale,
-			Modulate = color
-		};
-		parent.AddChild(canopy);
+		parent.AddChild(sprite);
 	}
 
 	void MakeRock(Node parent, Vector3 pos, float scale, Material mat)
 	{
 		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : Colors.Gray;
-		var rock = new Sprite3D
+		int variant = (int)(GD.Randi() % 3);
+
+		var sprite = new Sprite3D
 		{
-			Texture = MakeCircleTexture(color, 24),
+			Texture = TryLoadTexture($"res://assets/texture/world/deco_rock_{variant}.png") ?? MakePixelRockTexture(color, variant),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.15f * scale, 0),
-			PixelSize = 0.025f * scale,
-			Modulate = color
+			Position = pos + new Vector3(0, 0.12f * scale, 0),
+			PixelSize = 0.030f * scale,
+			Modulate = Colors.White
 		};
-		parent.AddChild(rock);
+		parent.AddChild(sprite);
 	}
 
 	void MakeRuin(Node parent, Vector3 pos, Material mat)
 	{
 		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : new Color(0.28f, 0.24f, 0.20f);
-		var ruin = new Sprite3D
+		int variant = (int)(GD.Randi() % 2);
+
+		var sprite = new Sprite3D
 		{
-			Texture = MakeColorTexture(color, 6, 14),
+			Texture = TryLoadTexture($"res://assets/texture/world/deco_ruin_{variant}.png") ?? MakePixelRuinTexture(color, variant),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.45f, 0),
-			PixelSize = 0.06f,
-			Modulate = color
+			Position = pos + new Vector3(0, 0.42f, 0),
+			PixelSize = 0.035f,
+			Modulate = Colors.White
 		};
-		parent.AddChild(ruin);
+		parent.AddChild(sprite);
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	//  Zone triggers — Area3D + Box colliders
-	// ═══════════════════════════════════════════════════════════════
-
-	void BuildZoneTriggers()
+	void MakeBush(Node parent, Vector3 pos, float scale, Material mat)
 	{
-		var triggers = new Node3D { Name = "Triggers" };
-		for (int i = 0; i < _zonePoses.Count; i++)
+		var color = mat is StandardMaterial3D sm ? sm.AlbedoColor : Colors.Green;
+
+		var sprite = new Sprite3D
 		{
-			var area = new Area3D
-			{
-				Position = _zonePoses[i],
-				Name = _zoneNames[i]
-			};
-			var shape = new CollisionShape3D();
-			shape.Shape = new BoxShape3D { Size = new Vector3(2.6f, 1f, 2.6f) };
-			area.AddChild(shape);
-
-			int idx = i;
-			area.BodyEntered += (body) =>
-			{
-				if (body == _player && _currentZone != idx)
-					OnEnterZone(idx);
-			};
-
-			triggers.AddChild(area);
-		}
-		AddChild(triggers);
-	}
-
-	void OnEnterZone(int idx)
-	{
-		_currentZone = idx;
-		GD.Print($"[WorldMap3D] Entered: {_zoneNames[idx]}");
-		CycleManager.Instance.CurrentNodeIndex = idx;
-
-		EventManager.CheckEvents(_zoneNames[idx], CycleManager.Instance, _ => { });
-
-		if (!string.IsNullOrEmpty(CycleManager.Instance.PendingEnemyScene))
-			_combatPending = true;
-	}
-
-	void TriggerStartZone()
-	{
-		if (CycleManager.Instance.SkipStartEvents)
-		{
-			CycleManager.Instance.SkipStartEvents = false;
-			return;
-		}
-
-		int start = CycleManager.Instance.CurrentNodeIndex;
-		GD.Print($"[WorldMap3D] Start zone: {_zoneNames[start]}");
-		EventManager.CheckEvents(_zoneNames[start], CycleManager.Instance, _ => { });
-		if (!string.IsNullOrEmpty(CycleManager.Instance.PendingEnemyScene))
-			_combatPending = true;
+			Texture = TryLoadTexture("res://assets/texture/world/deco_bush.png") ?? MakePixelBushTexture(color),
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+			Position = pos + new Vector3(0, 0.08f * scale, 0),
+			PixelSize = 0.025f * scale,
+			Modulate = Colors.White
+		};
+		parent.AddChild(sprite);
 	}
 
 	// ═══════════════════════════════════════════════════════════════
-	//  Enemy placeholders
+	//  Particles — zone-specific ambient effects
+	// ═══════════════════════════════════════════════════════════════
+
+	void BuildParticles()
+	{
+		var particlesNode = new Node3D { Name = "Particles" };
+
+		if (_worldData?.Regions?.Length > 0)
+			AddLeafParticles(particlesNode, RegionToWorldPos(_worldData.Regions[0]));
+
+		if (_worldData?.Regions?.Length > 1)
+			AddDustParticles(particlesNode, RegionToWorldPos(_worldData.Regions[1]));
+
+		if (_worldData?.Regions?.Length > 4)
+			AddSparkleParticles(particlesNode, RegionToWorldPos(_worldData.Regions[4]));
+
+		AddChild(particlesNode);
+	}
+
+	Vector3 RegionToWorldPos(RegionPlacement region)
+	{
+		return new Vector3(
+			region.TileX * WorldConstants.TileSizeMeters,
+			0,
+			region.TileY * WorldConstants.TileSizeMeters);
+	}
+
+	void AddLeafParticles(Node parent, Vector3 center)
+	{
+		var gp = new GpuParticles3D
+		{
+			Name = "LeafParticles",
+			Amount = 30,
+			Lifetime = 4.5f,
+			AmountRatio = 1.0f,
+			VisibilityAabb = new Aabb(center, new Vector3(8, 3, 8)),
+			DrawPass1 = MakeParticleQuadMesh(new Color(0.22f, 0.58f, 0.16f, 0.85f), 0.05f)
+		};
+
+		var mat = new ParticleProcessMaterial
+		{
+			EmissionShape = ParticleProcessMaterial.EmissionShapeEnum.Box,
+			EmissionBoxExtents = new Vector3(3f, 0.5f, 3f),
+			Gravity = new Vector3(0.15f, -0.45f, 0),
+			InitialVelocityMin = 0.2f,
+			InitialVelocityMax = 0.7f,
+			AngleMin = 0,
+			AngleMax = 360,
+			ScaleMin = 0.5f,
+			ScaleMax = 1.5f,
+			LifetimeRandomness = 0.35f,
+			Direction = new Vector3(0, -1, 0),
+			Spread = 50,
+			DampingMin = 0.04f,
+			DampingMax = 0.12f
+		};
+		gp.ProcessMaterial = mat;
+		gp.Position = center;
+		parent.AddChild(gp);
+	}
+
+	void AddDustParticles(Node parent, Vector3 center)
+	{
+		var gp = new GpuParticles3D
+		{
+			Name = "DustParticles",
+			Amount = 20,
+			Lifetime = 6.0f,
+			AmountRatio = 1.0f,
+			VisibilityAabb = new Aabb(center, new Vector3(6, 2, 6)),
+			DrawPass1 = MakeParticleQuadMesh(new Color(0.55f, 0.48f, 0.38f, 0.45f), 0.04f)
+		};
+
+		var mat = new ParticleProcessMaterial
+		{
+			EmissionShape = ParticleProcessMaterial.EmissionShapeEnum.Box,
+			EmissionBoxExtents = new Vector3(2f, 0.25f, 2f),
+			Gravity = Vector3.Zero,
+			InitialVelocityMin = 0.05f,
+			InitialVelocityMax = 0.20f,
+			AngleMin = 0,
+			AngleMax = 360,
+			ScaleMin = 0.6f,
+			ScaleMax = 1.4f,
+			LifetimeRandomness = 0.5f,
+			Direction = new Vector3(0, 1, 0),
+			Spread = 120,
+			DampingMin = 0.30f,
+			DampingMax = 0.50f
+		};
+		gp.ProcessMaterial = mat;
+		gp.Position = center;
+		parent.AddChild(gp);
+	}
+
+	void AddSparkleParticles(Node parent, Vector3 center)
+	{
+		var gp = new GpuParticles3D
+		{
+			Name = "SparkleParticles",
+			Amount = 15,
+			Lifetime = 1.0f,
+			AmountRatio = 1.0f,
+			VisibilityAabb = new Aabb(center, new Vector3(5, 3, 5)),
+			DrawPass1 = MakeParticleQuadMesh(new Color(0.60f, 0.85f, 1.0f, 0.90f), 0.04f)
+		};
+
+		var mat = new ParticleProcessMaterial
+		{
+			EmissionShape = ParticleProcessMaterial.EmissionShapeEnum.Sphere,
+			EmissionSphereRadius = 2f,
+			Gravity = Vector3.Zero,
+			InitialVelocityMin = 0.1f,
+			InitialVelocityMax = 0.5f,
+			AngleMin = 0,
+			AngleMax = 360,
+			ScaleMin = 0.4f,
+			ScaleMax = 1.3f,
+			LifetimeRandomness = 0.5f,
+			Direction = new Vector3(0, 1, 0),
+			Spread = 80,
+			DampingMin = 0.01f,
+			DampingMax = 0.05f
+		};
+		gp.ProcessMaterial = mat;
+		gp.Position = center;
+		parent.AddChild(gp);
+	}
+
+	static Mesh MakeParticleQuadMesh(Color color, float size)
+	{
+		var quad = new QuadMesh { Size = new Vector2(size, size) };
+		var mat = new StandardMaterial3D
+		{
+			AlbedoColor = color,
+			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			CullMode = BaseMaterial3D.CullModeEnum.Disabled
+		};
+		quad.Material = mat;
+		return quad;
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	//  Region triggers — now handled by RegionNode (Area3D + signal)
+	// ═══════════════════════════════════════════════════════════════
+
+	// ═══════════════════════════════════════════════════════════════
+	//  Enemy placeholders — data-driven from WorldData chunks
 	// ═══════════════════════════════════════════════════════════════
 
 	void BuildEnemyPlaceholders()
 	{
 		var enemies = new Node3D { Name = "Enemies" };
-		AddEnemyDot(enemies, new Vector3(6f, 0.01f, 10f));
-		AddEnemyDot(enemies, new Vector3(13f, 0.01f, 9.5f));
-		AddEnemyDot(enemies, new Vector3(9f, 0.01f, 5f));
+		if (_worldData?.Chunks == null) return;
+
+		var seen = new HashSet<string>();
+		for (int ci = 0; ci < _worldData.Chunks.Length; ci++)
+		{
+			var chunk = _worldData.Chunks[ci];
+			if (chunk?.Entities == null) continue;
+			foreach (var entity in chunk.Entities)
+			{
+				if (entity.Type != EntityType.Enemy) continue;
+				if (entity.State != 0) continue;
+
+				string key = $"{entity.Id}_{entity.TileX}_{entity.TileY}";
+				if (!seen.Add(key)) continue;
+
+				float wx = entity.TileX * WorldConstants.TileSizeMeters;
+				float wz = entity.TileY * WorldConstants.TileSizeMeters;
+				AddEnemyDot(enemies, new Vector3(wx, 0.01f, wz), entity.Id);
+			}
+		}
 		AddChild(enemies);
 	}
 
-	void AddEnemyDot(Node parent, Vector3 pos)
+	void AddEnemyDot(Node parent, Vector3 pos, string enemyId)
 	{
+		var def = EnemyState.Get(enemyId);
+		Color color = WorldMaterials.Instance.EnemyDot.AlbedoColor;
+		string name = enemyId;
+
+		if (def != null)
+		{
+			name = def.Name;
+			color = def.Category switch
+			{
+				"boss"  => new Color(0.9f, 0.2f, 0.1f),
+				"elite" => new Color(1f, 0.7f, 0.1f),
+				_       => WorldMaterials.Instance.EnemyDot.AlbedoColor,
+			};
+		}
+
 		var dot = new Sprite3D
 		{
-			Name = "EnemyDot",
-			Texture = MakeCircleTexture(WorldMaterials.Instance.EnemyDot.AlbedoColor),
+			Name = name,
+			Texture = MakeCircleTexture(color),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = pos,
 			PixelSize = 0.005f,
-			Modulate = WorldMaterials.Instance.EnemyDot.AlbedoColor
+			Modulate = color
 		};
+		dot.SetMeta("enemy_id", enemyId);
 		parent.AddChild(dot);
 	}
 
@@ -703,30 +725,34 @@ public partial class WorldMap3D : Node3D
 	void BuildPlayer()
 	{
 		_player = new Player3D { Name = "Player" };
-		_player.Position = _zonePoses[CycleManager.Instance.CurrentNodeIndex];
+		var savedPos = CycleManager.Instance.LastWorldPosition;
+		if (savedPos != Vector3.Zero)
+		{
+			_player.Position = savedPos;
+			CycleManager.Instance.LastWorldPosition = Vector3.Zero;
+		}
+		else
+		{
+			int startIdx = CycleManager.Instance.CurrentRegionIndex;
+			if (_worldData?.Regions?.Length > startIdx)
+			{
+				var region = _worldData.Regions[startIdx];
+				_player.Position = new Vector3(
+					region.TileX * WorldConstants.TileSizeMeters,
+					0,
+					region.TileY * WorldConstants.TileSizeMeters);
+			}
+			else
+			{
+				_player.Position = new Vector3(WorldWidth * 0.5f, 0, WorldHeight * 0.5f);
+			}
+		}
 		AddChild(_player);
 	}
 
 	// ═══════════════════════════════════════════════════════════════
-	//  Zone labels — Label3D billboard
+	//  Zone labels — now handled by RegionNode (Label3D billboard)
 	// ═══════════════════════════════════════════════════════════════
-
-	void BuildZoneLabels()
-	{
-		for (int i = 0; i < _zonePoses.Count; i++)
-		{
-			var label = new Label3D
-			{
-				Text = _zoneNames[i],
-				Position = _zonePoses[i] + new Vector3(0, 1.2f, 0),
-				Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-				Modulate = new Color(1, 1, 1, 0.6f),
-				FontSize = 48,
-				OutlineSize = 2
-			};
-			AddChild(label);
-		}
-	}
 
 	// ═══════════════════════════════════════════════════════════════
 	//  UI — CanvasLayer buttons (identical to 2D version)
@@ -766,6 +792,21 @@ public partial class WorldMap3D : Node3D
 	//  (Replace with real sprites/textures later)
 	// ═══════════════════════════════════════════════════════════════
 
+	static Texture2D TryLoadTexture(string path)
+	{
+		if (ResourceLoader.Exists(path))
+		{
+			try { var res = ResourceLoader.Load<Texture2D>(path); if (res != null) return res; }
+			catch { }
+		}
+		if (FileAccess.FileExists(path))
+		{
+			try { var img = Image.LoadFromFile(path); if (img != null && !img.IsEmpty()) return ImageTexture.CreateFromImage(img); }
+			catch { }
+		}
+		return null;
+	}
+
 	static ImageTexture MakeColorTexture(Color c, int w = 4, int h = 4)
 	{
 		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
@@ -801,6 +842,439 @@ public partial class WorldMap3D : Node3D
 			for (int x = left; x < right; x++)
 				img.SetPixel(x, y, c);
 		}
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	//  Pixel-art texture helpers
+	// ═══════════════════════════════════════════════════════════════
+
+	static ImageTexture MakePixelTreeTexture(Color canopyColor)
+	{
+		int w = 24, h = 32;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color trunk = new Color(0.30f, 0.20f, 0.10f);
+		Color darkGreen = new Color(canopyColor.R * 0.60f, canopyColor.G * 0.60f, canopyColor.B * 0.60f);
+		Color darkerGreen = new Color(canopyColor.R * 0.35f, canopyColor.G * 0.35f, canopyColor.B * 0.35f);
+
+		for (int y = 2; y <= 17; y++)
+		{
+			int halfW;
+			if (y <= 3) halfW = 2;
+			else if (y <= 4) halfW = 3;
+			else if (y <= 5) halfW = 4;
+			else if (y <= 6) halfW = 5;
+			else if (y <= 8) halfW = 6;
+			else if (y <= 12) halfW = 7;
+			else if (y <= 14) halfW = 6;
+			else if (y <= 15) halfW = 5;
+			else if (y <= 16) halfW = 3;
+			else halfW = 2;
+
+			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
+			{
+				if (x < 0 || x >= w) continue;
+				Color c = canopyColor;
+				int shade = (x * 7 + y * 13) % 8;
+				if (shade == 0) c = darkerGreen;
+				else if (shade == 1 || shade == 2) c = darkGreen;
+				img.SetPixel(x, y, c);
+			}
+		}
+
+		for (int y = 15; y <= 31; y++)
+		{
+			if (y >= 24)
+			{
+				img.SetPixel(10, y, trunk);
+				img.SetPixel(11, y, trunk);
+				img.SetPixel(12, y, trunk);
+			}
+			else if (y >= 18)
+			{
+				Color tc = (y % 2 == 0) ? trunk : new Color(trunk.R * 0.85f, trunk.G * 0.85f, trunk.B * 0.85f);
+				img.SetPixel(11, y, tc);
+				img.SetPixel(12, y, tc);
+			}
+			else
+			{
+				img.SetPixel(11, y, trunk);
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakePixelRockTexture(Color baseColor, int variant)
+	{
+		int w = 16, h = 16;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color highlight = new Color(
+			Mathf.Min(baseColor.R * 1.4f, 1f),
+			Mathf.Min(baseColor.G * 1.4f, 1f),
+			Mathf.Min(baseColor.B * 1.4f, 1f));
+		Color shadow = new Color(baseColor.R * 0.55f, baseColor.G * 0.55f, baseColor.B * 0.55f);
+
+		var rng = new RandomNumberGenerator();
+		rng.Seed = (ulong)(variant * 313 + baseColor.GetHashCode() & 0x7FFFFFFF);
+
+		int cx = w / 2;
+		int cy = h / 2;
+		for (int y = 3; y <= 13; y++)
+		{
+			int maxHalf = 5 - Mathf.Abs(y - cy) / 2;
+			if (variant == 1) maxHalf += (y % 3 == 0 ? 1 : 0);
+			if (variant == 2) maxHalf += (y > cy ? 0 : 1);
+
+			int left = cx - maxHalf;
+			int right = cx + maxHalf;
+			if (variant == 0) { left += (y - 3) / 4; right -= (y - 3) / 5; }
+
+			for (int x = left; x <= right; x++)
+			{
+				if (x < 0 || x >= w || y < 0 || y >= h) continue;
+				if (x == left && y < 11)
+					img.SetPixel(x, y, highlight);
+				else if (x >= right - 1 && y > 4)
+					img.SetPixel(x, y, shadow);
+				else
+				{
+					float jit = (rng.Randf() - 0.5f) * 0.15f;
+					Color c = new Color(
+						baseColor.R + jit,
+						baseColor.G + jit,
+						baseColor.B + jit);
+					img.SetPixel(x, y, c);
+				}
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakePixelRuinTexture(Color baseColor, int variant)
+	{
+		int w = 16, h = 24;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color brick = new Color(baseColor.R * 1.15f, baseColor.G * 1.15f, baseColor.B * 1.15f);
+		Color dark = new Color(baseColor.R * 0.55f, baseColor.G * 0.55f, baseColor.B * 0.55f);
+		Color moss = new Color(0.10f, 0.28f, 0.08f);
+
+		if (variant == 0)
+		{
+			for (int y = 0; y < h; y++)
+			{
+				int left = 4 + (y / 4);
+				int right = 11 - (y / 5);
+				if (y > 18) { left = 17; right = 16; }
+
+				for (int x = left; x <= right && x < w; x++)
+				{
+					Color c = baseColor;
+					if ((x + y) % 3 == 0) c = brick;
+					if ((x == left || x == right) && (y % 6 > 3)) c = dark;
+					if (y > 16 && (x + y) % 4 == 0) c = moss;
+					img.SetPixel(x, y, c);
+				}
+			}
+		}
+		else
+		{
+			for (int y = 0; y < h; y++)
+			{
+				int pillarLeft = 3 + (y / 6);
+				int pillarRight = 5;
+				int archLeft = 5;
+				int archRight = 11 - (y / 5);
+
+				for (int x = pillarLeft; x <= pillarRight && x < w; x++)
+				{
+					if (y > 17) continue;
+					Color c = baseColor;
+					if ((x + y) % 3 == 0) c = brick;
+					img.SetPixel(x, y, c);
+				}
+				for (int x = archLeft; x <= archRight && x < w; x++)
+				{
+					if (y > 17) continue;
+					Color c = baseColor;
+					if ((x + y) % 4 == 0) c = brick;
+					if (x == archRight && (y % 5 > 2)) c = dark;
+					if (y > 14 && (x + y) % 5 == 0) c = moss;
+					img.SetPixel(x, y, c);
+				}
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakePixelBushTexture(Color baseColor)
+	{
+		int w = 8, h = 8;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color darkGreen = new Color(baseColor.R * 0.55f, baseColor.G * 0.55f, baseColor.B * 0.55f);
+		Color highlight = new Color(
+			Mathf.Min(baseColor.R * 1.3f, 1f),
+			Mathf.Min(baseColor.G * 1.3f, 1f),
+			Mathf.Min(baseColor.B * 1.3f, 1f));
+
+		for (int y = 1; y <= 6; y++)
+		{
+			int halfW;
+			if (y == 1) halfW = 1;
+			else if (y == 2) halfW = 2;
+			else if (y <= 4) halfW = 3;
+			else if (y == 5) halfW = 2;
+			else halfW = 1;
+
+			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
+			{
+				if (x < 0 || x >= w) continue;
+				if ((x + y) % 3 == 0)
+					img.SetPixel(x, y, darkGreen);
+				else if (y == 3 && x == w / 2 + halfW - 1)
+					img.SetPixel(x, y, highlight);
+				else
+					img.SetPixel(x, y, baseColor);
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakeGrassTuftTexture()
+	{
+		int w = 8, h = 4;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color grass = new Color(0.16f, 0.38f, 0.10f);
+		Color bright = new Color(0.22f, 0.46f, 0.14f);
+
+		img.SetPixel(3, 0, grass);
+		img.SetPixel(3, 1, bright);
+
+		img.SetPixel(5, 0, grass);
+		img.SetPixel(5, 1, bright);
+		img.SetPixel(5, 2, grass);
+
+		img.SetPixel(1, 0, bright);
+		img.SetPixel(1, 1, grass);
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakeSkyGradientTexture(int w, int h)
+	{
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+
+		Color topColor = new Color(0.08f, 0.12f, 0.30f);
+		Color midColor = new Color(0.18f, 0.30f, 0.55f);
+		Color lowColor = new Color(0.45f, 0.62f, 0.85f);
+		Color horizonColor = new Color(0.78f, 0.88f, 0.98f);
+
+		for (int y = 0; y < h; y++)
+		{
+			float t = (float)y / h;
+			Color c;
+			if (t < 0.25f)
+				c = topColor.Lerp(midColor, t / 0.25f);
+			else if (t < 0.60f)
+				c = midColor.Lerp(lowColor, (t - 0.25f) / 0.35f);
+			else
+				c = lowColor.Lerp(horizonColor, (t - 0.60f) / 0.40f);
+
+			for (int x = 0; x < w; x++)
+			{
+				float dither = ((x + y) % 8 < 4) ? 0f : 0.02f;
+				Color px = new Color(
+					Mathf.Min(c.R + dither, 1f),
+					Mathf.Min(c.G + dither, 1f),
+					Mathf.Min(c.B + dither, 1f));
+				img.SetPixel(x, y, px);
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakePixelCloudTexture()
+	{
+		int w = 48, h = 24;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color white = new Color(1, 1, 1, 0.95f);
+		Color offWhite = new Color(0.88f, 0.90f, 0.94f, 0.78f);
+		Color edgeWhite = new Color(0.78f, 0.80f, 0.88f, 0.45f);
+
+		(int x, int y, int r)[] blobs = new (int, int, int)[]
+		{
+			(18, 12, 8), (28, 10, 9), (22, 14, 7), (32, 13, 5)
+		};
+
+		for (int y = 0; y < h; y++)
+		{
+			for (int x = 0; x < w; x++)
+			{
+				float maxOverlap = 0;
+				foreach (var (bx, by, br) in blobs)
+				{
+					float dx = x - bx;
+					float dy = y - by;
+					float dist = Mathf.Sqrt(dx * dx + dy * dy) / br;
+					float overlap = 1f - dist;
+					if (overlap > maxOverlap) maxOverlap = overlap;
+				}
+
+				if (maxOverlap > 0.72f)
+					img.SetPixel(x, y, white);
+				else if (maxOverlap > 0.40f)
+					img.SetPixel(x, y, offWhite);
+				else if (maxOverlap > 0.12f)
+					img.SetPixel(x, y, edgeWhite);
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakeMountainRangeTexture(int w, int h, Color bodyColor, Color snowColor, int seed)
+	{
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		var rng = new RandomNumberGenerator();
+		rng.Seed = (ulong)seed;
+
+		int stepSize = w / 16;
+		int[] heights = new int[w];
+		int prevH = h / 3;
+
+		for (int x = 0; x < w; x++)
+		{
+			if (x % stepSize == 0)
+				prevH = rng.RandiRange(h / 4, h);
+			heights[x] = prevH;
+		}
+
+		for (int x = 0; x < w; x++)
+		{
+			int mh = heights[x];
+			mh += (x * seed + x * x * 3) % 5 - 2;
+			mh = Mathf.Clamp(mh, 0, h);
+
+			int snowStart = mh - h / 8;
+			if (snowStart < 0) snowStart = 0;
+
+			for (int y = 0; y < mh; y++)
+			{
+				int ry = h - 1 - y;
+				if (y >= snowStart && mh > h / 2)
+					img.SetPixel(x, ry, snowColor);
+				else
+					img.SetPixel(x, ry, bodyColor);
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakePixelSunTexture(int size)
+	{
+		var img = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color sunYellow = new Color(1, 0.88f, 0.35f);
+		Color ditherYellow = new Color(1, 0.82f, 0.30f, 0.6f);
+		Color outerYellow = new Color(1, 0.75f, 0.25f, 0.30f);
+
+		float half = size * 0.5f;
+		int sunRadius = size / 2 - 2;
+
+		for (int y = 0; y < size; y++)
+		{
+			for (int x = 0; x < size; x++)
+			{
+				float dx = x - half + 0.5f;
+				float dy = y - half + 0.5f;
+				float dist = Mathf.Sqrt(dx * dx + dy * dy);
+
+				if (dist < sunRadius - 1)
+				{
+					img.SetPixel(x, y, sunYellow);
+				}
+				else if (dist < sunRadius + 1)
+				{
+					if ((x + y) % 2 == 0)
+						img.SetPixel(x, y, ditherYellow);
+				}
+				else if (dist < sunRadius + 3)
+				{
+					if ((x + y) % 3 == 0)
+						img.SetPixel(x, y, outerYellow);
+				}
+			}
+		}
+
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static ImageTexture MakeDragonSilhouetteTexture(int w, int h)
+	{
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		img.Fill(new Color(0, 0, 0, 0));
+
+		Color body = new Color(0, 0, 0, 0.5f);
+		Color wing = new Color(0, 0, 0, 0.2f);
+
+		int center = h / 2;
+		int bodyThickness = 2;
+
+		int[] wingPositions = { 8, 22, 36, 50 };
+		int[] wingSizes = { 7, 8, 7, 5 };
+
+		for (int y = 0; y < h; y++)
+		{
+			for (int x = 0; x < w; x++)
+			{
+				bool pixel = false;
+
+				if (y >= center - bodyThickness && y <= center + bodyThickness)
+					pixel = true;
+
+				for (int i = 0; i < wingPositions.Length; i++)
+				{
+					int wx = wingPositions[i];
+					int ws = wingSizes[i];
+					int dist = Mathf.Abs(x - wx);
+					if (dist < ws)
+					{
+						int wingSpan = ws - dist;
+						if (y <= center && y >= center - wingSpan * 2)
+							pixel = true;
+						if (y >= center && y <= center + wingSpan)
+							pixel = true;
+					}
+				}
+
+				if (pixel)
+				{
+					bool isBody = y >= center - bodyThickness && y <= center + bodyThickness;
+					img.SetPixel(x, y, isBody ? body : wing);
+				}
+			}
+		}
+
 		return ImageTexture.CreateFromImage(img);
 	}
 }

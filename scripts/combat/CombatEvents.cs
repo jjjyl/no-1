@@ -2,6 +2,7 @@ namespace No1.Combat;
 
 using System.Collections.Generic;
 using Godot;
+using No1.Core;
 using No1.UI;
 
 public static class CombatEvents
@@ -172,9 +173,12 @@ public static class CombatEvents
 				case "enemy_count":
 					if (!CompareOp(_ui.AliveEnemyCount(), c.Op, c.Value)) return false;
 					break;
-				case "round":
-					if (!CompareOp(ctx.Round, c.Op, c.Value)) return false;
-					break;
+			case "round":
+				if (!CompareOp(ctx.Round, c.Op, c.Value)) return false;
+				break;
+			case "pending_enemy":
+				if (CycleManager.Instance.PendingEnemyScene != c.Target) return false;
+				break;
 			}
 		}
 		return true;

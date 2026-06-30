@@ -246,9 +246,9 @@ public partial class Temple3D : Node3D
 		if (blessing == null) return;
 
 		cm.SelectBlessing(blessing.Value);
-		cm.EnterWorld();
-
 		Input.MouseMode = Input.MouseModeEnum.Visible;
-		GameManager.Instance.GoToScene(GameManager.SceneWorld);
+
+		ulong seed = 0; // 0 = random; TODO: get from SeedSelector
+		GameManager.Instance.EnterWorld(seed);
 	}
 }

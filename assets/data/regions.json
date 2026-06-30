@@ -1,0 +1,12 @@
+{
+  "regions": [
+    { "id": "forest_edge",    "name": "林地边缘", "required_biome": "Forest",    "is_anchor": true,  "avg_radius": 12, "min_cycle": 1 },
+    { "id": "abandoned_mine", "name": "废矿入口", "required_biome": "Hills",     "is_anchor": false, "avg_radius": 10, "min_cycle": 1 },
+    { "id": "cliff_plateau",  "name": "断崖台地", "required_biome": "Mountain",  "is_anchor": true,  "avg_radius": 14, "min_cycle": 1 },
+    { "id": "ancient_field",  "name": "古战场",   "required_biome": "Plains",    "is_anchor": false, "avg_radius": 16, "min_cycle": 1 },
+    { "id": "crystal_cave",   "name": "结晶洞穴", "required_biome": "Mountain",  "is_anchor": false, "avg_radius": 8,  "min_cycle": 2 },
+    { "id": "wasteland_edge", "name": "荒原边缘", "required_biome": "Desert",    "is_anchor": false, "avg_radius": 18, "min_cycle": 1 },
+    { "id": "forgotten_tower","name": "忘却之塔", "required_biome": "Hills",     "is_anchor": false, "avg_radius": 6,  "min_cycle": 3 },
+    { "id": "sacred_spring",  "name": "圣泉",     "required_biome": "Forest",    "is_anchor": false, "avg_radius": 5,  "min_cycle": 2 }
+  ]
+}

@@ -3,7 +3,7 @@ namespace No1.World;
 using Godot;
 using No1.Core;
 using No1.UI;
-
+[Obsolete("Use WorldMap3D with procedural generation. WorldMap is the legacy 2D node-based map.")]
 public partial class WorldMap : Node2D
 {
 	const float WorldW = 2000f;
@@ -50,7 +50,6 @@ public partial class WorldMap : Node2D
 
 		_combatPending = false;
 		GameManager.Instance.GoToScene("res://scenes/combat/combat.tscn");
-		CycleManager.Instance.PendingEnemyScene = null;
 		CycleManager.Instance.PendingBattleEvents = "res://assets/data/battle_events.json";
 	}
 

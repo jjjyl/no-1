@@ -202,9 +202,12 @@
 		{
 			"id": "ancient_guardian_awaken",
 			"trigger": { "type": "on_battle_start" },
-			"conditions": [],
+			"conditions": [
+				{ "type": "pending_enemy", "target": "tower_guardian" }
+			],
 			"effects": [
 				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#aaaacc]符文守卫睁开了眼睛——它已经等了一千年。[/color][/b]" },
+				{ "type": "add_enemy", "enemy_id": "tower_guardian", "count": 1 },
 				{ "type": "log_event", "text": "古代守卫苏醒" }
 			],
 			"once": true

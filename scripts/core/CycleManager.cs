@@ -10,6 +10,10 @@ public partial class CycleManager : Node
 	public BlessingType? SelectedBlessing { get; private set; }
 	public CharacterStats PlayerStats { get; private set; } = null!;
 	public int CurrentNodeIndex { get; set; }
+	public int CurrentRegionIndex { get; set; }
+	public ulong WorldSeed { get; set; }
+	public string[] OverridePaths { get; set; } = System.Array.Empty<string>();
+	public List<ulong> RecentSeeds { get; set; } = new();
 	public List<CompanionState> ActiveCompanions { get; private set; } = new();
 	public string PendingEnemyScene;
 	public string PendingBattleEvents;
@@ -17,6 +21,8 @@ public partial class CycleManager : Node
 	public int FragmentCount { get; private set; }
 	public int Money { get; set; }
 	public bool SkipStartEvents;
+	public Vector3 LastWorldPosition;
+	const int MaxRecentSeeds = 5;
 
 	HashSet<string> _flags = new();           // 轮回级
 	HashSet<string> _accountFlags = new();    // 账号级（跨轮回不重置）
@@ -26,6 +32,7 @@ public partial class CycleManager : Node
 	public override void _Ready()
 	{
 		CompanionState.LoadRegistry();
+		EnemyState.LoadRegistry();
 		EventManager.Load();
 		Instance = this;
 		LoadAccount();
@@ -72,13 +79,20 @@ public partial class CycleManager : Node
 		return Math.Max(0.1f, rate);
 	}
 
-	public void EnterWorld()
+	public void EnterWorld(ulong seed = 0, string[] overridePaths = null)
 	{
+		if (seed == 0) seed = (ulong)System.Random.Shared.NextInt64();
+		WorldSeed = seed;
+		OverridePaths = overridePaths ?? System.Array.Empty<string>();
+		RecentSeeds.Insert(0, seed);
+		if (RecentSeeds.Count > MaxRecentSeeds)
+			RecentSeeds = RecentSeeds.Distinct().Take(MaxRecentSeeds).ToList();
 		PlayerStats.FullHeal();
 		ActiveCompanions.Clear();
 		_flags.Clear();
 		EventManager.ResetCycle();
 		CurrentNodeIndex = 0;
+		CurrentRegionIndex = 0;
 	}
 
 	public void JoinCompanion(string name)
@@ -108,6 +122,12 @@ public partial class CycleManager : Node
 		SaveAccount();
 	}
 
+	public void RemoveAccountFlag(string flag)
+	{
+		_accountFlags.Remove(flag);
+		SaveAccount();
+	}
+
 	public bool HasAccountFlag(string flag) => _accountFlags.Contains(flag);
 
 	// ── 存档 ──
@@ -120,6 +140,7 @@ public partial class CycleManager : Node
 			["fragmentCount"] = FragmentCount,
 			["money"] = Money,
 			["accountFlags"] = new Godot.Collections.Array(_accountFlags.Select(s => (Variant)s).ToArray()),
+			["recentSeeds"] = new Godot.Collections.Array(RecentSeeds.Select(s => (Variant)s.ToString()).ToArray()),
 		};
 		if (PlayerInventory != null)
 			save["inventory"] = PlayerInventory.Serialize();
@@ -161,6 +182,11 @@ public partial class CycleManager : Node
 			foreach (var item in dict["accountFlags"].AsGodotArray())
 				_accountFlags.Add(item.AsString());
 
+		if (dict.ContainsKey("recentSeeds"))
+			foreach (var item in dict["recentSeeds"].AsGodotArray())
+				if (ulong.TryParse(item.AsString(), out var s))
+					RecentSeeds.Add(s);
+
 		GD.Print($"[CycleManager] Loaded: cycle={CurrentCycle}, accountFlags={_accountFlags.Count}");
 	}
 
@@ -192,6 +218,7 @@ public partial class CycleManager : Node
 	{
 		CurrentCycle++;
 		Money = 100;
+		RemoveAccountFlag("scene:world");
 		SaveAccount();
 	}
 
@@ -200,5 +227,7 @@ public partial class CycleManager : Node
 		PlayerStats.FullHeal();
 		SelectedBlessing = null;
 		_flags.Clear();
+		CurrentRegionIndex = 0;
+		RemoveAccountFlag("scene:world");
 	}
 }

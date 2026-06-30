@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://m1n03v1auvcb"]
+[gd_scene load_steps=2 format=3 uid="uid://bw74utax5s1ch"]
 
 [ext_resource type="Script" uid="uid://cgc5p6yy3usee" path="res://scripts/ui/TempleUI.cs" id="1_7wi2x"]
 
-[node name="Temple" type="Control" node_paths=PackedStringArray("_cycleLabel", "_insightBtn", "_valorBtn", "_wandererBtn", "_enterBtn", "_blessingDesc", "_inventoryGrid", "_equipDisplay", "_itemDesc", "_useItemBtn")]
+[node name="Temple" type="Control" node_paths=PackedStringArray("_cycleLabel", "_insightBtn", "_valorBtn", "_wandererBtn", "_enterBtn", "_blessingDesc")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

@@ -1,139 +1,185 @@
 # World Materials Map
 
-This document maps every material slot in `WorldMaterials.cs` to its visual role, scene location, and planned future texture. Artists use this as a reference when creating replacement textures. No code changes are needed when swapping a solid-color material for a textured one: just place the PNG in `res://assets/texture/world/` and update the material factory call.
+Last updated: 2026-06-29. This is the **single canonical reference** for all visual materials, textures, and decoration assets in the 3D world map.
 
 ---
 
-## Material Slot Table
+## Texture Override System
 
-### Ground
+Drop pixel-art PNG files into `res://assets/texture/world/` and restart. **Zero code changes.**
 
-The base terrain plane. Only one material here because the ground uses procedural noise rather than a flat color.
+Every material and decoration checks for an override file at startup. If found → loaded. If not → procedural pixel-art fallback is generated.
 
-| Slot Name    | Color (R,G,B)    | Intended Visual Role                          | Usage Location in Scene                           | Future Texture                                 |
-|-------------|------------------|-----------------------------------------------|---------------------------------------------------|------------------------------------------------|
-| GrassBase   | procedural noise | World floor terrain with organic green-brown texture | The main `Ground` mesh covering the entire map area | `res://assets/texture/world/grass_base.png`    |
+Logic in both `WorldMaterials.cs` and `WorldMap3D.cs`:
 
-### Zone Plates
-
-Flat colored plates attached to a `Zone` node. Each zone gets a distinct hue so players can tell regions apart at a glance. Hover/click highlights test against these materials.
-
-| Slot Name         | Color (R,G,B)    | Intended Visual Role                          | Usage Location in Scene                           | Future Texture                                     |
-|-------------------|------------------|-----------------------------------------------|---------------------------------------------------|----------------------------------------------------|
-| ZoneForest        | (0.14, 0.33, 0.14) | Dense forest region, dark green              | Zone plate mesh attached to the Forest zone node   | `res://assets/texture/world/zone_forest.png`        |
-| ZoneMine          | (0.28, 0.25, 0.22) | Underground mine entrance, earthy brown-grey | Zone plate mesh attached to the Mine zone node     | `res://assets/texture/world/zone_mine.png`          |
-| ZoneCliff         | (0.38, 0.33, 0.18) | Rocky cliff highlands, warm ochre            | Zone plate mesh attached to the Cliff zone node    | `res://assets/texture/world/zone_cliff.png`         |
-| ZoneBattlefield   | (TBD)            | Combat arena, blood-and-iron tones           | Zone plate mesh for the Battlefield zone (Task B)  | `res://assets/texture/world/zone_battlefield.png`   |
-| ZoneCrystal       | (TBD)            | Crystal cavern, cool blue-white shimmer      | Zone plate mesh for the Crystal zone (Task B)      | `res://assets/texture/world/zone_crystal.png`       |
-| ZoneWasteland     | (TBD)            | Desolate wasteland, sandy grey-brown         | Zone plate mesh for the Wasteland zone (Task B)    | `res://assets/texture/world/zone_wasteland.png`     |
-| ZoneTower         | (TBD)            | Mysterious tower, dark stone and shadow      | Zone plate mesh for the Tower zone (Task B)        | `res://assets/texture/world/zone_tower.png`         |
-| ZoneSpring        | (TBD)            | Healing spring, soft aqua-green              | Zone plate mesh for the Spring zone (Task B)       | `res://assets/texture/world/zone_spring.png`        |
-
-### Paths
-
-Narrow connecting meshes between zone plates. Each path has its own material so it can darken or lighten independently from the zones it links.
-
-| Slot Name  | Color (R,G,B)    | Intended Visual Role                          | Usage Location in Scene                           | Future Texture                                 |
-|-----------|------------------|-----------------------------------------------|---------------------------------------------------|------------------------------------------------|
-| Path01    | (0.42, 0.33, 0.18) | Road from Zone 0 to Zone 1, warm tan        | Path mesh spanning the Zone0-Zone1 connection      | `res://assets/texture/world/path01.png`        |
-| Path12    | (0.38, 0.30, 0.15) | Road from Zone 1 to Zone 2, darker brown    | Path mesh spanning the Zone1-Zone2 connection      | `res://assets/texture/world/path12.png`        |
-| Path34    | (TBD)            | Road from Zone 3 to Zone 4 (Task B)          | Path mesh spanning the Zone3-Zone4 connection      | `res://assets/texture/world/path34.png`        |
-
-### Background
-
-Large backdrop elements behind the play area. These are always visible and create depth. `DragonShadow` uses alpha transparency rather than a solid fill.
-
-| Slot Name     | Color (R,G,B,A)     | Intended Visual Role                          | Usage Location in Scene                           | Future Texture                                     |
-|---------------|---------------------|-----------------------------------------------|---------------------------------------------------|----------------------------------------------------|
-| Sky           | (0.18, 0.28, 0.45)  | Sky dome or backdrop panel, muted blue       | Backdrop mesh behind the ground plane              | `res://assets/texture/world/sky.png`                |
-| Sun           | (1.00, 0.85, 0.50)  | Sun disc or light source, warm gold          | Sun fixture floating above the backdrop            | `res://assets/texture/world/sun.png`                |
-| Mountain      | (0.10, 0.12, 0.18)  | Distant mountain silhouette, dark navy-grey  | Mountain mesh placed behind the ground             | `res://assets/texture/world/mountain.png`           |
-| DragonShadow  | (0.00, 0.00, 0.00, 0.25) | Flying dragon shadow overlay, semi-transparent black | Large shadow quad above the world map        | `res://assets/texture/world/dragon_shadow.png`      |
-
-### Decorations
-
-Small props scattered across the map for visual variety. They do not affect gameplay. All use solid unshaded color for now.
-
-| Slot Name | Color (R,G,B)    | Intended Visual Role                          | Usage Location in Scene                           | Future Texture                                 |
-|----------|------------------|-----------------------------------------------|---------------------------------------------------|------------------------------------------------|
-| DecoTree | (0.15, 0.40, 0.10) | Tree prop, bright leaf-green                | Tree decoration instances around zone edges        | `res://assets/texture/world/deco_tree.png`     |
-| DecoRock | (0.35, 0.33, 0.30) | Rock prop, neutral grey-brown               | Rock decoration instances scattered on the ground  | `res://assets/texture/world/deco_rock.png`     |
-| DecoRuin | (0.28, 0.24, 0.20) | Ruin prop, weathered brown                  | Ruin decoration instances near older zones         | `res://assets/texture/world/deco_ruin.png`     |
-
-### Markers
-
-Small indicator dots or shapes that sit on top of the map to show player position, enemy locations, and other points of interest. These are always rendered above ground geometry.
-
-| Slot Name      | Color (R,G,B)    | Intended Visual Role                          | Usage Location in Scene                           | Future Texture                                       |
-|----------------|------------------|-----------------------------------------------|---------------------------------------------------|------------------------------------------------------|
-| EnemyDot       | (0.80, 0.30, 0.30) | Enemy location marker, bright red           | Small disc or sphere at each enemy position         | `res://assets/texture/world/enemy_dot.png`            |
-| PlayerBody     | (0.30, 0.50, 0.90) | Player character body, cornflower blue      | Player mesh traversing the map                     | `res://assets/texture/world/player_body.png`          |
-| CompanionDot   | (TBD)            | Companion location marker (Task B)            | Small disc at companion position                   | `res://assets/texture/world/companion_dot.png`        |
-| ShopMarker     | (TBD)            | Shop / vendor location indicator (Task B)     | Small shape at each shop location                  | `res://assets/texture/world/shop_marker.png`          |
+```
+Texture = TryLoadTexture("res://assets/texture/world/xxx.png") ?? ProceduralFallback();
+```
 
 ---
 
-## New Slots from Task B
+## Material Slots (23 total, all PerPixel)
 
-These eight slots do not exist in `WorldMaterials.cs` yet. They will be added as companion work (Task B) and share the same factory helpers. Colors are marked TBD; final values depend on the artist's palette direction.
+### Ground (1)
 
-| Slot Name        | Suggested Color         | Section      | Notes                                        |
-|------------------|-------------------------|--------------|----------------------------------------------|
-| ZoneBattlefield  | reddish-brown           | Zone Plates  | Distinct enough from ZoneMine and ZoneCliff   |
-| ZoneCrystal      | cool blue-white         | Zone Plates  | Should read as crystalline at a distance      |
-| ZoneWasteland    | sandy grey-brown        | Zone Plates  | Muted, no strong saturation                   |
-| ZoneTower        | dark stone-grey         | Zone Plates  | Somber tone, contrasts with bright zones      |
-| ZoneSpring       | soft aqua-green         | Zone Plates  | Feels lush and restorative                    |
-| Path34           | mid-brown               | Paths        | Sits between Path01 and Path12 in value       |
-| CompanionDot     | bright green            | Markers      | Friendly contrast to the red EnemyDot         |
-| ShopMarker       | gold/amber              | Markers      | Reads as valuable or interactive              |
+| Slot | Override File | Fallback | Roughness |
+|------|--------------|----------|-----------|
+| GrassBase | `grass_base.png` | 64px FastNoiseLite (5-level quantised) | 0.9 |
+
+### Zone Plates (8)
+
+All use Bayer-ordered dither textures (50% checker/stripe/diagonal patterns), `Roughness=0.9`.
+
+| Slot | Override File | Colour |
+|------|--------------|--------|
+| ZoneForest | `zone_forest.png` | (0.14, 0.33, 0.14) checker |
+| ZoneMine | `zone_mine.png` | (0.28, 0.25, 0.22) horizontal stripe |
+| ZoneCliff | `zone_cliff.png` | (0.38, 0.33, 0.18) vertical stripe |
+| ZoneBattlefield | `zone_battlefield.png` | (0.35, 0.30, 0.22) diagonal |
+| ZoneCrystal | `zone_crystal.png` | (0.40, 0.45, 0.55) checker |
+| ZoneWasteland | `zone_wasteland.png` | (0.30, 0.20, 0.15) horizontal |
+| ZoneTower | `zone_tower.png` | (0.18, 0.16, 0.24) vertical |
+| ZoneSpring | `zone_spring.png` | (0.18, 0.38, 0.35) diagonal |
+
+### Paths (3)
+
+All share the same override file. `Roughness=0.9`.
+
+| Slot | Override File | Lighter Edge Colour |
+|------|--------------|---------------------|
+| Path01 | `path_dirt.png` | (0.42, 0.33, 0.18) / (0.52, 0.42, 0.25) |
+| Path12 | `path_dirt.png` | (0.38, 0.30, 0.15) / (0.48, 0.39, 0.22) |
+| Path34 | `path_dirt.png` | (0.40, 0.32, 0.20) / (0.50, 0.41, 0.27) |
+
+### Background (4)
+
+Sky/Sun/Mountain have transparent backgrounds for layering. `ShadingMode=PerPixel`.
+
+| Slot | Override File | Fallback Description |
+|------|--------------|---------------------|
+| Sky | `sky_gradient.png` | 8-band vertical gradient (dark→light blue) |
+| Sun | `sun.png` | Pixel-art circle with 8-ray dither edge, 32px |
+| Mountain | `mountain.png` | Jagged pixel silhouette with snow caps |
+| DragonShadow | `dragon_shadow.png` | Bat-wing silhouette, α=0.35, 64x20px |
+
+### Decorations (3)
+
+These are material definitions used by `WorldMap3D.ScatterDecorations()`. The actual sprites use separate override paths (see Decorations section below). `Roughness=0.9`.
+
+| Slot | Override File | Fallback |
+|------|--------------|----------|
+| DecoTree | `deco_tree.png` | Diagonal cross-hatch (tree canopy) |
+| DecoRock | `deco_rock.png` | 4-level random speckle |
+| DecoRuin | `deco_ruin.png` | Offset brick rows with mortar lines |
+
+### Markers (4)
+
+`Roughness=0.5` (slight shine to stand out from terrain).
+
+| Slot | Override File | Fallback Icon |
+|------|--------------|---------------|
+| EnemyDot | `marker_enemy.png` | Skull (eye sockets + teeth), 16px |
+| PlayerBody | `marker_player.png` | Diamond with dithered fill + bright core, 16px |
+| CompanionDot | `marker_companion.png` | Heart shape, 16px |
+| ShopMarker | `marker_shop.png` | Coin circle with checker-dither + centre band, 16px |
 
 ---
 
-## Texture Replacement Guide
+## Decorations & Sprites (WorldMap3D.cs)
 
-### Material Factory Helpers
+These are `Sprite3D` billboard objects with procedural textures that also support override files.
 
-`WorldMaterials.cs` exposes three static factory methods. All return an unshaded `StandardMaterial3D`:
+### Trees
 
-- **`MakeFlat(string name, float r, float g, float b)`**
-  Fills the material with a single solid RGB color. Used by every slot except `GrassBase` and `DragonShadow`. This is the starting point: quick to build, easy to identify each material on screen.
+- **Code**: `MakeTree()` → single `Sprite3D`, 24x32px combined tree texture
+- **Override**: `deco_tree.png`
+- **Variation**: +/-10 random rotation, scale 0.4-1.3
 
-- **`MakeTextured(string name, string path)`**
-  Loads a `Texture2D` from disk and sets it as the albedo. Call this instead of `MakeFlat` when you have a finished texture ready. The material stays unshaded.
+### Rocks (3 variants)
 
-- **`MakeTransparent(string name, float r, float g, float b, float a)`**
-  Same as `MakeFlat` but with an alpha channel and transparency enabled. Currently used only by `DragonShadow`.
+- **Code**: `MakeRock()` → 16x16px procedural rock (3 grey shades)
+- **Overrides**: `deco_rock_0.png`, `deco_rock_1.png`, `deco_rock_2.png`
+- **Variation**: 3 shape variants, scale 0.2-0.8
 
-### Swapping a Solid Color for a Texture
+### Ruins (2 variants)
 
-To replace any flat material with a texture, follow these steps inside `BuildAll()`:
+- **Code**: `MakeRuin()` → 16x24px broken pillar/arch with brick lines
+- **Overrides**: `deco_ruin_0.png`, `deco_ruin_1.png`
 
-1. Drop the texture file into `res://assets/texture/world/`.
-2. Find the line that currently calls `MakeFlat` for that slot. For example:
-   ```csharp
-   ZoneForest = MakeFlat("ZoneForest", 0.14f, 0.33f, 0.14f);
-   ```
-3. Replace it with a `MakeTextured` call:
-   ```csharp
-   ZoneForest = MakeTextured("ZoneForest", "res://assets/texture/world/zone_forest.png");
-   ```
-4. No other file needs to change. Every `Build*` script references `WorldMaterials.Instance.ZoneForest` directly, so the property name stays the same regardless of whether it uses a color or a texture.
+### Bushes
 
-### What Does Not Change
+- **Code**: `MakeBush()` → 8x8px round pixel cluster, 2 green shades
+- **Override**: `deco_bush.png`
 
-- **Property names** (`GrassBase`, `ZoneForest`, `Path01`, etc.) remain the same across both color and texture builds.
-- **`Build*` scripts** in `scripts/world/build/` reference these properties by name. They never call `MakeFlat` or `MakeTextured` themselves.
-- **Shading mode** stays unshaded for all materials. If lighting or normal maps are added later, that is a shader-level change, not a material-slot change.
+### Grass Tufts
 
-### Material Count Summary
+- **Code**: Scattered 120 billboard sprites across the world
+- **Override**: `grass_tuft.png`
+- **Variation**: random scale 0.7-1.3, colour (0.18, 0.42, 0.12)
 
-| Section      | Existing | New (Task B) | Total |
-|-------------|----------|--------------|-------|
-| Ground      | 1        | 0            | 1     |
-| Zone Plates | 3        | 5            | 8     |
-| Paths       | 2        | 1            | 3     |
-| Background  | 4        | 0            | 4     |
-| Decorations | 3        | 0            | 3     |
-| Markers     | 2        | 2            | 4     |
-| **Total**   | **15**   | **8**         | **23** |
+---
+
+## Parallax Background Layers (WorldMap3D.BuildParallax)
+
+Multi-layer Sprite3D billboards at varying Z-depths.
+
+| Layer | Z | Override File | Description |
+|-------|---|---------------|-------------|
+| Sky gradient | -15 | `sky_gradient.png` | 256x128 gradient texture, full-screen |
+| Clouds (3-5) | -12 | `cloud.png` | 48x24 white pixel clusters, random positions |
+| Far mountains | -8 | `mountain_far.png` | 256x48 jagged silhouette with snow caps |
+| Near mountains | -5 | `mountain_near.png` | 256x40 darker silhouette |
+| Sun | -13 | `sun.png` | 32x32 pixel-art circle, upper-right |
+| Dragon shadow | -4 | `dragon_shadow.png` | 64x20 winged silhouette, tween-animated |
+
+---
+
+## Particle Effects (WorldMap3D.BuildParticles)
+
+GPUParticles3D, zone-specific. Not overridable by files — code-only.
+
+| Zone | Type | Count | Colour | Behaviour |
+|------|------|-------|--------|-----------|
+| Forest (zone 0) | Falling leaves | 30 | Green (0.22,0.58,0.16,0.85) | Gravity -0.45, wind drift 0.15x |
+| Mine (zone 1) | Dust motes | 20 | Warm grey (0.55,0.48,0.38,0.45) | No gravity, slow random movement |
+| Crystal (zone 4) | Sparkles | 15 | Blue-white (0.60,0.85,1.0,0.90) | Sphere emission, short lifetime 0.5-1.5s |
+
+---
+
+## Zone Border Blending
+
+Semi-transparent `QuadMesh` strips placed between connected zones. `α=0.06`. Code-only, not overridable.
+
+---
+
+## File Count Summary
+
+| Category | Override Files |
+|----------|---------------|
+| Ground | 1 |
+| Zone plates | 8 |
+| Paths | 1 (shared) |
+| Background | 4 |
+| Decorations (materials) | 3 |
+| Markers | 4 |
+| Decoration sprites | 7 (1 tree + 3 rock + 2 ruin + 1 bush) |
+| Grass tuft | 1 |
+| Parallax layers | 5 (cloud + 2 mountain + sun + dragon) |
+| **Total unique paths** | **34** |
+
+---
+
+## Quick Start for Artists
+
+1. Create pixel-art PNG (16x16 to 64x64, nearest-neighbour filtered)
+2. Save to `res://assets/texture/world/` with the exact filename from the table above
+3. Restart the game
+4. Missing files silently fall back to procedural textures — no broken visuals
+
+### Which files to replace first (highest visual impact)
+
+1. `grass_base.png` — covers the entire world floor
+2. `zone_forest.png` through `zone_spring.png` — 8 zone identity colours
+3. `sky_gradient.png` — background atmosphere
+4. `deco_tree.png` — trees are the most numerous decoration
+5. `cloud.png` — adds depth to the sky

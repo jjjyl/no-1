@@ -1,0 +1,20 @@
+{
+  "map_name": "example",
+  "description": "Template for custom map overrides. Apply on top of generated world.",
+  "base_seed": 0,
+
+  "tile_overrides": [
+  ],
+
+  "biome_overrides": [
+  ],
+
+  "region_overrides": [
+  ],
+
+  "path_overrides": [
+  ],
+
+  "entity_overrides": [
+  ]
+}
