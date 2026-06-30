@@ -10,8 +10,8 @@
 			},
 			"effects": [
 				{
-					"type": "combat",
-					"enemy": "res://scenes/characters/base_mob.tscn"
+									"type": "combat",
+					"enemy_id": "base_mob"
 				}
 			]
 		},
@@ -134,7 +134,7 @@
 						},
 						{
 							"type": "combat",
-							"enemy": "res://scenes/characters/base_mob.tscn"
+							"enemy_id": "ancient_dragon"
 						},
 						{
 							"type": "set_flag",
@@ -172,7 +172,7 @@
 						},
 						{
 							"type": "combat",
-							"enemy": "res://scenes/characters/base_mob.tscn"
+							"enemy_id": "ancient_dragon"
 						},
 						{
 							"type": "set_flag",
@@ -689,7 +689,7 @@
 						},
 						{
 							"type": "combat",
-							"enemy": "res://scenes/characters/base_mob.tscn"
+							"enemy_id": "tower_guardian"
 						},
 						{
 							"type": "set_flag",
@@ -1170,7 +1170,7 @@
 						},
 						{
 							"type": "combat",
-							"enemy": "res://scenes/characters/base_mob.tscn"
+							"enemy_id": "ancient_dragon"
 						},
 						{
 							"type": "set_account_flag",

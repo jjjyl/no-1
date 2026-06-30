@@ -180,18 +180,15 @@ public partial class CombatUI : Control
 
 	void BuildEnemyCards()
 	{
-		string enemyPath = CycleManager.Instance.PendingEnemyScene;
-		if (string.IsNullOrEmpty(enemyPath)) enemyPath = "res://scenes/characters/base_mob.tscn";
-		var tpl = GD.Load<PackedScene>(enemyPath);
+		string enemyId = CycleManager.Instance.PendingEnemyScene;
+		var def = EnemyState.Get(enemyId);
+		if (def == null) def = EnemyState.Get("base_mob");
 
 		for (int i = 0; i < EnemyGroupSize; i++)
 		{
-			var mob = (Node)tpl.Instantiate();
-			AddChild(mob);
-			var st = mob.GetNode<CharacterStats>("Stats");
-			st.DisplayName = $"魔种{i + 1}";
+			var st = def.SpawnStats(CycleManager.Instance?.CurrentCycle ?? 1);
+			st.DisplayName = def.IsElite ? $"精英{def.Name}{i + 1}" : $"{def.Name}{i + 1}";
 			st.FullHeal();
-			if (i > 0) st.ApplyModifier("power", (int)(GD.Randi() % 3) - 1);
 
 			var slot = new EnemySlot
 			{
@@ -267,9 +264,9 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 				}
 			};
 
-			_enemies.Add(slot);
-		}
+		_enemies.Add(slot);
 	}
+}
 
 	static Texture2D Icon(string name) => GD.Load<Texture2D>($"res://assets/ui/icons/{name}.png");
 
@@ -1585,20 +1582,17 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 	public void AddEnemies(string enemyId, int count)
 	{
-		string path = string.IsNullOrEmpty(enemyId) ? "res://scenes/characters/base_mob.tscn"
-			: $"res://scenes/characters/{enemyId}.tscn";
-		var tpl = GD.Load<PackedScene>(path);
-		if (tpl == null) return;
+		var def = EnemyState.Get(enemyId);
+		if (def == null) def = EnemyState.Get("base_mob");
+		if (def == null) return;
 		for (int i = 0; i < count; i++)
-			AddEnemyFromScene(tpl, $"魔种{_enemies.Count + 1}");
+			AddEnemyFromState(def, $"{def.Name}{_enemies.Count + 1}");
 		RefreshAll();
 	}
 
-	void AddEnemyFromScene(PackedScene tpl, string name)
+	void AddEnemyFromState(EnemyState def, string name)
 	{
-		var mob = (Node)tpl.Instantiate();
-		AddChild(mob);
-		var st = mob.GetNode<CharacterStats>("Stats");
+		var st = def.SpawnStats(CycleManager.Instance?.CurrentCycle ?? 1);
 		st.DisplayName = name;
 		st.FullHeal();
 

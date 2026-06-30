@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded;
+render_mode unshaded, cull_disabled;
 
 uniform sampler2D tex : source_color;
 uniform float tile_count = 64.0;

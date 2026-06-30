@@ -233,7 +233,7 @@ public struct BiomeOverride
 public static class WorldConstants
 {
     // TODO: set false for full world after testing
-    public const bool DebugSmall = true;
+    public const bool DebugSmall = false;
 
     public const int WorldWidth  = DebugSmall ? 384 : 1000;
     public const int WorldHeight = DebugSmall ? 256 : 800;

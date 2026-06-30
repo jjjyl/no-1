@@ -401,9 +401,12 @@ public class EventManager
 					var toRemove = cm.ActiveCompanions.FirstOrDefault(c => c.Name == leaveName);
 					if (toRemove != null) cm.ActiveCompanions.Remove(toRemove);
 					break;
-				case "combat":
+			case "combat":
+				if (e.ContainsKey("enemy_id"))
+					cm.PendingEnemyScene = e["enemy_id"].AsString();
+				else if (e.ContainsKey("enemy"))
 					cm.PendingEnemyScene = e["enemy"].AsString();
-					break;
+				break;
 				case "set_flag":
 					cm.SetFlag(e["flag"].AsString());
 					break;
