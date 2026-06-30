@@ -200,9 +200,10 @@ public partial class ChunkManager : Node
 	ArrayMesh BuildChunkMesh(ChunkData chunk)
 	{
 		const float HEIGHT_SCALE = 5.0f;
+		const float EDGE_OVERLAP = 0.05f;
 		int dim = WorldConstants.ChunkDim;
 		float tileSize = WorldConstants.TileSizeMeters;
-		float halfChunk = dim * tileSize * 0.5f;
+		float halfExtent = dim * tileSize * 0.5f + EDGE_OVERLAP;
 		int vertsPerRow = dim + 1;
 
 		var st = new SurfaceTool();
@@ -213,8 +214,8 @@ public partial class ChunkManager : Node
 			for (int x = 0; x <= dim; x++)
 			{
 				float height = GetVertexHeight(chunk, x, z, dim, HEIGHT_SCALE);
-				float worldX = x * tileSize - halfChunk;
-				float worldZ = z * tileSize - halfChunk;
+				float worldX = (float)x / dim * 2.0f * halfExtent - halfExtent;
+				float worldZ = (float)z / dim * 2.0f * halfExtent - halfExtent;
 				st.SetUV(new Vector2((float)x / dim, (float)z / dim));
 				st.AddVertex(new Vector3(worldX, height, worldZ));
 			}
@@ -240,6 +241,38 @@ public partial class ChunkManager : Node
 				st.AddIndex(v01);
 			}
 		}
+
+		// ── Skirt: vertical edge walls to hide chunk seams ──
+		const float SKIRT_DEPTH = 4.0f;
+		int baseIdx = vertsPerRow * vertsPerRow;
+
+		void AddSkirtQuad(int ax, int az, int bx, int bz)
+		{
+			float ha = GetVertexHeight(chunk, ax, az, dim, HEIGHT_SCALE);
+			float hb = GetVertexHeight(chunk, bx, bz, dim, HEIGHT_SCALE);
+			float wax = (float)ax / dim * 2.0f * halfExtent - halfExtent;
+			float waz = (float)az / dim * 2.0f * halfExtent - halfExtent;
+			float wbx = (float)bx / dim * 2.0f * halfExtent - halfExtent;
+			float wbz = (float)bz / dim * 2.0f * halfExtent - halfExtent;
+
+			st.SetUV(Vector2.Zero);
+			st.AddVertex(new Vector3(wax, ha, waz));
+			st.SetUV(Vector2.Zero);
+			st.AddVertex(new Vector3(wax, ha - SKIRT_DEPTH, waz));
+			st.SetUV(Vector2.Zero);
+			st.AddVertex(new Vector3(wbx, hb, wbz));
+			st.SetUV(Vector2.Zero);
+			st.AddVertex(new Vector3(wbx, hb - SKIRT_DEPTH, wbz));
+
+			st.AddIndex(baseIdx); st.AddIndex(baseIdx + 1); st.AddIndex(baseIdx + 2);
+			st.AddIndex(baseIdx + 1); st.AddIndex(baseIdx + 3); st.AddIndex(baseIdx + 2);
+			baseIdx += 4;
+		}
+
+		for (int z = 0; z < dim; z++) AddSkirtQuad(0, z, 0, z + 1);
+		for (int z = 0; z < dim; z++) AddSkirtQuad(dim, z, dim, z + 1);
+		for (int x = 0; x < dim; x++) AddSkirtQuad(x, 0, x + 1, 0);
+		for (int x = 0; x < dim; x++) AddSkirtQuad(x, dim, x + 1, dim);
 
 		st.GenerateNormals();
 		return st.Commit();
