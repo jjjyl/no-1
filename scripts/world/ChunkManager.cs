@@ -52,11 +52,6 @@ public partial class ChunkManager : Node
 		if (WorldData == null || Player == null)
 			return;
 
-		if (_playerChunkX == -1)
-			GD.Print($"[CHUNK-SYS] World={WorldData.Width}x{WorldData.Height} " +
-			         $"Chunks={WorldConstants.ChunksX}x{WorldConstants.ChunksY} " +
-			         $"TotalChunks={WorldConstants.TotalChunks} TilesPerChunk={WorldConstants.TilesPerChunk}");
-
 		var pos = Player.GlobalPosition;
 		var (cx, cy) = WorldToChunk(pos.X, pos.Z);
 
@@ -176,15 +171,6 @@ public partial class ChunkManager : Node
 
 			chunk.SceneNode.AddChild(meshInstance);
 			_terrainParent.AddChild(chunk.SceneNode);
-
-			var aabb = mesh.GetAabb();
-			var vertCount = mesh.GetSurfaceCount() > 0 ? mesh.SurfaceGetArrayLen(0) : 0;
-			GD.Print($"[CHUNK] ({cx},{cy}) loaded OK — verts={vertCount} " +
-			         $"aabb=({aabb.Position.X:F1},{aabb.Position.Y:F1},{aabb.Position.Z:F1}) size=({aabb.Size.X:F1},{aabb.Size.Y:F1},{aabb.Size.Z:F1}) " +
-			         $"worldPos=({meshInstance.GlobalPosition.X:F1},{meshInstance.GlobalPosition.Y:F1},{meshInstance.GlobalPosition.Z:F1}) " +
-			         $"matType={mat.GetType().Name}");
-
-			ScatterDecorations(chunk, chunk.SceneNode);
 
 			chunk.IsLoaded = true;
 		}
@@ -312,8 +298,7 @@ public partial class ChunkManager : Node
 		return (heightSum / heightCount) * heightScale;
 	}
 
-	// Set to false once shader path is confirmed working
-	static bool UseShaderMaterial = false;
+	static bool UseShaderMaterial = true;
 
 	Material SelectMaterial(ChunkData chunk)
 	{
@@ -336,10 +321,8 @@ public partial class ChunkManager : Node
 			}
 
 			var sm = new ShaderMaterial { Shader = shader };
-			if (baseMat != null && baseMat.AlbedoTexture != null)
-				sm.SetShaderParameter("tex", baseMat.AlbedoTexture);
-			else
-				sm.SetShaderParameter("tex", MakeColorTex(baseMat?.AlbedoColor ?? new Color(0.2f, 0.4f, 0.15f)));
+			var tex = GetBiomeTex(analysis.Dominant, baseMat);
+			sm.SetShaderParameter("tex", tex);
 
 			float tileCount = analysis.DominantRatio > 0.8f ? 4f : 12f;
 			sm.SetShaderParameter("tile_count", tileCount);
@@ -354,6 +337,51 @@ public partial class ChunkManager : Node
 		};
 	}
 	Shader _tileShader;
+	Dictionary<TileType, ImageTexture> _biomeTextures = new();
+
+	ImageTexture GetBiomeTex(TileType type, StandardMaterial3D baseMat)
+	{
+		if (_biomeTextures.TryGetValue(type, out var cached))
+			return cached;
+
+		Color c = baseMat?.AlbedoColor ?? type switch
+		{
+			TileType.Grass => new Color(0.20f, 0.50f, 0.15f),
+			TileType.Dirt  => new Color(0.42f, 0.33f, 0.22f),
+			TileType.Water => new Color(0.12f, 0.35f, 0.60f),
+			TileType.Rock  => new Color(0.38f, 0.36f, 0.34f),
+			TileType.Snow  => new Color(0.88f, 0.92f, 0.96f),
+			TileType.Sand  => new Color(0.76f, 0.68f, 0.42f),
+			TileType.Swamp => new Color(0.18f, 0.28f, 0.15f),
+			_              => new Color(0.25f, 0.45f, 0.20f)
+		};
+
+		int s = 32;
+		var img = Image.CreateEmpty(s, s, false, Image.Format.Rgba8);
+		for (int y = 0; y < s; y++)
+		for (int x = 0; x < s; x++)
+		{
+			bool grid = (x == 0 || y == 0);
+			float n = ((x * 13 + y * 7) % 17) / 17f * 0.18f - 0.09f;
+			float v = grid ? 0.08f : n;
+
+			Color px = new Color(
+				Mathf.Clamp(c.R + v, 0, 1),
+				Mathf.Clamp(c.G + v, 0, 1),
+				Mathf.Clamp(c.B + v, 0, 1));
+
+			if (type == TileType.Water && (x + y) % 5 < 2)
+				px = new Color(px.R, px.G, Mathf.Min(px.B + 0.08f, 1));
+			if (type == TileType.Rock && (x % 8 < 2 || y % 8 < 2))
+				px = new Color(Mathf.Max(px.R - 0.06f, 0), Mathf.Max(px.G - 0.06f, 0), Mathf.Max(px.B - 0.06f, 0));
+
+			img.SetPixel(x, y, px);
+		}
+
+		var tex = ImageTexture.CreateFromImage(img);
+		_biomeTextures[type] = tex;
+		return tex;
+	}
 
 	void UnloadChunk(int cx, int cy)
 	{
@@ -367,8 +395,17 @@ public partial class ChunkManager : Node
 
 	ImageTexture MakeColorTex(Color c)
 	{
-		var img = Image.CreateEmpty(4, 4, false, Image.Format.Rgba8);
-		img.Fill(c);
+		int w = 16, h = 16;
+		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
+		for (int y = 0; y < h; y++)
+		for (int x = 0; x < w; x++)
+		{
+			float n = ((x * 7 + y * 13) % 16) / 16f * 0.5f - 0.25f;
+			img.SetPixel(x, y, new Color(
+				Mathf.Clamp(c.R + n, 0, 1),
+				Mathf.Clamp(c.G + n, 0, 1),
+				Mathf.Clamp(c.B + n, 0, 1)));
+		}
 		return ImageTexture.CreateFromImage(img);
 	}
 

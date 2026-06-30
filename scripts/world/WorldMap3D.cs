@@ -106,9 +106,6 @@ public partial class WorldMap3D : Node3D
 		GD.Print($"[WorldMap3D] Player at {_player.GlobalPosition}");
 		_chunkManager.Player = _player;
 		BuildReturnButton();
-
-		GD.Print($"[DIAG] Player at ({_player.Position.X:F1},{_player.Position.Y:F1},{_player.Position.Z:F1})");
-		GD.Print($"[DIAG] CameraDistance={CameraDistance} Pitch={CameraPitch} Yaw={_cameraYaw}");
 		GD.Print("[WorldMap3D] _Ready complete");
 	}
 
