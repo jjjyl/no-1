@@ -19,10 +19,10 @@ public partial class WorldMap3D : Node3D
 	[Export] public float WorldHeight = 15f;
 
 	// ── Camera ──
-	[Export] public float CameraDistance = 15f;
+	[Export] public float CameraDistance = 5f;
 	[Export] public float CameraPitch = 45f;
-	[Export] public float CameraZoomMin = 5f;
-	[Export] public float CameraZoomMax = 40f;
+	[Export] public float CameraZoomMin = 2f;
+	[Export] public float CameraZoomMax = 12f;
 	[Export] public float CameraZoomStep = 1.5f;
 	[Export] public float CameraFollowSpeed = 5f;
 	[Export] public float CameraRotateSensitivity = 0.3f;

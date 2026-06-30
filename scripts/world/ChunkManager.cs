@@ -172,6 +172,8 @@ public partial class ChunkManager : Node
 			chunk.SceneNode.AddChild(meshInstance);
 			_terrainParent.AddChild(chunk.SceneNode);
 
+			ScatterDecorations(chunk, chunk.SceneNode);
+
 			chunk.IsLoaded = true;
 		}
 		catch (System.Exception ex)
@@ -344,16 +346,16 @@ public partial class ChunkManager : Node
 		if (_biomeTextures.TryGetValue(type, out var cached))
 			return cached;
 
-		Color c = baseMat?.AlbedoColor ?? type switch
+		Color c = type switch
 		{
-			TileType.Grass => new Color(0.20f, 0.50f, 0.15f),
-			TileType.Dirt  => new Color(0.42f, 0.33f, 0.22f),
-			TileType.Water => new Color(0.12f, 0.35f, 0.60f),
-			TileType.Rock  => new Color(0.38f, 0.36f, 0.34f),
-			TileType.Snow  => new Color(0.88f, 0.92f, 0.96f),
-			TileType.Sand  => new Color(0.76f, 0.68f, 0.42f),
-			TileType.Swamp => new Color(0.18f, 0.28f, 0.15f),
-			_              => new Color(0.25f, 0.45f, 0.20f)
+			TileType.Grass => new Color(0.15f, 0.45f, 0.10f),
+			TileType.Dirt  => new Color(0.38f, 0.28f, 0.18f),
+			TileType.Water => new Color(0.08f, 0.28f, 0.55f),
+			TileType.Rock  => new Color(0.32f, 0.30f, 0.28f),
+			TileType.Snow  => new Color(0.72f, 0.78f, 0.84f),
+			TileType.Sand  => new Color(0.68f, 0.58f, 0.35f),
+			TileType.Swamp => new Color(0.12f, 0.22f, 0.10f),
+			_              => new Color(0.20f, 0.40f, 0.15f)
 		};
 
 		int s = 32;
@@ -361,19 +363,16 @@ public partial class ChunkManager : Node
 		for (int y = 0; y < s; y++)
 		for (int x = 0; x < s; x++)
 		{
-			bool grid = (x == 0 || y == 0);
 			float n = ((x * 13 + y * 7) % 17) / 17f * 0.18f - 0.09f;
-			float v = grid ? 0.08f : n;
-
-			Color px = new Color(
-				Mathf.Clamp(c.R + v, 0, 1),
-				Mathf.Clamp(c.G + v, 0, 1),
-				Mathf.Clamp(c.B + v, 0, 1));
+		Color px = new Color(
+			Mathf.Clamp(c.R + n, 0, 1),
+			Mathf.Clamp(c.G + n, 0, 1),
+			Mathf.Clamp(c.B + n, 0, 1));
 
 			if (type == TileType.Water && (x + y) % 5 < 2)
-				px = new Color(px.R, px.G, Mathf.Min(px.B + 0.08f, 1));
+				px = new Color(px.R, px.G, Mathf.Min(px.B + 0.10f, 1));
 			if (type == TileType.Rock && (x % 8 < 2 || y % 8 < 2))
-				px = new Color(Mathf.Max(px.R - 0.06f, 0), Mathf.Max(px.G - 0.06f, 0), Mathf.Max(px.B - 0.06f, 0));
+				px = new Color(Mathf.Max(px.R - 0.08f, 0), Mathf.Max(px.G - 0.08f, 0), Mathf.Max(px.B - 0.08f, 0));
 
 			img.SetPixel(x, y, px);
 		}
@@ -556,159 +555,170 @@ public partial class ChunkManager : Node
 
 	// ── Decoration scattering ─────────────────────────────────────────
 
+	/// <summary>
+	/// Defines a type of decoration: texture, ground-contact point, scale, billboard.
+	/// </summary>
+	struct DecorationDef
+	{
+		public string Name;
+		public Texture2D Texture;
+		public float BaseYFrac;
+		public float PixelScaleBase;   // target meters per pixel, multiplied by scale factor
+		public Vector2 ScaleRange;
+		public BaseMaterial3D.BillboardModeEnum Billboard;
+	}
+
+	static List<DecorationDef> _decoDefs;
+
+	static void EnsureDecoDefs()
+	{
+		if (_decoDefs != null)
+			return;
+		_decoDefs = new();
+
+		void Add(string name, Texture2D tex, float yFrac, float pxPerM, float sMin, float sMax, BaseMaterial3D.BillboardModeEnum bb)
+		{
+			_decoDefs.Add(new DecorationDef
+			{
+				Name = name,
+				Texture = tex,
+				BaseYFrac = yFrac,
+				PixelScaleBase = pxPerM,
+				ScaleRange = new Vector2(sMin, sMax),
+				Billboard = bb
+			});
+		}
+
+		var treeTex = TryLoadTexture("res://assets/texture/world/deco_tree.png")
+			?? MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
+
+		Add("Tree",  treeTex, 0.88f, 0.007f, 0.6f, 1.0f, BaseMaterial3D.BillboardModeEnum.FixedY);
+		Add("Rock",  MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.FixedY);
+		Add("Bush",  MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)), 0.85f, 0.08f, 0.6f, 0.9f, BaseMaterial3D.BillboardModeEnum.FixedY);
+		Add("Tuft",  MakeSimpleGrassTuftTexture(), 0.80f, 0.04f, 0.5f, 0.8f, BaseMaterial3D.BillboardModeEnum.FixedY);
+		Add("Ruin",  MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)), 0.95f, 0.10f, 0.8f, 1.0f, BaseMaterial3D.BillboardModeEnum.FixedY);
+		Add("RockSnow", MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.FixedY);
+	}
+
+	static DecorationDef? FindDeco(string name)
+	{
+		if (_decoDefs == null) return null;
+		foreach (var d in _decoDefs)
+			if (d.Name == name) return d;
+		return null;
+	}
+
+	/// <summary>
+	/// Spawn a Sprite3D decoration with correct Offset so ground-contact
+	/// point sits at groundPos.Y.  Billboard rotates around the contact
+	/// point (tree pivots from base).
+	/// </summary>
+	static void SpawnDecoration(DecorationDef def, Node parent, Vector3 groundPos, RandomNumberGenerator rng)
+	{
+		var tex = def.Texture;
+		if (tex == null) return;
+
+		float scale = rng.RandfRange(def.ScaleRange.X, def.ScaleRange.Y);
+		float texH = tex.GetHeight();
+
+		float offsetY = texH * (def.BaseYFrac - 0.5f);
+
+		var sprite = new Sprite3D
+		{
+			Texture = tex,
+			Billboard = def.Billboard,
+			Position = groundPos,
+			PixelSize = def.PixelScaleBase * scale,
+			Offset = new Vector2(0, offsetY),
+			Modulate = Colors.White,
+		};
+
+		if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
+		{
+			sprite.RotationDegrees = new Vector3(0, rng.RandfRange(-12, 12), 0);
+		}
+
+		parent.AddChild(sprite);
+	}
+
 	void ScatterDecorations(ChunkData chunk, Node3D sceneNode)
 	{
-		var mats = WorldMaterials.Instance;
+		EnsureDecoDefs();
 
 		var rng = new RandomNumberGenerator();
 		rng.Seed = (ulong)(chunk.X * 1000 + chunk.Y) + WorldData.Seed % 1000;
 
 		int dim = WorldConstants.ChunkDim;
-		int count = rng.RandiRange(30, Mathf.Min(80, dim * dim / 50));
+		const int STEP = 4;  // check every 4th tile → max 1024 candidates per chunk
 
-		for (int i = 0; i < count; i++)
+		for (int ty = 0; ty < dim; ty += STEP)
+		for (int tx = 0; tx < dim; tx += STEP)
 		{
-			int tx = rng.RandiRange(0, dim - 1);
-			int ty = rng.RandiRange(0, dim - 1);
 			int ti = ty * dim + tx;
-			TileType type = chunk.Tiles[ti].Type;
+			TileType tileType = chunk.Tiles[ti].Type;
+			if (tileType == TileType.Water || tileType == TileType.Path)
+				continue;
 
-			float wx = (chunk.X * dim + tx) * WorldConstants.TileSizeMeters;
-			float wz = (chunk.Y * dim + ty) * WorldConstants.TileSizeMeters;
-			float ox = rng.RandfRange(-0.2f, 0.2f);
-			float oz = rng.RandfRange(-0.2f, 0.2f);
-			Vector3 pos = new Vector3(wx + ox, 0, wz + oz);
+			float groundH = chunk.Tiles[ti].Height / 255f * 5.0f;
+			float wx = (chunk.X * dim + tx + 0.5f) * WorldConstants.TileSizeMeters;
+			float wz = (chunk.Y * dim + ty + 0.5f) * WorldConstants.TileSizeMeters;
+			Vector3 pos = new Vector3(wx, groundH, wz);
 
 			float roll = rng.Randf();
+			DecorationDef? pick = null;
 
-			switch (type)
+			switch (tileType)
 			{
 				case TileType.Grass:
-					if (roll < 0.6f)
-						MakeSimpleTree(sceneNode, pos, mats?.DecoTree?.AlbedoColor ?? new Color(0.15f, 0.40f, 0.10f));
-					else if (roll < 0.9f)
-						MakeSimpleBush(sceneNode, pos, mats?.DecoTree?.AlbedoColor ?? new Color(0.15f, 0.40f, 0.10f));
-					else
-						MakeSimpleGrassTuft(sceneNode, pos);
+					if (roll < 0.05f)       pick = FindDeco("Tree");
+					else if (roll < 0.08f)  pick = FindDeco("Rock");
+					else if (roll < 0.10f)  pick = FindDeco("Bush");
+					else if (roll < 0.14f)  pick = FindDeco("Tuft");
 					break;
 
 				case TileType.Dirt:
-					if (roll < 0.8f)
-						MakeSimpleRock(sceneNode, pos, mats?.DecoRock?.AlbedoColor ?? new Color(0.35f, 0.33f, 0.30f));
-					else
-						MakeSimpleRuin(sceneNode, pos, mats?.DecoRuin?.AlbedoColor ?? new Color(0.28f, 0.24f, 0.20f));
+					if (roll < 0.04f)       pick = FindDeco("Rock");
+					else if (roll < 0.05f)  pick = FindDeco("Ruin");
+					else if (roll < 0.07f)  pick = FindDeco("Tuft");
+					else if (roll < 0.09f)  pick = FindDeco("Tree");
 					break;
 
 				case TileType.Rock:
-					if (roll < 0.7f)
-						MakeSimpleRock(sceneNode, pos, mats?.DecoRock?.AlbedoColor ?? new Color(0.35f, 0.33f, 0.30f));
-					else
-						MakeSimpleTree(sceneNode, pos, mats?.DecoTree?.AlbedoColor ?? new Color(0.15f, 0.40f, 0.10f));
+					if (roll < 0.05f)       pick = FindDeco("Rock");
+					else if (roll < 0.08f)  pick = FindDeco("Tree");
 					break;
 
 				case TileType.Sand:
 				case TileType.Swamp:
-					if (roll < 0.5f)
-						MakeSimpleRock(sceneNode, pos, mats?.DecoRock?.AlbedoColor ?? new Color(0.35f, 0.33f, 0.30f));
-					else
-						MakeSimpleGrassTuft(sceneNode, pos);
+					if (roll < 0.03f)       pick = FindDeco("Rock");
+					else if (roll < 0.04f)  pick = FindDeco("Tuft");
 					break;
 
-				case TileType.Water:
 				case TileType.Snow:
-				case TileType.Path:
-					continue;
-
-				default:
-					if (roll < 0.5f)
-						MakeSimpleRock(sceneNode, pos, mats?.DecoRock?.AlbedoColor ?? new Color(0.35f, 0.33f, 0.30f));
-					else
-						MakeSimpleGrassTuft(sceneNode, pos);
+					if (roll < 0.03f)       pick = FindDeco("RockSnow");
 					break;
 			}
+
+			if (pick != null)
+				SpawnDecoration(pick.Value, sceneNode, pos, rng);
 		}
 	}
 
-	void MakeSimpleTree(Node parent, Vector3 pos, Color color)
+	// ── Texture helpers ────────────────────────────────────────────
+
+	static Texture2D TryLoadTexture(string path)
 	{
-		float scale = 0.8f + (GD.Randi() % 10) * 0.04f;
-		float rotDeg = (GD.Randi() % 20) - 10;
-
-		var sprite = new Sprite3D
+		if (ResourceLoader.Exists(path))
 		{
-			Texture = MakeSimpleTreeTexture(color),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.45f * scale, 0),
-			PixelSize = 0.028f * scale,
-			Modulate = Colors.White,
-			RotationDegrees = new Vector3(0, rotDeg, 0)
-		};
-		parent.AddChild(sprite);
-	}
-
-	void MakeSimpleRock(Node parent, Vector3 pos, Color color)
-	{
-		float scale = 0.7f + (GD.Randi() % 7) * 0.05f;
-
-		var sprite = new Sprite3D
+			try { var res = ResourceLoader.Load<Texture2D>(path); if (res != null) return res; }
+			catch { }
+		}
+		if (FileAccess.FileExists(path))
 		{
-			Texture = MakeSimpleRockTexture(color),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.08f * scale, 0),
-			PixelSize = 0.022f * scale,
-			Modulate = Colors.White
-		};
-		parent.AddChild(sprite);
-	}
-
-	void MakeSimpleBush(Node parent, Vector3 pos, Color color)
-	{
-		float scale = 0.6f + (GD.Randi() % 5) * 0.06f;
-		float rotDeg = (GD.Randi() % 30) - 15;
-
-		var sprite = new Sprite3D
-		{
-			Texture = MakeSimpleBushTexture(color),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.06f * scale, 0),
-			PixelSize = 0.020f * scale,
-			Modulate = Colors.White,
-			RotationDegrees = new Vector3(0, rotDeg, 0)
-		};
-		parent.AddChild(sprite);
-	}
-
-	void MakeSimpleGrassTuft(Node parent, Vector3 pos)
-	{
-		float scale = 0.5f + (GD.Randi() % 4) * 0.08f;
-		float rotDeg = (GD.Randi() % 360);
-
-		var sprite = new Sprite3D
-		{
-			Texture = MakeSimpleGrassTuftTexture(),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.02f, 0),
-			PixelSize = 0.012f * scale,
-			Modulate = Colors.White,
-			RotationDegrees = new Vector3(0, rotDeg, 0)
-		};
-		parent.AddChild(sprite);
-	}
-
-	void MakeSimpleRuin(Node parent, Vector3 pos, Color color)
-	{
-		float rotDeg = (GD.Randi() % 15) - 7;
-
-		var sprite = new Sprite3D
-		{
-			Texture = MakeSimpleRuinTexture(color),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = pos + new Vector3(0, 0.40f, 0),
-			PixelSize = 0.030f,
-			Modulate = Colors.White,
-			RotationDegrees = new Vector3(0, rotDeg, 0)
-		};
-		parent.AddChild(sprite);
+			try { var img = Image.LoadFromFile(path); if (img != null && !img.IsEmpty()) return ImageTexture.CreateFromImage(img); }
+			catch { }
+		}
+		return null;
 	}
 
 	// ── Simple procedural textures for decorations ────────────────────
