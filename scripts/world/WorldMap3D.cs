@@ -19,13 +19,14 @@ public partial class WorldMap3D : Node3D
 	[Export] public float WorldHeight = 15f;
 
 	// ── Camera ──
-	[Export] public float CameraDistance = 5f;
-	[Export] public float CameraPitch = 45f;
-	[Export] public float CameraZoomMin = 2f;
-	[Export] public float CameraZoomMax = 12f;
+	[Export] public float CameraDistance = 8f;
+	[Export] public float CameraPitch = 50f;
+	[Export] public float CameraYaw = 45f;       // locked direction — 0=North, 45=isometric
+	public static float StaticCameraYaw;
+	[Export] public float CameraZoomMin = 3f;
+	[Export] public float CameraZoomMax = 18f;
 	[Export] public float CameraZoomStep = 1.5f;
 	[Export] public float CameraFollowSpeed = 5f;
-	[Export] public float CameraRotateSensitivity = 0.3f;
 	[Export] public float FirstPersonSensitivity = 0.15f;
 
 	// ── Terrain ──
@@ -56,19 +57,14 @@ public partial class WorldMap3D : Node3D
 	Node3D _cameraPivot;
 
 	// Camera control
-	float _cameraYaw;    // horizontal rotation around world center
-	bool _middleDragging;
-	Vector2 _dragStart;
-
-	// First-person mode
-	bool _firstPerson;
 	float _fpYaw;
 	float _fpPitch;
+	bool _firstPerson;
 	float _savedCamDistance;
-	float _savedCamYaw;
 
 	public override void _Ready()
 	{
+		StaticCameraYaw = CameraYaw;
 		GD.Print("[WorldMap3D] _Ready start");
 		_worldData = GameManager.CurrentWorldData;
 		if (_worldData == null)
@@ -171,7 +167,7 @@ public partial class WorldMap3D : Node3D
 	void UpdateCameraTransform()
 	{
 		float pitchRad = Mathf.DegToRad(CameraPitch);
-		float yawRad = Mathf.DegToRad(_cameraYaw);
+		float yawRad = Mathf.DegToRad(CameraYaw);
 
 		float x = Mathf.Cos(pitchRad) * Mathf.Sin(yawRad);
 		float y = Mathf.Sin(pitchRad);
@@ -188,8 +184,7 @@ public partial class WorldMap3D : Node3D
 		if (_firstPerson)
 		{
 			_savedCamDistance = CameraDistance;
-			_savedCamYaw = _cameraYaw;
-			_fpYaw = _cameraYaw;
+			_fpYaw = CameraYaw;
 			_fpPitch = 0f;
 			Input.MouseMode = Input.MouseModeEnum.Captured;
 			if (_player != null) _player.ProcessMode = ProcessModeEnum.Disabled;
@@ -197,7 +192,6 @@ public partial class WorldMap3D : Node3D
 		else
 		{
 			CameraDistance = _savedCamDistance;
-			_cameraYaw = _savedCamYaw;
 			_cameraPivot.RotationDegrees = Vector3.Zero;
 			_camera.RotationDegrees = Vector3.Zero;
 			Input.MouseMode = Input.MouseModeEnum.Visible;
@@ -233,16 +227,7 @@ public partial class WorldMap3D : Node3D
 				CameraDistance = Mathf.Clamp(CameraDistance - CameraZoomStep, CameraZoomMin, CameraZoomMax);
 			else if (mb.ButtonIndex == MouseButton.WheelDown)
 				CameraDistance = Mathf.Clamp(CameraDistance + CameraZoomStep, CameraZoomMin, CameraZoomMax);
-
-			if (mb.ButtonIndex == MouseButton.Middle)
-			{
-				_middleDragging = mb.Pressed;
-				_dragStart = mb.Position;
-			}
 		}
-
-		if (e is InputEventMouseMotion mm2 && _middleDragging)
-			_cameraYaw -= mm2.Relative.X * CameraRotateSensitivity;
 
 		// Let player handle left-click (don't consume here)
 	}

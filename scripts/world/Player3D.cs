@@ -21,10 +21,10 @@ public partial class Player3D : CharacterBody3D
 		var body = new Sprite3D
 		{
 			Texture = MakeCharacterTexture(),
-			Billboard = BaseMaterial3D.BillboardModeEnum.FixedY,
+			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = Vector3.Zero,
 			PixelSize = 0.0625f,
-			Offset = new Vector2(0, 24 * (0.917f - 0.5f)),  // feet at ground
+			Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
 			Name = "Body"
 		};
 		AddChild(body);
@@ -55,6 +55,15 @@ public partial class Player3D : CharacterBody3D
 			if (Input.IsKeyPressed(Key.A) || Input.IsKeyPressed(Key.Left))  input.X -= 1;
 			if (Input.IsKeyPressed(Key.D) || Input.IsKeyPressed(Key.Right)) input.X += 1;
 		}
+
+		// Rotate WASD to match camera yaw
+		float yawRad = Mathf.DegToRad(WorldMap3D.StaticCameraYaw);
+		float cos = Mathf.Cos(yawRad);
+		float sin = Mathf.Sin(yawRad);
+		input = new Vector3(
+			input.X * cos + input.Z * sin,
+			0,
+			-input.X * sin + input.Z * cos);
 
 		MoveDirection = input.Normalized();
 		Translate(MoveDirection * Speed * dt);

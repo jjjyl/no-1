@@ -566,6 +566,7 @@ public partial class ChunkManager : Node
 		public float PixelScaleBase;   // target meters per pixel, multiplied by scale factor
 		public Vector2 ScaleRange;
 		public BaseMaterial3D.BillboardModeEnum Billboard;
+		public int PanelCount;         // 0=sprite, N=crossed quads around Y
 	}
 
 	static List<DecorationDef> _decoDefs;
@@ -576,7 +577,7 @@ public partial class ChunkManager : Node
 			return;
 		_decoDefs = new();
 
-		void Add(string name, Texture2D tex, float yFrac, float pxPerM, float sMin, float sMax, BaseMaterial3D.BillboardModeEnum bb)
+		void Add(string name, Texture2D tex, float yFrac, float pxPerM, float sMin, float sMax, BaseMaterial3D.BillboardModeEnum bb, int panels = 0)
 		{
 			_decoDefs.Add(new DecorationDef
 			{
@@ -585,19 +586,20 @@ public partial class ChunkManager : Node
 				BaseYFrac = yFrac,
 				PixelScaleBase = pxPerM,
 				ScaleRange = new Vector2(sMin, sMax),
-				Billboard = bb
+				Billboard = bb,
+				PanelCount = panels
 			});
 		}
 
 		var treeTex = TryLoadTexture("res://assets/texture/world/deco_tree.png")
 			?? MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
 
-		Add("Tree",  treeTex, 0.88f, 0.007f, 0.6f, 1.0f, BaseMaterial3D.BillboardModeEnum.FixedY);
-		Add("Rock",  MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.FixedY);
-		Add("Bush",  MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)), 0.85f, 0.08f, 0.6f, 0.9f, BaseMaterial3D.BillboardModeEnum.FixedY);
-		Add("Tuft",  MakeSimpleGrassTuftTexture(), 0.80f, 0.04f, 0.5f, 0.8f, BaseMaterial3D.BillboardModeEnum.FixedY);
-		Add("Ruin",  MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)), 0.95f, 0.10f, 0.8f, 1.0f, BaseMaterial3D.BillboardModeEnum.FixedY);
-		Add("RockSnow", MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.FixedY);
+		Add("Tree",  treeTex, 0.88f, 0.007f, 0.6f, 1.0f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Rock",  MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Bush",  MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)), 0.85f, 0.08f, 0.6f, 0.9f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Tuft",  MakeSimpleGrassTuftTexture(), 0.80f, 0.04f, 0.5f, 0.8f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Ruin",  MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)), 0.95f, 0.10f, 0.8f, 1.0f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("RockSnow", MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.Enabled);
 	}
 
 	static DecorationDef? FindDeco(string name)
@@ -620,25 +622,91 @@ public partial class ChunkManager : Node
 
 		float scale = rng.RandfRange(def.ScaleRange.X, def.ScaleRange.Y);
 		float texH = tex.GetHeight();
+		float texW = tex.GetWidth();
+		float worldW = texW * def.PixelScaleBase * scale;
+		float worldH = texH * def.PixelScaleBase * scale;
 
-		float offsetY = texH * (def.BaseYFrac - 0.5f);
+		// Y offset to align BaseYFrac contact point with groundPos.Y
+		float yOffset = worldH * (def.BaseYFrac - 0.5f);
+		float yRot = rng.RandfRange(-12, 12);
 
-		var sprite = new Sprite3D
+		if (def.PanelCount > 0)
 		{
-			Texture = tex,
-			Billboard = def.Billboard,
-			Position = groundPos,
-			PixelSize = def.PixelScaleBase * scale,
-			Offset = new Vector2(0, offsetY),
-			Modulate = Colors.White,
+			var mat = MakeAlphaMaterial(tex);
+			var mesh = BuildCrossMesh(worldW, worldH, def.PanelCount);
+			var mi = new MeshInstance3D
+			{
+				Mesh = mesh,
+				MaterialOverride = mat,
+				Position = groundPos + new Vector3(0, yOffset, 0),
+				RotationDegrees = new Vector3(0, yRot, 0),
+			};
+			parent.AddChild(mi);
+		}
+		else
+		{
+			float offsetY = texH * (def.BaseYFrac - 0.5f);
+			var sprite = new Sprite3D
+			{
+				Texture = tex,
+				Billboard = def.Billboard,
+				Position = groundPos,
+				PixelSize = def.PixelScaleBase * scale,
+				Offset = new Vector2(0, offsetY),
+				Modulate = Colors.White,
+			};
+			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
+				sprite.RotationDegrees = new Vector3(0, yRot, 0);
+			parent.AddChild(sprite);
+		}
+	}
+
+	static StandardMaterial3D MakeAlphaMaterial(Texture2D tex)
+	{
+		return new StandardMaterial3D
+		{
+			AlbedoTexture = tex,
+			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
 		};
+	}
 
-		if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
+	/// <summary>
+	/// Build a single ArrayMesh containing N crossed quads equally spaced around Y axis.
+	/// Shares a single texture — used for trees to avoid flat-paper look.
+	/// </summary>
+	static ArrayMesh BuildCrossMesh(float w, float h, int panels)
+	{
+		float hw = w * 0.5f;
+		float hh = h * 0.5f;
+
+		var st = new SurfaceTool();
+		st.Begin(Mesh.PrimitiveType.Triangles);
+
+		for (int i = 0; i < panels; i++)
 		{
-			sprite.RotationDegrees = new Vector3(0, rng.RandfRange(-12, 12), 0);
+			float angle = Mathf.Pi * 2f * i / panels;
+			float cos = Mathf.Cos(angle);
+			float sin = Mathf.Sin(angle);
+
+			Vector3 RotY(float lx, float ly) => new Vector3(lx * cos, ly, lx * sin);
+
+			var bl = RotY(-hw, -hh); var br = RotY(hw, -hh);
+			var tl = RotY(-hw,  hh); var tr = RotY(hw,  hh);
+
+			st.SetUV(new Vector2(0, 1)); st.AddVertex(bl);
+			st.SetUV(new Vector2(1, 1)); st.AddVertex(br);
+			st.SetUV(new Vector2(0, 0)); st.AddVertex(tl);
+			st.SetUV(new Vector2(1, 0)); st.AddVertex(tr);
+
+			int b = i * 4;
+			st.AddIndex(b); st.AddIndex(b + 1); st.AddIndex(b + 2);
+			st.AddIndex(b + 1); st.AddIndex(b + 3); st.AddIndex(b + 2);
 		}
 
-		parent.AddChild(sprite);
+		st.GenerateNormals();
+		return st.Commit();
 	}
 
 	void ScatterDecorations(ChunkData chunk, Node3D sceneNode)
