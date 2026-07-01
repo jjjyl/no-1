@@ -1,9 +1,13 @@
 namespace No1;
 
 using Godot;
+using No1.Combat;
 
 public partial class CharacterStats : Node
 {
+	/// <summary>状态效果追踪器 — 管理所有临时 buff/debuff。</summary>
+	public StatusTracker Statuses;
+
 	[Export] public string DisplayName { get; set; } = "未命名";
 
 	// ── 基础属性 ──
@@ -134,6 +138,17 @@ public partial class CharacterStats : Node
 		if (dmg > b)
 			SevereHP = Math.Max(0, SevereHP - (dmg - b));
 
+		return dmg;
+	}
+
+	/// <summary>固定伤害 — 不经过闪避/防御/精力扣除，直接作用在双血条上。</summary>
+	public int TakeDirectDamage(int amount)
+	{
+		int dmg = Math.Max(1, amount);
+		int b = Math.Min(dmg, BruiseHP);
+		BruiseHP -= b;
+		if (dmg > b)
+			SevereHP = Math.Max(0, SevereHP - (dmg - b));
 		return dmg;
 	}
 }

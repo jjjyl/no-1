@@ -42,6 +42,7 @@ public static class CombatEvents
 				Source    = S(t, "source"),
 				Skill     = S(t, "skill"),
 				Target    = S(t, "target"),
+				StatusId  = S(t, "status_id"),
 				State     = S(t, "state"),
 				MinDamage = t.ContainsKey("min") ? t["min"].AsInt32() : 0,
 				Threshold = t.ContainsKey("threshold") ? t["threshold"].AsSingle() : 0,
@@ -56,12 +57,13 @@ public static class CombatEvents
 					var cd = c.AsGodotDictionary();
 					evt.Conditions.Add(new ConditionDef
 					{
-						Type   = S(cd, "type"),
-						Target = S(cd, "target"),
-						State  = S(cd, "state"),
-						Value  = cd.ContainsKey("value") ? cd["value"].AsInt32() : 0,
-						ValueF = cd.ContainsKey("value") ? cd["value"].AsSingle() : 0,
-						Op     = S(cd, "op"),
+						Type     = S(cd, "type"),
+						Target   = S(cd, "target"),
+						StatusId = S(cd, "status_id"),
+						State    = S(cd, "state"),
+						Value    = cd.ContainsKey("value") ? cd["value"].AsInt32() : 0,
+						ValueF   = cd.ContainsKey("value") ? cd["value"].AsSingle() : 0,
+						Op       = S(cd, "op"),
 					});
 				}
 			}
@@ -131,6 +133,11 @@ public static class CombatEvents
 				if (!MatchSource(t.Source, ctx.Source)) return false;
 				if (ctx.HpPct > t.Threshold) return false;
 				return true;
+			case "on_state_applied":
+			case "on_state_removed":
+				if (!MatchSource(t.Source, ctx.Source)) return false;
+				if (!string.IsNullOrEmpty(t.StatusId) && t.StatusId != ctx.StatusId) return false;
+				return true;
 			case "on_enemy_defeated":
 			case "on_ally_defeated":
 			case "on_turn_start":
@@ -139,7 +146,6 @@ public static class CombatEvents
 			case "on_round":
 				return t.Round <= 0 || t.Round == ctx.Round;
 			case "on_battle_start":
-			case "on_state_applied":
 				return true;
 		}
 		return false;
@@ -178,6 +184,9 @@ public static class CombatEvents
 				break;
 			case "pending_enemy":
 				if (CycleManager.Instance.PendingEnemyScene != c.Target) return false;
+				break;
+			case "has_status":
+				if (!_ui.HasStatus(c.Target, c.StatusId)) return false;
 				break;
 			}
 		}

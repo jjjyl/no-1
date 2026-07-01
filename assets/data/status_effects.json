@@ -1,0 +1,38 @@
+{
+  "_comment": "状态效果定义表。effects 里的 key 对应 CharacterStats 的 modifier key，value 为 int 加值。tick_damage 为每回合固定伤害（无视防御）。",
+  "statuses": {
+    "fear": {
+      "name": "恐惧",
+      "type": "debuff",
+      "effects": { "power": -2, "agility": -3 },
+      "default_duration": 3,
+      "icon_color": "#cc4444",
+      "description": "被龙威压制，力量与敏捷下降"
+    },
+    "burning": {
+      "name": "灼烧",
+      "type": "debuff",
+      "effects": {},
+      "tick_damage": 5,
+      "default_duration": 3,
+      "icon_color": "#ff8844",
+      "description": "龙息余焰在燃烧，每回合损失 5 点生命"
+    },
+    "def_up": {
+      "name": "防御提升",
+      "type": "buff",
+      "effects": { "def_flat": 4 },
+      "default_duration": 2,
+      "icon_color": "#4488cc",
+      "description": "临时防御力提升"
+    },
+    "enrage": {
+      "name": "狂怒",
+      "type": "buff",
+      "effects": { "power": 5, "speed": 3 },
+      "default_duration": 3,
+      "icon_color": "#ff4444",
+      "description": "陷入狂暴，攻击与速度大幅提升"
+    }
+  }
+}

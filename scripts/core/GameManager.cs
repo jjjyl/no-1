@@ -18,6 +18,7 @@ public partial class GameManager : Node
 	{
 		Instance = this;
 		Combat.SkillData.Load();
+		Combat.StatusDef.Load();
 		CallDeferred(nameof(LoadStartScene));
 	}
 

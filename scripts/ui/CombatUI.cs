@@ -65,6 +65,7 @@ public partial class CombatUI : Control
 		public Label EnergyLabel;
 		public Container SkillsArea;
 		public RichTextLabel StatLabel;
+		public RichTextLabel StatusLabel;
 		public PanelContainer Card;
 		public int DefBonus, DodgeBonus;
 	}
@@ -81,6 +82,7 @@ public partial class CombatUI : Control
 		public ProgressBar GaugeBar, EnergyBar;
 		public Label EnergyLabel;
 		public RichTextLabel StatLabel;
+		public RichTextLabel StatusLabel;
 		public PanelContainer Card;
 	}
 
@@ -158,6 +160,8 @@ public partial class CombatUI : Control
 		_turnLabel.CustomMinimumSize = Vector2.Zero;
 
 		_player = CycleManager.Instance.PlayerStats;
+		if (_player != null)
+			_player.Statuses ??= new StatusTracker(_player, "玩家");
 		_pGauge = 0;
 
 		if (_dialogueNext != null)
@@ -189,6 +193,7 @@ public partial class CombatUI : Control
 			var st = def.SpawnStats(CycleManager.Instance?.CurrentCycle ?? 1);
 			st.DisplayName = def.IsElite ? $"精英{def.Name}{i + 1}" : $"{def.Name}{i + 1}";
 			st.FullHeal();
+			st.Statuses = new StatusTracker(st, st.DisplayName);
 
 			var slot = new EnemySlot
 			{
@@ -241,6 +246,9 @@ public partial class CombatUI : Control
 				Visible = false,
 			};
 			inner.AddChild(slot.StatLabel);
+
+			slot.StatusLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
+			inner.AddChild(slot.StatusLabel);
 
 			card.AddChild(inner);
 			_enemyList.AddChild(card);
@@ -338,6 +346,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		foreach (var comp in CycleManager.Instance.ActiveCompanions)
 		{
 			var st = comp.SpawnStats();
+			st.Statuses = new StatusTracker(st, comp.Name);
 			var slot = new CompSlot { State = comp, Stats = st };
 
 			var outer = new VBoxContainer();
@@ -381,6 +390,9 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 				Visible = false,
 			};
 			outer.AddChild(slot.StatLabel);
+
+			slot.StatusLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
+			outer.AddChild(slot.StatusLabel);
 
 			slot.SkillsArea = new VBoxContainer { Visible = false };
 			slot.SkillsArea.AddThemeConstantOverride("separation", 2);
@@ -540,7 +552,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 					{
 						CombatEvents.Fire("on_turn_start", new FireContext { Source = e.DisplayName, Round = _round });
 						EnemyAct(e);
-						CombatEvents.Fire("on_turn_end", new FireContext { Source = e.DisplayName, Round = _round });
+						EndCharacterTurn(e.Stats.Statuses, e.DisplayName);
 						_round++;
 						CombatEvents.Fire("on_round", new FireContext { Round = _round });
 					}
@@ -549,8 +561,54 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 				}
 			}
 		}
+
+#if DEBUG
+		HandleDebugKeys();
+#endif
 		UpdateDisplay();
 	}
+
+#if DEBUG
+	float _debugKeyCooldown;
+
+	void HandleDebugKeys()
+	{
+		_debugKeyCooldown -= (float)GetProcessDeltaTime();
+		if (_debugKeyCooldown > 0) return;
+
+		var tracker = _player?.Statuses;
+		var enemyTracker = _enemies.FirstOrDefault(e => e.Alive)?.Stats?.Statuses;
+
+		if (Input.IsKeyPressed(Key.F1))
+		{
+			_debugKeyCooldown = 0.5f;
+			tracker?.Apply("fear", 3, "DEBUG-F1");
+			Log("[DEBUG] 玩家获得 恐惧(3回合)", "#ffcc44");
+			RefreshAll();
+		}
+		else if (Input.IsKeyPressed(Key.F2))
+		{
+			_debugKeyCooldown = 0.5f;
+			tracker?.Apply("burning", 3, "DEBUG-F2");
+			Log("[DEBUG] 玩家获得 灼烧(3回合)", "#ffcc44");
+			RefreshAll();
+		}
+		else if (Input.IsKeyPressed(Key.F3))
+		{
+			_debugKeyCooldown = 0.5f;
+			tracker?.Apply("def_up", 2, "DEBUG-F3");
+			Log("[DEBUG] 玩家获得 防御提升(2回合)", "#ffcc44");
+			RefreshAll();
+		}
+		else if (Input.IsKeyPressed(Key.F4))
+		{
+			_debugKeyCooldown = 0.5f;
+			enemyTracker?.Apply("enrage", 3, "DEBUG-F4");
+			Log("[DEBUG] 敌人获得 狂怒(3回合)", "#ffcc44");
+			RefreshAll();
+		}
+	}
+#endif
 
 	void ForceSkipPlayer()
 	{
@@ -719,7 +777,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			_waiting = false;
 			_targetActor.SkillsArea.Visible = false;
 			_activeCompanion = null;
-			CombatEvents.Fire("on_turn_end", new FireContext { Source = _targetActor.State.Name, Round = _round });
+			EndCharacterTurn(_targetActor.Stats.Statuses, _targetActor.State.Name);
 			if (!e.Stats.IsDead) e.Alive = true;
 			else { e.Alive = false; Log($"[color=red]{e.DisplayName}倒下了！[/color]", "#ff8888"); CombatEvents.Fire("on_enemy_defeated", new FireContext { Source = _targetActor.State.Name, Target = e.DisplayName, Round = _round }); }
 			CheckAllDead();
@@ -753,6 +811,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			RefreshAll();
 			_waiting = false;
 			_playerActions.Visible = false;
+			EndCharacterTurn(_player?.Statuses, "玩家");
 			if (!e.Stats.IsDead) e.Alive = true;
 			else { e.Alive = false; Log($"[color=red]{e.DisplayName}倒下了！[/color]", "#ff8888"); CombatEvents.Fire("on_enemy_defeated", new FireContext { Source = "player", Target = e.DisplayName, Round = _round }); }
 			CheckAllDead();
@@ -787,7 +846,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		_waiting = false;
 		actor.SkillsArea.Visible = false;
 		_activeCompanion = null;
-		CombatEvents.Fire("on_turn_end", new FireContext { Source = actor.State.Name, Round = _round });
+		EndCharacterTurn(actor.Stats.Statuses, actor.State.Name);
 	}
 
 	void ConfirmHealOnPlayer()
@@ -817,7 +876,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		_waiting = false;
 		actor.SkillsArea.Visible = false;
 		_activeCompanion = null;
-		CombatEvents.Fire("on_turn_end", new FireContext { Source = actor.State.Name, Round = _round });
+		EndCharacterTurn(actor.Stats.Statuses, actor.State.Name);
 	}
 
 	void CheckAllDead()
@@ -887,7 +946,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		RefreshAll();
 		_activeCompanion = null;
 		comp.SkillsArea.Visible = false;
-		CombatEvents.Fire("on_turn_end", new FireContext { Source = comp.State.Name, Round = _round });
+		EndCharacterTurn(comp.Stats.Statuses, comp.State.Name);
 	}
 
 	void QueueAction(string action)
@@ -957,7 +1016,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		_player.Energy = Math.Min(_player.Energy + _player.EnergyRegen, _player.EnergyMax);
 		RefreshAll();
 		_playerActions.Visible = false;
-		CombatEvents.Fire("on_turn_end", new FireContext { Source = "player", Round = _round });
+		EndCharacterTurn(_player?.Statuses, "玩家");
 	}
 
 	void TryEscape()
@@ -1151,7 +1210,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		_activeItemUser = null;
 		fromComp.SkillsArea.Visible = false;
 		_activeCompanion = null;
-		CombatEvents.Fire("on_turn_end", new FireContext { Source = fromComp.State.Name, Round = _round });
+		EndCharacterTurn(fromComp.Stats.Statuses, fromComp.State.Name);
 	}
 
 	void BeginCompanionGiveTargeting(string itemId, CompSlot fromComp)
@@ -1263,7 +1322,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		_activeItemUser = null;
 		fromComp.SkillsArea.Visible = false;
 		_activeCompanion = null;
-		CombatEvents.Fire("on_turn_end", new FireContext { Source = fromComp.State.Name, Round = _round });
+		EndCharacterTurn(fromComp.Stats.Statuses, fromComp.State.Name);
 	}
 
 	void DoPlayerGift(string itemId, CompSlot toComp)
@@ -1464,6 +1523,9 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		e.StatLabel.Text = $"力{st.Power}体{st.Body}敏{st.Agility}心{st.Heart}运{st.Fortune}  "
 			+ $"ATK{st.ATK} 物防{st.DefFlat} 精防{st.SpiritDef} 速{st.Speed}  "
 			+ $"闪{st.Dodge:F0}% 暴{st.CritRate:F0}%";
+		var statusLine = StatusText(st.Statuses);
+		e.StatusLabel.Text = statusLine;
+		e.StatusLabel.Visible = !string.IsNullOrEmpty(statusLine);
 	}
 
 	void RefreshCompSlot(CompSlot s)
@@ -1479,6 +1541,9 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		s.StatLabel.Text = $"力{st.Power}体{st.Body}敏{st.Agility}心{st.Heart}运{st.Fortune}  "
 			+ $"ATK{st.ATK} 物防{st.DefFlat} 精防{st.SpiritDef} 速{st.Speed}  "
 			+ $"闪{st.Dodge:F0}% 暴{st.CritRate:F0}%";
+		var statusLine = StatusText(st.Statuses);
+		s.StatusLabel.Text = statusLine;
+		s.StatusLabel.Visible = !string.IsNullOrEmpty(statusLine);
 	}
 
 	void RefreshBars(CharacterStats st, ProgressBar bb, Label bl, ProgressBar sb, Label sl)
@@ -1489,11 +1554,28 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		sl.Text = $"重: {st.SevereHP}/{st.MaxSevereHP}";
 	}
 
+	static string StatusText(StatusTracker tracker)
+	{
+		if (tracker == null || tracker.Count == 0) return "";
+		var parts = new List<string>();
+		foreach (var s in tracker.GetAllActive())
+		{
+			string dur = s.Duration < 0 ? "" : $"({s.Duration})";
+			string color = s.Type == "debuff" ? "red" : s.Type == "buff" ? "cyan" : "yellow";
+			string tick = s.TickDamage > 0 ? $"🔥" : "";
+			parts.Add($"[color={color}][{s.Name}{dur}]{tick}[/color]");
+		}
+		return string.Join(" ", parts);
+	}
+
 	void RefreshStatDisplay()
 	{
 		_playerStat.Text = $"力{_player.Power}体{_player.Body}敏{_player.Agility}心{_player.Heart}运{_player.Fortune}  "
 			+ $"ATK{_player.ATK} 物防{_player.DefFlat} 精防{_player.SpiritDef} 速{_player.Speed}  "
 			+ $"闪{_player.Dodge:F0}% 暴{_player.CritRate:F0}%";
+		var statusLine = StatusText(_player?.Statuses);
+		if (!string.IsNullOrEmpty(statusLine))
+			_playerStat.Text += $"\n{statusLine}";
 	}
 
 	public float GetHpPct(string target)
@@ -1595,6 +1677,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		var st = def.SpawnStats(CycleManager.Instance?.CurrentCycle ?? 1);
 		st.DisplayName = name;
 		st.FullHeal();
+		st.Statuses = new StatusTracker(st, name);
 
 		var slot = new EnemySlot { Stats = st, Alive = true, DisplayName = name };
 		var card = new PanelContainer();
@@ -1622,6 +1705,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		inner.AddChild(eRow);
 		slot.StatLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true, Visible = false };
 		inner.AddChild(slot.StatLabel);
+		slot.StatusLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
+		inner.AddChild(slot.StatusLabel);
 		card.AddChild(inner);
 		_enemyList.AddChild(card);
 		slot.NameLabel.GuiInput += e =>
@@ -1673,8 +1758,10 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		energyRow.AddChild(slot.EnergyLabel);
 		outer.AddChild(energyRow);
 		slot.StatLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true, Visible = false };
-		outer.AddChild(slot.StatLabel);
-		slot.SkillsArea = new VBoxContainer { Visible = false };
+			outer.AddChild(slot.StatLabel);
+			slot.StatusLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
+			outer.AddChild(slot.StatusLabel);
+			slot.SkillsArea = new VBoxContainer { Visible = false };
 		var actLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
 		slot.SkillsArea.AddChild(actLabel);
 		outer.AddChild(slot.SkillsArea);
@@ -1739,17 +1826,78 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 	public void ApplyBuff(string target, string buffId, int duration)
 	{
-		CharacterStats st = null;
-		if (target == "player") st = _player;
-		else
+		GD.Print($"[CombatUI.ApplyBuff] target={target} buffId={buffId} dur={duration}");
+		var tracker = GetStatusTracker(target);
+		if (tracker == null)
 		{
-			var c = _compSlots.FirstOrDefault(s => s.State.Name == target);
-			if (c != null) st = c.Stats;
+			GD.PrintErr($"[CombatUI.ApplyBuff] No StatusTracker for target '{target}'");
+			return;
 		}
-		if (st == null) return;
-		var parts = buffId.Split('+');
-		if (parts.Length == 2 && int.TryParse(parts[1], out int val))
-			st.ApplyModifier(parts[0], val);
-		Log($"(事件) {target} 获得 {buffId}", "#ffcc44");
+
+		string statusId = buffId;
+		GD.Print($"[CombatUI.ApplyBuff] Applying '{statusId}' to '{target}' via tracker...");
+		var active = tracker.Apply(statusId, duration, target);
+		if (active == null) { GD.PrintErr("[CombatUI.ApplyBuff] Apply returned null!"); return; }
+
+		GD.Print($"[CombatUI.ApplyBuff] OK — {target} now has {tracker.Count} active status(es)");
+		CombatEvents.Fire("on_state_applied", new FireContext
+		{
+			Source = target,
+			Target = target,
+			StatusId = statusId,
+			Round = _round,
+		});
+
+		RefreshAll();
+	}
+
+	StatusTracker GetStatusTracker(string target)
+	{
+		if (target == "player") return _player?.Statuses;
+		var comp = _compSlots.FirstOrDefault(s => s.State.Name == target);
+		if (comp != null) return comp.Stats?.Statuses;
+		var enemy = _enemies.FirstOrDefault(e => e.DisplayName == target);
+		return enemy?.Stats?.Statuses;
+	}
+
+	public bool HasStatus(string target, string statusId)
+	{
+		var tracker = GetStatusTracker(target);
+		return tracker != null && tracker.HasStatus(statusId);
+	}
+
+	void TickOwnerStatuses(StatusTracker tracker, string ownerName)
+	{
+		if (tracker == null)
+		{
+			GD.Print($"── [StatusTracker] {ownerName} 回合结算 (tracker=null, skip)");
+			return;
+		}
+		if (tracker.Count == 0)
+		{
+			GD.Print($"── [StatusTracker] {ownerName} 回合结算 (无状态, skip)");
+			return;
+		}
+		GD.Print($"── [StatusTracker] {ownerName} 回合结算 ──");
+		var events = tracker.TickRound();
+		foreach (var (status, reason) in events)
+		{
+			if (reason == "expired")
+			{
+				GD.Print($"  ⏰ [{ownerName}] 状态 [{status.StatusId}] {status.Name} 到期");
+				CombatEvents.Fire("on_state_removed", new FireContext
+				{
+					Source = ownerName,
+					StatusId = status.StatusId,
+					Round = _round,
+				});
+			}
+		}
+	}
+
+	void EndCharacterTurn(StatusTracker tracker, string name)
+	{
+		CombatEvents.Fire("on_turn_end", new FireContext { Source = name, Round = _round });
+		TickOwnerStatuses(tracker, name);
 	}
 }

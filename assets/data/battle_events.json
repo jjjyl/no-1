@@ -4,7 +4,8 @@
 			"id": "battle_start_test",
 			"trigger": { "type": "on_battle_start" },
 			"effects": [
-				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#ffcc44]战斗事件系统已加载。[/color][/b]" }
+				{ "type": "show_dialogue", "speaker": "系统", "text": "[b][color=#ffcc44]战斗事件系统已加载。[/color][/b]" },
+				{ "type": "apply_buff", "target": "player", "buff_id": "burning", "duration": 3 }
 			],
 			"once": true
 		},
@@ -223,6 +224,22 @@
 				{ "type": "show_dialogue", "speaker": "艾薇", "text": "[b]天一，和上次一样。[/b]" },
 				{ "type": "show_dialogue", "speaker": "天一", "text": "[b]嗯。[/b]" },
 				{ "type": "log_event", "text": "艾薇和天一交换了一个默契的眼神" }
+			],
+			"once": false
+		},
+		{
+			"id": "test_status_applied",
+			"trigger": { "type": "on_state_applied" },
+			"effects": [
+				{ "type": "log_event", "text": "⚡ 状态被应用了（on_state_applied 触发正常）" }
+			],
+			"once": false
+		},
+		{
+			"id": "test_status_removed",
+			"trigger": { "type": "on_state_removed" },
+			"effects": [
+				{ "type": "log_event", "text": "💨 状态到期移除了（on_state_removed 触发正常）" }
 			],
 			"once": false
 		}
