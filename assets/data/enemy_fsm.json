@@ -1,0 +1,210 @@
+{
+  "_comment": "敌人状态机与动画帧映射 — 2D 像素精灵 SpriteSheet 切帧 + 状态转换规则。hframes/vframes 按精灵表统一设置，每个状态的动画为单独 row。",
+
+  "base_mob": {
+    "sprite_layout": { "hframes": 4, "vframes": 5 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 6,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 3,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "death":   { "row": 4, "start_col": 0, "frames": 4, "fps": 8,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 8], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [5, 15], "anim": "wander", "speed": 1.1,   "wander_radius": 6.0 },
+      "rest":     { "next": "idle",    "after_sec": [10, 25], "anim": "rest",   "chance_from_idle": 0.15 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 3.5 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 2.2 },
+      "combat":   { "on": "battle_start", "anim": "idle" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "forest_beast": {
+    "sprite_layout": { "hframes": 4, "vframes": 6 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 6,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 3, "fps": 3,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "attack":  { "row": 4, "start_col": 0, "frames": 4, "fps": 12, "loop": false },
+      "death":   { "row": 5, "start_col": 0, "frames": 4, "fps": 8,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [2, 6], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [3, 10], "anim": "wander", "speed": 1.8,  "wander_radius": 8.0 },
+      "rest":     { "next": "idle",    "after_sec": [8, 18],  "anim": "rest",  "chance_from_idle": 0.12 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 4.5 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 3.5 },
+      "combat":   { "on": "battle_start", "anim": "attack" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "mine_slug": {
+    "sprite_layout": { "hframes": 3, "vframes": 4 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 3, "fps": 4,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 3, "fps": 5,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 1, "fps": 1,  "loop": true },
+      "aggro":   { "row": 2, "start_col": 1, "frames": 2, "fps": 8,  "loop": true },
+      "death":   { "row": 3, "start_col": 0, "frames": 3, "fps": 6,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [4, 10], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [6, 20], "anim": "wander", "speed": 0.6,  "wander_radius": 3.0 },
+      "rest":     { "next": "idle",    "after_sec": [15, 30], "anim": "rest",  "chance_from_idle": 0.25 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 2.5 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 1.0 },
+      "combat":   { "on": "battle_start", "anim": "idle" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "cliff_hawk": {
+    "sprite_layout": { "hframes": 4, "vframes": 5 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 5,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 4,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "attack":  { "row": 3, "start_col": 2, "frames": 2, "fps": 12, "loop": false },
+      "death":   { "row": 4, "start_col": 0, "frames": 4, "fps": 6,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [2, 5], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [3, 8],  "anim": "wander", "speed": 2.5,  "wander_radius": 12.0 },
+      "rest":     { "next": "idle",    "after_sec": [6, 15],  "anim": "rest",  "chance_from_idle": 0.18 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 5.0 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 4.5 },
+      "combat":   { "on": "battle_start", "anim": "attack" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "ancient_warrior": {
+    "sprite_layout": { "hframes": 4, "vframes": 6 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 6,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 3,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "attack":  { "row": 4, "start_col": 0, "frames": 4, "fps": 12, "loop": false },
+      "death":   { "row": 5, "start_col": 0, "frames": 4, "fps": 8,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 7],  "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [4, 12], "anim": "wander", "speed": 1.5,  "wander_radius": 7.0 },
+      "rest":     { "next": "idle",    "after_sec": [10, 20], "anim": "rest",  "chance_from_idle": 0.10 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 4.0 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 2.8 },
+      "combat":   { "on": "battle_start", "anim": "attack" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "crystal_warden": {
+    "sprite_layout": { "hframes": 4, "vframes": 5 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 5,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 7,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 4,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 9,  "loop": true },
+      "death":   { "row": 4, "start_col": 0, "frames": 4, "fps": 6,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 8],  "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [5, 14], "anim": "wander", "speed": 1.3,  "wander_radius": 5.0 },
+      "rest":     { "next": "idle",    "after_sec": [8, 20],  "anim": "rest",  "chance_from_idle": 0.20 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 4.0 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 2.2 },
+      "combat":   { "on": "battle_start", "anim": "idle" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "wasteland_hunter": {
+    "sprite_layout": { "hframes": 4, "vframes": 6 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 6,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 3,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "attack":  { "row": 4, "start_col": 0, "frames": 4, "fps": 12, "loop": false },
+      "death":   { "row": 5, "start_col": 0, "frames": 4, "fps": 8,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 10], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [5, 15], "anim": "wander", "speed": 1.0,  "wander_radius": 10.0 },
+      "rest":     { "next": "idle",    "after_sec": [12, 30], "anim": "rest",  "chance_from_idle": 0.15 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 5.0 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 2.0 },
+      "combat":   { "on": "battle_start", "anim": "attack" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "spring_lurker": {
+    "sprite_layout": { "hframes": 4, "vframes": 5 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 5,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 7,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 4,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "death":   { "row": 4, "start_col": 0, "frames": 4, "fps": 6,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 10], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [4, 12], "anim": "wander", "speed": 1.2,  "wander_radius": 6.0 },
+      "rest":     { "next": "idle",    "after_sec": [10, 25], "anim": "rest",  "chance_from_idle": 0.20 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 3.5 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 2.8 },
+      "combat":   { "on": "battle_start", "anim": "idle" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "tower_guardian": {
+    "sprite_layout": { "hframes": 4, "vframes": 6 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 4, "fps": 6,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 2, "fps": 3,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 2, "fps": 10, "loop": true },
+      "attack":  { "row": 4, "start_col": 0, "frames": 4, "fps": 12, "loop": false },
+      "death":   { "row": 5, "start_col": 0, "frames": 4, "fps": 8,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 8],  "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [5, 12], "anim": "wander", "speed": 1.0,  "wander_radius": 4.0 },
+      "rest":     { "next": "idle",    "after_sec": [10, 20], "anim": "rest",  "chance_from_idle": 0.08 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 5.0 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 2.0 },
+      "combat":   { "on": "battle_start", "anim": "attack" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  },
+
+  "ancient_dragon": {
+    "sprite_layout": { "hframes": 6, "vframes": 7 },
+    "anims": {
+      "idle":    { "row": 0, "start_col": 0, "frames": 6, "fps": 5,  "loop": true },
+      "wander":  { "row": 1, "start_col": 0, "frames": 6, "fps": 7,  "loop": true },
+      "rest":    { "row": 2, "start_col": 0, "frames": 3, "fps": 3,  "loop": true },
+      "aggro":   { "row": 3, "start_col": 0, "frames": 4, "fps": 8,  "loop": true },
+      "attack":  { "row": 4, "start_col": 0, "frames": 6, "fps": 10, "loop": false },
+      "breath":  { "row": 5, "start_col": 0, "frames": 6, "fps": 8,  "loop": false },
+      "death":   { "row": 6, "start_col": 0, "frames": 6, "fps": 6,  "loop": false }
+    },
+    "states": {
+      "idle":     { "next": "wander",  "after_sec": [3, 10], "anim": "idle" },
+      "wander":   { "next": "idle",    "after_sec": [5, 20], "anim": "wander", "speed": 0.8,  "wander_radius": 15.0 },
+      "rest":     { "next": "idle",    "after_sec": [15, 40], "anim": "rest",  "chance_from_idle": 0.20 },
+      "aggro":    { "next": "chase",   "on_enter": "player_in_range", "anim": "aggro", "range": 8.0 },
+      "chase":    { "next": "combat",  "on_contact": true, "anim": "wander", "speed": 1.5 },
+      "combat":   { "on": "battle_start", "anim": "attack" },
+      "death":    { "on": "hp_zero",   "anim": "death" }
+    }
+  }
+}

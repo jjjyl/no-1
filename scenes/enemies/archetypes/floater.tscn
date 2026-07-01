@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="uid://cjb43iwg4ogry"]
+
+[ext_resource type="Script" uid="uid://dbfmfbjp8sap8" path="res://scripts/combat/EnemyBase.cs" id="1_h1fu7"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_sacw7"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_h1fu7"]
+radius = 3.0
+
+[node name="Floater" type="Node3D"]
+script = ExtResource("1_h1fu7")
+
+[node name="Sprite" type="Sprite3D" parent="."]
+billboard = 1
+render_priority = 1
+
+[node name="Shadow" type="Sprite3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.25, 0, 0, 0, 1, 0, -0.8, 0)
+modulate = Color(0, 0, 0, 0.5019608)
+render_priority = -1
+
+[node name="GroundRay" type="RayCast3D" parent="."]
+target_position = Vector3(0, -8, 0)
+
+[node name="BodyArea" type="Area3D" parent="."]
+
+[node name="BodyShape" type="CollisionShape3D" parent="BodyArea"]
+shape = SubResource("SphereShape3D_sacw7")
+
+[node name="AggroArea" type="Area3D" parent="."]
+
+[node name="AggroShape" type="CollisionShape3D" parent="AggroArea"]
+shape = SubResource("SphereShape3D_h1fu7")

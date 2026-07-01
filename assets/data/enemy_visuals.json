@@ -1,0 +1,114 @@
+{
+  "_comment": "敌人视觉配置 — 精灵表路径、原型模板、大小、阴影参数。后期替换贴图只需改 spritesheet 路径。",
+  
+  "base_mob": {
+    "spritesheet": "res://assets/sprites/enemies/base_mob.png",
+    "archetype": "floater",
+    "scale": 0.6,
+    "sprite_offset": [0, 0.1, 0],
+    "shadow_scale": [0.4, 0.2, 1],
+    "shadow_offset_y": -0.4,
+    "map_icon": "res://assets/icons/map/dot_enemy_small.png",
+    "map_dot_color": "#8b8b8b",
+    "minimap_blip": "enemy_normal"
+  },
+  "forest_beast": {
+    "spritesheet": "res://assets/sprites/enemies/forest_beast.png",
+    "archetype": "quadruped",
+    "scale": 0.9,
+    "sprite_offset": [0, 0.3, 0],
+    "shadow_scale": [1.0, 0.35, 1],
+    "shadow_offset_y": -0.2,
+    "map_icon": "res://assets/icons/map/dot_enemy_quad.png",
+    "map_dot_color": "#4a7c3f",
+    "minimap_blip": "enemy_normal"
+  },
+  "mine_slug": {
+    "spritesheet": "res://assets/sprites/enemies/mine_slug.png",
+    "archetype": "floater",
+    "scale": 1.2,
+    "sprite_offset": [0, 0.0, 0],
+    "shadow_scale": [0.9, 0.35, 1],
+    "shadow_offset_y": -0.5,
+    "map_icon": "res://assets/icons/map/dot_enemy_float.png",
+    "map_dot_color": "#8b7355",
+    "minimap_blip": "enemy_normal"
+  },
+  "cliff_hawk": {
+    "spritesheet": "res://assets/sprites/enemies/cliff_hawk.png",
+    "archetype": "floater",
+    "scale": 0.8,
+    "sprite_offset": [0, 0.8, 0],
+    "shadow_scale": [0.35, 0.15, 1],
+    "shadow_offset_y": -0.3,
+    "map_icon": "res://assets/icons/map/dot_enemy_float.png",
+    "map_dot_color": "#b8a090",
+    "minimap_blip": "enemy_normal"
+  },
+  "ancient_warrior": {
+    "spritesheet": "res://assets/sprites/enemies/ancient_warrior.png",
+    "archetype": "biped_small",
+    "scale": 1.0,
+    "sprite_offset": [0, 0.0, 0],
+    "shadow_scale": [0.6, 0.3, 1],
+    "shadow_offset_y": -0.8,
+    "map_icon": "res://assets/icons/map/dot_enemy_human.png",
+    "map_dot_color": "#7a8a8a",
+    "minimap_blip": "enemy_normal"
+  },
+  "crystal_warden": {
+    "spritesheet": "res://assets/sprites/enemies/crystal_warden.png",
+    "archetype": "floater",
+    "scale": 1.1,
+    "sprite_offset": [0, 0.5, 0],
+    "shadow_scale": [0.5, 0.2, 1],
+    "shadow_offset_y": -0.3,
+    "map_icon": "res://assets/icons/map/dot_enemy_float.png",
+    "map_dot_color": "#4ae0e0",
+    "minimap_blip": "enemy_normal"
+  },
+  "wasteland_hunter": {
+    "spritesheet": "res://assets/sprites/enemies/wasteland_hunter.png",
+    "archetype": "quadruped",
+    "scale": 1.4,
+    "sprite_offset": [0, 0.2, 0],
+    "shadow_scale": [1.5, 0.5, 1],
+    "shadow_offset_y": -0.3,
+    "map_icon": "res://assets/icons/map/dot_enemy_quad.png",
+    "map_dot_color": "#8b4513",
+    "minimap_blip": "enemy_elite"
+  },
+  "spring_lurker": {
+    "spritesheet": "res://assets/sprites/enemies/spring_lurker.png",
+    "archetype": "floater",
+    "scale": 1.0,
+    "sprite_offset": [0, 0.2, 0],
+    "shadow_scale": [0.55, 0.22, 1],
+    "shadow_offset_y": -0.3,
+    "map_icon": "res://assets/icons/map/dot_enemy_float.png",
+    "map_dot_color": "#4682b4",
+    "minimap_blip": "enemy_normal"
+  },
+  "tower_guardian": {
+    "spritesheet": "res://assets/sprites/enemies/tower_guardian.png",
+    "archetype": "biped_small",
+    "scale": 1.2,
+    "sprite_offset": [0, 0.0, 0],
+    "shadow_scale": [0.7, 0.35, 1],
+    "shadow_offset_y": -0.9,
+    "map_icon": "res://assets/icons/map/dot_enemy_boss.png",
+    "map_dot_color": "#ff6600",
+    "minimap_blip": "boss"
+  },
+  "ancient_dragon": {
+    "spritesheet": "res://assets/sprites/enemies/ancient_dragon.png",
+    "archetype": "quadruped",
+    "scale": 3.5,
+    "sprite_offset": [0, 0.0, 0],
+    "shadow_scale": [3.0, 1.0, 1],
+    "shadow_offset_y": -0.4,
+    "map_icon": "res://assets/icons/map/dot_enemy_boss.png",
+    "map_dot_color": "#cc0000",
+    "minimap_blip": "boss"
+  }
+}

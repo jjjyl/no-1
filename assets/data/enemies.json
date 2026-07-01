@@ -1,0 +1,204 @@
+{
+  "enemies": [
+    {
+      "id": "base_mob",
+      "name": "基础魔种",
+      "category": "normal",
+      "desc": "普通的魔粒聚合体，随处可见的威胁。",
+      "archetype": "floater",
+      "zone": "*",
+      "rarity": 1,
+      "stats": {
+        "power":   { "min": 3, "max": 5 },
+        "body":    { "min": 2, "max": 4 },
+        "agility": { "min": 3, "max": 5 },
+        "heart":   { "min": 1, "max": 3 },
+        "fortune": { "min": 1, "max": 3 }
+      },
+      "hp": {
+        "bruise": { "min": 12, "max": 18 },
+        "severe": { "min": 10, "max": 18 }
+      },
+      "speed": { "min": 5, "max": 7 }
+    },
+    {
+      "id": "forest_beast",
+      "name": "林间兽",
+      "category": "normal",
+      "desc": "在林地边缘游荡的魔化野兽，速度极快但脆弱。",
+      "archetype": "quadruped",
+      "zone": "林地边缘",
+      "rarity": 1,
+      "stats": {
+        "power":   { "min": 4, "max": 6 },
+        "body":    { "min": 1, "max": 3 },
+        "agility": { "min": 6, "max": 8 },
+        "heart":   { "min": 1, "max": 2 },
+        "fortune": { "min": 2, "max": 4 }
+      },
+      "hp": {
+        "bruise": { "min": 9, "max": 14 },
+        "severe": { "min": 5, "max": 10 }
+      },
+      "speed": { "min": 7, "max": 9 }
+    },
+    {
+      "id": "mine_slug",
+      "name": "矿道蛞蝓",
+      "category": "normal",
+      "desc": "吸附在废矿壁上的巨大软体魔种，防御力高但行动迟缓。",
+      "archetype": "floater",
+      "zone": "废矿入口",
+      "rarity": 1,
+      "stats": {
+        "power":   { "min": 2, "max": 4 },
+        "body":    { "min": 5, "max": 7 },
+        "agility": { "min": 1, "max": 3 },
+        "heart":   { "min": 1, "max": 3 },
+        "fortune": { "min": 1, "max": 2 }
+      },
+      "hp": {
+        "bruise": { "min": 18, "max": 24 },
+        "severe": { "min": 8, "max": 14 }
+      },
+      "speed": { "min": 3, "max": 5 }
+    },
+    {
+      "id": "cliff_hawk",
+      "name": "崖鹰",
+      "category": "normal",
+      "desc": "在断崖台地盘旋的魔化猛禽，闪避率极高。",
+      "archetype": "floater",
+      "zone": "断崖台地",
+      "rarity": 2,
+      "stats": {
+        "power":   { "min": 3, "max": 5 },
+        "body":    { "min": 1, "max": 3 },
+        "agility": { "min": 7, "max": 9 },
+        "heart":   { "min": 1, "max": 3 },
+        "fortune": { "min": 3, "max": 5 }
+      },
+      "hp": {
+        "bruise": { "min": 8, "max": 12 },
+        "severe": { "min": 5, "max": 10 }
+      },
+      "speed": { "min": 8, "max": 10 }
+    },
+    {
+      "id": "ancient_warrior",
+      "name": "亡灵战士",
+      "category": "normal",
+      "desc": "从古战场残骸中重聚的古代士兵，平衡而坚韧。",
+      "archetype": "biped_small",
+      "zone": "古战场",
+      "rarity": 2,
+      "stats": {
+        "power":   { "min": 4, "max": 6 },
+        "body":    { "min": 3, "max": 5 },
+        "agility": { "min": 3, "max": 5 },
+        "heart":   { "min": 2, "max": 4 },
+        "fortune": { "min": 2, "max": 4 }
+      },
+      "hp": {
+        "bruise": { "min": 15, "max": 20 },
+        "severe": { "min": 10, "max": 14 }
+      },
+      "speed": { "min": 4, "max": 6 }
+    },
+    {
+      "id": "crystal_warden",
+      "name": "晶石守卫",
+      "category": "normal",
+      "desc": "由结晶洞穴的晶石活化而成的守卫，擅长精神攻击。",
+      "archetype": "floater",
+      "zone": "结晶洞穴",
+      "rarity": 2,
+      "stats": {
+        "power":   { "min": 2, "max": 4 },
+        "body":    { "min": 2, "max": 4 },
+        "agility": { "min": 2, "max": 4 },
+        "heart":   { "min": 6, "max": 8 },
+        "fortune": { "min": 3, "max": 5 }
+      },
+      "hp": {
+        "bruise": { "min": 12, "max": 16 },
+        "severe": { "min": 10, "max": 16 }
+      },
+      "speed": { "min": 4, "max": 6 }
+    },
+    {
+      "id": "wasteland_hunter",
+      "name": "荒原猎手",
+      "category": "normal",
+      "desc": "在荒原边缘徘徊的巨型捕食者，攻击力极高。",
+      "archetype": "quadruped",
+      "zone": "荒原边缘",
+      "rarity": 3,
+      "stats": {
+        "power":   { "min": 6, "max": 9 },
+        "body":    { "min": 3, "max": 5 },
+        "agility": { "min": 2, "max": 4 },
+        "heart":   { "min": 1, "max": 3 },
+        "fortune": { "min": 2, "max": 4 }
+      },
+      "hp": {
+        "bruise": { "min": 12, "max": 18 },
+        "severe": { "min": 8, "max": 14 }
+      },
+      "speed": { "min": 4, "max": 6 }
+    },
+    {
+      "id": "spring_lurker",
+      "name": "泉底潜伏者",
+      "category": "normal",
+      "desc": "藏在圣泉底部的魔种，能在净化之力中生存说明它不一般。",
+      "archetype": "floater",
+      "zone": "圣泉",
+      "rarity": 3,
+      "stats": {
+        "power":   { "min": 4, "max": 6 },
+        "body":    { "min": 2, "max": 4 },
+        "agility": { "min": 5, "max": 7 },
+        "heart":   { "min": 3, "max": 5 },
+        "fortune": { "min": 3, "max": 5 }
+      },
+      "hp": {
+        "bruise": { "min": 12, "max": 16 },
+        "severe": { "min": 8, "max": 12 }
+      },
+      "speed": { "min": 6, "max": 8 }
+    },
+    {
+      "id": "tower_guardian",
+      "name": "符文守卫",
+      "category": "boss",
+      "desc": "忘却之塔的守护者——由古代符文构成的活体机关。",
+      "archetype": "biped_small",
+      "zone": "忘却之塔",
+      "rarity": 4,
+      "stats": {
+        "power": 6, "body": 6, "agility": 3, "heart": 5, "fortune": 3
+      },
+      "hp": {
+        "bruise": 25, "severe": 20
+      },
+      "speed": 4
+    },
+    {
+      "id": "ancient_dragon",
+      "name": "古代巨龙",
+      "category": "boss",
+      "desc": "世界痛苦的化身——不是敌人，是旧时代遗留下来的记忆之躯。",
+      "archetype": "quadruped",
+      "zone": "*",
+      "rarity": 5,
+      "stats": {
+        "power": 12, "body": 10, "agility": 3, "heart": 8, "fortune": 5
+      },
+      "hp": {
+        "bruise": 40, "severe": 30
+      },
+      "speed": 3
+    }
+  ]
+}

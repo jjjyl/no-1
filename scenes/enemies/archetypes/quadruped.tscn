@@ -1,0 +1,36 @@
+[gd_scene load_steps=4 format=3 uid="uid://40jvcm4rfsyg"]
+
+[ext_resource type="Script" uid="uid://dbfmfbjp8sap8" path="res://scripts/combat/EnemyBase.cs" id="1_drfro"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_qhtof"]
+radius = 0.6
+height = 1.2
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_drfro"]
+height = 0.8
+radius = 4.0
+
+[node name="Quadruped" type="Node3D"]
+script = ExtResource("1_drfro")
+
+[node name="Sprite" type="Sprite3D" parent="."]
+billboard = 1
+render_priority = 1
+
+[node name="Shadow" type="Sprite3D" parent="."]
+transform = Transform3D(1.2, 0, 0, 0, 0.4, 0, 0, 0, 1, 0, -0.8, 0)
+modulate = Color(0, 0, 0, 0.5019608)
+render_priority = -1
+
+[node name="GroundRay" type="RayCast3D" parent="."]
+target_position = Vector3(0, -5, 0)
+
+[node name="BodyArea" type="Area3D" parent="."]
+
+[node name="BodyShape" type="CollisionShape3D" parent="BodyArea"]
+shape = SubResource("CapsuleShape3D_qhtof")
+
+[node name="AggroArea" type="Area3D" parent="."]
+
+[node name="AggroShape" type="CollisionShape3D" parent="AggroArea"]
+shape = SubResource("CylinderShape3D_drfro")
