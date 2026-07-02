@@ -1,14 +1,69 @@
-[gd_scene load_steps=3 format=3 uid="uid://b0codygil21qi"]
+[gd_scene load_steps=10 format=3 uid="uid://b0codygil21qi"]
 
 [ext_resource type="Script" uid="uid://c650qppveaqyu" path="res://scripts/ui/CombatUI.cs" id="1_5vqsm"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5vqsm"]
+[sub_resource type="StyleBoxFlat" id="panel_player"]
+bg_color = Color(0.08, 0.08, 0.12, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.45, 0.55, 0.9)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[node name="Combat" type="Control" node_paths=PackedStringArray("_playerStat", "_playerName", "_battleLog", "_turnLabel", "_resultLabel", "_pBruiseBar", "_pSevereBar", "_pGaugeBar", "_pEnergyBar", "_atkBtn", "_defBtn", "_dodgeBtn", "_escapeBtn", "_itemBtn", "_continueBtn", "_templeBtn", "_playerActions", "_playerStatPanel", "_dialoguePanel", "_dialogueSpeaker", "_dialogueText", "_dialogueNext", "_skillRow", "_companionSection", "_enemyList")]
+[sub_resource type="StyleBoxFlat" id="bar_gauge_bg"]
+bg_color = Color(0.08, 0.08, 0.08, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="bar_gauge_fill"]
+bg_color = Color(0.9, 0.75, 0.25, 0.9)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="bar_bruise_bg"]
+bg_color = Color(0.1, 0.14, 0.08, 0.7)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="bar_bruise_fill"]
+bg_color = Color(0.35, 0.6, 0.3, 0.9)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="bar_severe_bg"]
+bg_color = Color(0.14, 0.08, 0.12, 0.7)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="bar_severe_fill"]
+bg_color = Color(0.6, 0.28, 0.48, 0.9)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="bar_energy_fill"]
+bg_color = Color(0.27, 0.53, 0.73, 0.9)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="Combat" type="Control" node_paths=PackedStringArray("_playerStat", "_playerName", "_battleLog", "_turnLabel", "_resultLabel", "_pBruiseBar", "_pSevereBar", "_pGaugeBar", "_pEnergyBar", "_playerPortrait", "_atkBtn", "_defBtn", "_dodgeBtn", "_escapeBtn", "_itemBtn", "_continueBtn", "_templeBtn", "_playerActions", "_playerStatPanel", "_dialoguePanel", "_dialogueSpeaker", "_dialogueText", "_dialogueNext", "_skillRow", "_companionSection", "_enemyList")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -17,30 +72,31 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_5vqsm")
 _playerStat = NodePath("PlayerStatPopup/PlayerStat")
-_playerName = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HBoxContainer/PlayerNameLabel")
-_battleLog = NodePath("MarginContainer/HBoxContainer/VBoxContainer/LogPanel/LogText")
-_turnLabel = NodePath("MarginContainer/HBoxContainer/VBoxContainer/TurnLabel")
-_resultLabel = NodePath("MarginContainer/HBoxContainer/VBoxContainer/ResultLabel")
-_pBruiseBar = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HP bars/PlayerBruiseBar")
-_pSevereBar = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HP bars/PlayerSevereBar")
-_pGaugeBar = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HBoxContainer/PlayerGaugeBar")
-_pEnergyBar = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerGaugeRow/PlayerEnergyBar")
-_atkBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/AttackBtn")
-_defBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/DefendBtn")
-_dodgeBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/DodgeBtn")
+_playerName = NodePath("MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/MainRow/PlayerNameLabel")
+_battleLog = NodePath("MarginContainer/MainLayout/CenterSection/LogPanel/LogText")
+_turnLabel = NodePath("MarginContainer/MainLayout/CenterSection/TurnLabel")
+_resultLabel = NodePath("MarginContainer/MainLayout/CenterSection/ResultLabel")
+_pBruiseBar = NodePath("MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/HP/PlayerBruiseBar")
+_pSevereBar = NodePath("MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/HP/PlayerSevereBar")
+_pGaugeBar = NodePath("MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/MainRow/PlayerGaugeBar")
+_pEnergyBar = NodePath("MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/EnergyRow/PlayerEnergyBar")
+_playerPortrait = NodePath("MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/PlayerPortrait")
+_atkBtn = NodePath("MarginContainer/MainLayout/ActionBar/BasicActions/AttackBtn")
+_defBtn = NodePath("MarginContainer/MainLayout/ActionBar/BasicActions/DefendBtn")
+_dodgeBtn = NodePath("MarginContainer/MainLayout/ActionBar/BasicActions/DodgeBtn")
 _escapeBtn = NodePath("EscapeBtn")
-_itemBtn = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer/ItemBtn")
-_continueBtn = NodePath("MarginContainer/HBoxContainer/VBoxContainer/ResultButtons/ContinueBtn")
-_templeBtn = NodePath("MarginContainer/HBoxContainer/VBoxContainer/ResultButtons/TempleBtn")
-_playerActions = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions")
+_itemBtn = NodePath("MarginContainer/MainLayout/ActionBar/BasicActions/ItemBtn")
+_continueBtn = NodePath("MarginContainer/MainLayout/CenterSection/ResultButtons/ContinueBtn")
+_templeBtn = NodePath("MarginContainer/MainLayout/CenterSection/ResultButtons/TempleBtn")
+_playerActions = NodePath("MarginContainer/MainLayout/ActionBar")
 _playerStatPanel = NodePath("PlayerStatPopup")
 _dialoguePanel = NodePath("DialoguePanel")
-_dialogueSpeaker = NodePath("DialoguePanel/VBoxContainer/DialogueSpeaker")
-_dialogueText = NodePath("DialoguePanel/VBoxContainer/DialogueText")
-_dialogueNext = NodePath("DialoguePanel/VBoxContainer/DialogueNext")
-_skillRow = NodePath("MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/SkillButtons")
-_companionSection = NodePath("MarginContainer/HBoxContainer/Player/CompanionSection")
-_enemyList = NodePath("MarginContainer/HBoxContainer/EnemyList")
+_dialogueSpeaker = NodePath("DialoguePanel/DialogInner/DialogueSpeaker")
+_dialogueText = NodePath("DialoguePanel/DialogInner/DialogueText")
+_dialogueNext = NodePath("DialoguePanel/DialogInner/DialogueNext")
+_skillRow = NodePath("MarginContainer/MainLayout/ActionBar/SkillButtons")
+_companionSection = NodePath("MarginContainer/MainLayout/PartySection/CompanionCards")
+_enemyList = NodePath("MarginContainer/MainLayout/EnemySection")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
@@ -49,7 +105,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.101960786, 0.050980393, 0.050980393, 1)
+color = Color(0.1, 0.05, 0.05, 1)
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -59,168 +115,191 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 30
+theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 30
+theme_override_constants/margin_bottom = 20
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+[node name="MainLayout" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
+
+[node name="EnemySection" type="HBoxContainer" parent="MarginContainer/MainLayout"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+size_flags_stretch_ratio = 4.0
+alignment = 1
+theme_override_constants/separation = -40
+
+[node name="CenterSection" type="VBoxContainer" parent="MarginContainer/MainLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.5
 alignment = 1
 
-[node name="EnemyList" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
-layout_mode = 2
-
-[node name="TurnLabel" type="RichTextLabel" parent="MarginContainer/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
+[node name="TurnLabel" type="RichTextLabel" parent="MarginContainer/MainLayout/CenterSection"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 bbcode_enabled = true
-text = "你的回合"
 fit_content = true
 autowrap_mode = 0
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="LogPanel" type="PanelContainer" parent="MarginContainer/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 120)
+[node name="LogPanel" type="PanelContainer" parent="MarginContainer/MainLayout/CenterSection"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 
-[node name="LogText" type="RichTextLabel" parent="MarginContainer/HBoxContainer/VBoxContainer/LogPanel"]
-custom_minimum_size = Vector2(350, 0)
+[node name="LogText" type="RichTextLabel" parent="MarginContainer/MainLayout/CenterSection/LogPanel"]
 layout_mode = 2
+size_flags_horizontal = 3
 bbcode_enabled = true
 scroll_following = true
 autowrap_mode = 2
 
-[node name="ResultLabel" type="RichTextLabel" parent="MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="ResultLabel" type="RichTextLabel" parent="MarginContainer/MainLayout/CenterSection"]
 layout_mode = 2
 bbcode_enabled = true
 fit_content = true
 autowrap_mode = 0
 
-[node name="ResultButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="ResultButtons" type="HBoxContainer" parent="MarginContainer/MainLayout/CenterSection"]
 layout_mode = 2
 alignment = 1
 
-[node name="ContinueBtn" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer/ResultButtons"]
+[node name="ContinueBtn" type="Button" parent="MarginContainer/MainLayout/CenterSection/ResultButtons"]
 layout_mode = 2
 text = "继续探索"
 
-[node name="TempleBtn" type="Button" parent="MarginContainer/HBoxContainer/VBoxContainer/ResultButtons"]
+[node name="TempleBtn" type="Button" parent="MarginContainer/MainLayout/CenterSection/ResultButtons"]
 layout_mode = 2
 text = "返回神殿"
 
-[node name="Player" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(500, 0)
+[node name="PartySection" type="VBoxContainer" parent="MarginContainer/MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.5
+theme_override_constants/separation = 6
+
+[node name="PlayerCard" type="PanelContainer" parent="MarginContainer/MainLayout/PartySection"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("panel_player")
+
+[node name="CardInner" type="VBoxContainer" parent="MarginContainer/MainLayout/PartySection/PlayerCard"]
 layout_mode = 2
 
-[node name="PlayerPanel" type="PanelContainer" parent="MarginContainer/HBoxContainer/Player"]
+[node name="PlayerPortrait" type="TextureRect" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner"]
+self_modulate = Color(0.3, 0.3, 0.35, 0.8)
+mouse_filter = 2
+custom_minimum_size = Vector2(100, 130)
 layout_mode = 2
+expand_mode = 3
+stretch_mode = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel"]
+[node name="MainRow" type="HBoxContainer" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner"]
 layout_mode = 2
+theme_override_constants/separation = 6
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer"]
-layout_mode = 2
-
-[node name="PlayerNameLabel" type="RichTextLabel" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HBoxContainer"]
+[node name="PlayerNameLabel" type="RichTextLabel" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/MainRow"]
+custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 bbcode_enabled = true
-text = "\"[b]主角[/b]\""
+text = "[b]主角[/b]"
 fit_content = true
 autowrap_mode = 0
 
-[node name="PlayerGaugeBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HBoxContainer"]
-custom_minimum_size = Vector2(80, 14)
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_5vqsm")
-
-[node name="HP bars" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer"]
-layout_mode = 2
-
-[node name="PlayerBruiseBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HP bars"]
-custom_minimum_size = Vector2(0, 20)
+[node name="PlayerGaugeBar" type="ProgressBar" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/MainRow"]
+custom_minimum_size = Vector2(100, 12)
 layout_mode = 2
 size_flags_horizontal = 3
-value = 20.0
+theme_override_styles/background = SubResource("bar_gauge_bg")
+theme_override_styles/fill = SubResource("bar_gauge_fill")
+show_percentage = false
 
-[node name="PlayerSevereBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/HP bars"]
-custom_minimum_size = Vector2(0, 20)
+[node name="HP" type="VBoxContainer" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PlayerBruiseBar" type="ProgressBar" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/HP"]
+custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 size_flags_horizontal = 3
-value = 10.0
+theme_override_styles/background = SubResource("bar_bruise_bg")
+theme_override_styles/fill = SubResource("bar_bruise_fill")
+show_percentage = false
 
-[node name="PlayerGaugeRow" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer"]
+[node name="PlayerSevereBar" type="ProgressBar" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/HP"]
+custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
-alignment = 1
+size_flags_horizontal = 3
+theme_override_styles/background = SubResource("bar_severe_bg")
+theme_override_styles/fill = SubResource("bar_severe_fill")
+show_percentage = false
 
-[node name="精" type="Label" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerGaugeRow"]
+[node name="EnergyRow" type="HBoxContainer" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EnergyLabel" type="Label" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/EnergyRow"]
 layout_mode = 2
 text = "精"
 
-[node name="PlayerEnergyBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerGaugeRow"]
-custom_minimum_size = Vector2(50, 20)
+[node name="PlayerEnergyBar" type="ProgressBar" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner/EnergyRow"]
+custom_minimum_size = Vector2(60, 14)
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/fill = SubResource("bar_energy_fill")
+show_percentage = false
 
-[node name="PlayerActions" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer"]
+[node name="CompanionCards" type="HBoxContainer" parent="MarginContainer/MainLayout/PartySection"]
 layout_mode = 2
+theme_override_constants/separation = -10
+
+[node name="ActionBar" type="HBoxContainer" parent="MarginContainer/MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 6
 alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions"]
+[node name="BasicActions" type="HBoxContainer" parent="MarginContainer/MainLayout/ActionBar"]
 layout_mode = 2
+theme_override_constants/separation = 4
 alignment = 1
 
-[node name="ItemBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
+[node name="ItemBtn" type="Button" parent="MarginContainer/MainLayout/ActionBar/BasicActions"]
 layout_mode = 2
 text = "物品"
 expand_icon = true
 
-[node name="AttackBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
+[node name="AttackBtn" type="Button" parent="MarginContainer/MainLayout/ActionBar/BasicActions"]
 layout_mode = 2
 text = "攻击"
 expand_icon = true
 
-[node name="DefendBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
+[node name="DefendBtn" type="Button" parent="MarginContainer/MainLayout/ActionBar/BasicActions"]
 layout_mode = 2
 text = "防御"
 expand_icon = true
 
-[node name="DodgeBtn" type="Button" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions/HBoxContainer"]
+[node name="DodgeBtn" type="Button" parent="MarginContainer/MainLayout/ActionBar/BasicActions"]
 layout_mode = 2
 text = "闪避"
 expand_icon = true
 
-[node name="SkillButtons" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/PlayerPanel/VBoxContainer/PlayerActions"]
+[node name="SkillButtons" type="HBoxContainer" parent="MarginContainer/MainLayout/ActionBar"]
 layout_mode = 2
+theme_override_constants/separation = 4
 alignment = 1
-
-[node name="CompanionActions" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Player"]
-visible = false
-layout_mode = 2
-
-[node name="CompActionLabel" type="RichTextLabel" parent="MarginContainer/HBoxContainer/Player/CompanionActions"]
-layout_mode = 2
-bbcode_enabled = true
-autowrap_mode = 1
-
-[node name="CompSkillRow" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Player/CompanionActions"]
-layout_mode = 2
-
-[node name="CompanionSection" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Player"]
-layout_mode = 2
 
 [node name="PlayerStatPopup" type="Panel" parent="."]
 visible = false
 custom_minimum_size = Vector2(150, 80)
 layout_mode = 0
-offset_left = 667.0
-offset_top = 30.0
-offset_right = 817.0
-offset_bottom = 110.0
+offset_left = 650.0
+offset_top = 20.0
+offset_right = 820.0
+offset_bottom = 120.0
 
 [node name="ColorRect" type="ColorRect" parent="PlayerStatPopup"]
 layout_mode = 1
@@ -229,57 +308,62 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.22670737, 0.22670755, 0.22670743, 1)
+color = Color(0.08, 0.08, 0.12, 0.95)
 
 [node name="PlayerStat" type="RichTextLabel" parent="PlayerStatPopup"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = -8.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 bbcode_enabled = true
 
 [node name="DialoguePanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(500, 200)
+visible = false
+custom_minimum_size = Vector2(500, 180)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -40.0
-offset_right = 20.0
+offset_left = -250.0
+offset_top = -200.0
+offset_right = 250.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="DialoguePanel"]
+[node name="DialogInner" type="VBoxContainer" parent="DialoguePanel"]
 layout_mode = 2
 alignment = 1
 
-[node name="DialogueSpeaker" type="RichTextLabel" parent="DialoguePanel/VBoxContainer"]
+[node name="DialogueSpeaker" type="RichTextLabel" parent="DialoguePanel/DialogInner"]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 bbcode_enabled = true
 fit_content = true
 autowrap_mode = 0
 
-[node name="DialogueText" type="RichTextLabel" parent="DialoguePanel/VBoxContainer"]
+[node name="DialogueText" type="RichTextLabel" parent="DialoguePanel/DialogInner"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
 scroll_following = true
 
-[node name="DialogueNext" type="Button" parent="DialoguePanel/VBoxContainer"]
+[node name="DialogueNext" type="Button" parent="DialoguePanel/DialogInner"]
 layout_mode = 2
 text = "继续"
 
 [node name="EscapeBtn" type="Button" parent="."]
 layout_mode = 0
-offset_left = 490.0
-offset_top = 45.0
-offset_right = 590.0
-offset_bottom = 76.0
+offset_left = 1058.0
+offset_top = 12.0
+offset_right = 1138.0
+offset_bottom = 43.0
 text = "撤离"
 expand_icon = true

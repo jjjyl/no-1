@@ -14,6 +14,7 @@ public static class PortraitManager
 
 	static readonly Dictionary<string, Color> _defaultColors = new()
 	{
+		["主角"] = Color.Color8(180, 160, 140),
 		["艾薇"] = Color.Color8(255, 181, 194),
 		["天一"] = Color.Color8(139, 184, 232),
 		["塞拉菲娜"] = Color.Color8(232, 213, 163),

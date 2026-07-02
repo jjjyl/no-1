@@ -13,6 +13,7 @@ public partial class CombatUI : Control
 {
 	[Export] RichTextLabel _playerStat, _playerName, _battleLog, _turnLabel, _resultLabel;
 	[Export] ProgressBar _pBruiseBar, _pSevereBar, _pGaugeBar, _pEnergyBar;
+	[Export] TextureRect _playerPortrait;
 	[Export] Button _atkBtn, _defBtn, _dodgeBtn, _escapeBtn, _itemBtn, _continueBtn, _templeBtn;
 	[Export] Control _playerActions, _playerStatPanel, _dialoguePanel;
 	[Export] RichTextLabel _dialogueSpeaker, _dialogueText;
@@ -23,6 +24,7 @@ public partial class CombatUI : Control
 	[Export] int EnemyGroupSize = 2;
 
 	CharacterStats _player;
+	PanelContainer _playerCard;
 	float _pGauge;
 	const float GaugeMax = 100f;
 	float _escapeGauge;
@@ -94,6 +96,19 @@ public partial class CombatUI : Control
 		AddBarLabel(_pSevereBar, out _pSevereLabel);
 		AddBarLabel(_pEnergyBar, out _pEnergyLabel);
 
+		ApplyBarColors(_pBruiseBar, CombatColors.BruiseBarFill, CombatColors.BruiseBarBg);
+		ApplyBarColors(_pSevereBar, CombatColors.SevereBarFill, CombatColors.SevereBarBg);
+		ApplyBarColors(_pEnergyBar, CombatColors.EnergyBarFill, CombatColors.EnergyBarBg);
+		ApplyBarColors(_pGaugeBar, CombatColors.GaugeBarFill, CombatColors.GaugeBarBg);
+
+		// Player portrait
+		var pp = PortraitManager.LoadPortrait("主角");
+		if (pp != null && _playerPortrait != null)
+		{
+			_playerPortrait.Texture = pp;
+			_playerPortrait.SelfModulate = Colors.White;
+		}
+
 		_continueBtn.Pressed += () =>
 		{
 			CycleManager.Instance.SkipStartEvents = true;
@@ -160,6 +175,7 @@ public partial class CombatUI : Control
 		_turnLabel.CustomMinimumSize = Vector2.Zero;
 
 		_player = CycleManager.Instance.PlayerStats;
+		_playerCard = _playerName?.GetParent()?.GetParent()?.GetParent() as PanelContainer;
 		if (_player != null)
 			_player.Statuses ??= new StatusTracker(_player, "玩家");
 		_pGauge = 0;
@@ -247,11 +263,60 @@ public partial class CombatUI : Control
 			};
 			inner.AddChild(slot.StatLabel);
 
-			slot.StatusLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
+		slot.StatusLabel = new RichTextLabel { BbcodeEnabled = true, FitContent = true };
 			inner.AddChild(slot.StatusLabel);
 
 			card.AddChild(inner);
 			_enemyList.AddChild(card);
+
+			// ── Portrait (enemy spritesheet) ──
+			var vis = EnemyVisualDef.Get(enemyId);
+			string portraitPath = null;
+			if (vis != null)
+			{
+				portraitPath = !string.IsNullOrEmpty(vis.BattlePortrait) ? vis.BattlePortrait : vis.Spritesheet;
+			}
+			if (!string.IsNullOrEmpty(portraitPath) && ResourceLoader.Exists(portraitPath))
+			{
+				var tex = GD.Load<Texture2D>(portraitPath);
+				if (tex != null)
+				{
+					float scale = vis?.Scale ?? 1f;
+					var portrait = new TextureRect
+					{
+						Texture = tex,
+						ExpandMode = TextureRect.ExpandModeEnum.FitWidth,
+						StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+						CustomMinimumSize = new Vector2(100, 140 * scale),
+						MouseFilter = MouseFilterEnum.Ignore,
+					};
+					inner.AddChild(portrait);
+					inner.MoveChild(portrait, 0);
+				}
+			}
+			else
+			{
+				// Fallback: colored placeholder
+				var placeholder = new ColorRect
+				{
+					Color = def.Category switch { "boss" => new Color(0.6f, 0.15f, 0.15f), "elite" => new Color(0.4f, 0.25f, 0.1f), _ => new Color(0.25f, 0.15f, 0.2f) },
+					CustomMinimumSize = new Vector2(100, 130),
+					MouseFilter = MouseFilterEnum.Ignore,
+				};
+				var plabel = new Label
+				{
+					Text = def.Name[..Math.Min(def.Name.Length, 2)],
+					HorizontalAlignment = HorizontalAlignment.Center,
+					VerticalAlignment = VerticalAlignment.Center,
+					MouseFilter = MouseFilterEnum.Ignore,
+				};
+				plabel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+				placeholder.AddChild(plabel);
+				inner.AddChild(placeholder);
+				inner.MoveChild(placeholder, 0);
+			}
+
+		_enemies.Add(slot);
 
 			slot.NameLabel.GuiInput += e =>
 			{
@@ -265,16 +330,14 @@ public partial class CombatUI : Control
 			};
 			card.GuiInput += e =>
 			{
-if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && _targeting && slot.Alive && _targetSkill != null && _targetSkill.Type == "attack")
+				if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && _targeting && slot.Alive && _targetSkill != null && _targetSkill.Type == "attack")
 				{
 					ConfirmTarget(slot);
 					GetViewport().SetInputAsHandled();
 				}
 			};
-
-		_enemies.Add(slot);
+		}
 	}
-}
 
 	static Texture2D Icon(string name) => GD.Load<Texture2D>($"res://assets/ui/icons/{name}.png");
 
@@ -341,6 +404,22 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		bar.AddChild(lbl);
 	}
 
+	static void ApplyBarColors(ProgressBar bar, Color fill, Color bg)
+	{
+		bar.AddThemeStyleboxOverride("fill", new StyleBoxFlat
+		{
+			BgColor = fill,
+			CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2,
+			CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2,
+		});
+		bar.AddThemeStyleboxOverride("background", new StyleBoxFlat
+		{
+			BgColor = bg,
+			CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2,
+			CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2,
+		});
+	}
+
 	void BuildCompanionSlots()
 	{
 		foreach (var comp in CycleManager.Instance.ActiveCompanions)
@@ -401,9 +480,27 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			outer.AddChild(slot.SkillsArea);
 
 			var card = new PanelContainer();
+			card.CustomMinimumSize = new Vector2(150, 160);
+			card.AddThemeStyleboxOverride("panel", CombatColors.PanelStyle(CombatColors.AllyPanelOutline));
 			slot.Card = card;
 			card.AddChild(outer);
 			_companionSection.AddChild(card);
+
+			// ── Portrait ──
+			var portraitTex = PortraitManager.LoadPortrait(comp.Name);
+			if (portraitTex != null)
+			{
+				var portrait = new TextureRect
+				{
+					Texture = portraitTex,
+					ExpandMode = TextureRect.ExpandModeEnum.FitWidth,
+					StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+					CustomMinimumSize = new Vector2(70, 90),
+					MouseFilter = MouseFilterEnum.Ignore,
+				};
+				outer.AddChild(portrait);
+				outer.MoveChild(portrait, 0);
+			}
 
 			slot.NameLabel.GuiInput += e =>
 			{
@@ -766,6 +863,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			int baseStat = isSpirit ? _targetActor.Stats.Heart : _targetActor.Stats.ATK;
 			int raw = _targetActor.Stats.DealDamage(skill.Power, isSpirit);
 			int d = e.Stats.TakeDamage(raw, isSpirit);
+			CombatFeedback.Flash(e.Card, CombatColors.DamageFlash);
+			CombatFeedback.FloatNum(e.Card, d, false);
 			_targetActor.Stats.Energy -= skill.Cost;
 			string tag = isSpirit ? "精神" : "物理";
 			Log($"『{_targetActor.State.Name}』{skill.Name}({tag}, {skill.Power:F1}×{baseStat}), 对{e.DisplayName}造成 [b]{d}[/b] 伤害", "#88aacc");
@@ -779,7 +878,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			_activeCompanion = null;
 			EndCharacterTurn(_targetActor.Stats.Statuses, _targetActor.State.Name);
 			if (!e.Stats.IsDead) e.Alive = true;
-			else { e.Alive = false; Log($"[color=red]{e.DisplayName}倒下了！[/color]", "#ff8888"); CombatEvents.Fire("on_enemy_defeated", new FireContext { Source = _targetActor.State.Name, Target = e.DisplayName, Round = _round }); }
+			else { e.Alive = false; CombatFeedback.ShrinkDead(e.Card); Log($"[color=red]{e.DisplayName}倒下了！[/color]", "#ff8888"); CombatEvents.Fire("on_enemy_defeated", new FireContext { Source = _targetActor.State.Name, Target = e.DisplayName, Round = _round }); }
 			CheckAllDead();
 		}
 		else
@@ -801,6 +900,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			int baseStat = isSpirit ? _player.Heart : _player.ATK;
 			int raw = _player.DealDamage(skill.Power, isSpirit);
 			int d = e.Stats.TakeDamage(raw, isSpirit);
+			CombatFeedback.Flash(e.Card, CombatColors.DamageFlash);
+			CombatFeedback.FloatNum(e.Card, d, false);
 			_player.Energy -= skill.Cost;
 			string tag = isSpirit ? "精神" : "物理";
 			Log($"你使用『{skill.Name}』({tag}, {skill.Power:F1}×{baseStat}), 对{e.DisplayName}造成 [b]{d}[/b] 伤害, 精力-{skill.Cost}", "#aa88ff");
@@ -813,7 +914,7 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			_playerActions.Visible = false;
 			EndCharacterTurn(_player?.Statuses, "玩家");
 			if (!e.Stats.IsDead) e.Alive = true;
-			else { e.Alive = false; Log($"[color=red]{e.DisplayName}倒下了！[/color]", "#ff8888"); CombatEvents.Fire("on_enemy_defeated", new FireContext { Source = "player", Target = e.DisplayName, Round = _round }); }
+			else { e.Alive = false; CombatFeedback.ShrinkDead(e.Card); Log($"[color=red]{e.DisplayName}倒下了！[/color]", "#ff8888"); CombatEvents.Fire("on_enemy_defeated", new FireContext { Source = "player", Target = e.DisplayName, Round = _round }); }
 			CheckAllDead();
 		}
 	}
@@ -837,6 +938,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 		int heal = Mathf.RoundToInt(skill.Power * actor.Stats.Heart);
 		target.Stats.BruiseHP = Math.Min(target.Stats.BruiseHP + heal, target.Stats.MaxBruiseHP);
+		CombatFeedback.Flash(target.Card, CombatColors.HealFlash);
+		CombatFeedback.FloatNum(target.Card, heal, true);
 		actor.Stats.Energy -= skill.Cost;
 		Log($"『{actor.State.Name}』{skill.Name}, 恢复『{target.State.Name}』[b]{heal}[/b] 擦伤", "#88aacc");
 		CombatEvents.Fire("on_skill_used", new FireContext { Source = actor.State.Name, Target = target.State.Name, SkillId = skill.Id, Round = _round });
@@ -867,6 +970,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 		int heal = Mathf.RoundToInt(skill.Power * actor.Stats.Heart);
 		_player.BruiseHP = Math.Min(_player.BruiseHP + heal, _player.MaxBruiseHP);
+		CombatFeedback.Flash(_playerCard, CombatColors.HealFlash);
+		CombatFeedback.FloatNum(_playerCard, heal, true);
 		actor.Stats.Energy -= skill.Cost;
 		Log($"『{actor.State.Name}』{skill.Name}, 恢复你 [b]{heal}[/b] 擦伤", "#88aacc");
 		CombatEvents.Fire("on_skill_used", new FireContext { Source = actor.State.Name, Target = "player", SkillId = skill.Id, Round = _round });
@@ -922,6 +1027,27 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 			int heal = Mathf.RoundToInt(skill.Power * comp.Stats.Heart);
 			target.BruiseHP = Math.Min(target.BruiseHP + heal, target.MaxBruiseHP);
+
+			if (target == _player)
+			{
+				CombatFeedback.Flash(_playerCard, CombatColors.HealFlash);
+				CombatFeedback.FloatNum(_playerCard, heal, true);
+			}
+			else if (target == comp.Stats)
+			{
+				CombatFeedback.Flash(comp.Card, CombatColors.HealFlash);
+				CombatFeedback.FloatNum(comp.Card, heal, true);
+			}
+			else
+			{
+				var allySlot = _compSlots.FirstOrDefault(s => s.Stats == target);
+				if (allySlot != null)
+				{
+					CombatFeedback.Flash(allySlot.Card, CombatColors.HealFlash);
+					CombatFeedback.FloatNum(allySlot.Card, heal, true);
+				}
+			}
+
 			comp.Stats.Energy -= skill.Cost;
 
 			string tn = target == _player ? "你" : "自己";
@@ -1055,6 +1181,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		{
 			int heal = Mathf.RoundToInt(skill.Power * _player.Heart);
 			_player.BruiseHP = Math.Min(_player.BruiseHP + heal, _player.MaxBruiseHP);
+			CombatFeedback.Flash(_playerCard, CombatColors.HealFlash);
+			CombatFeedback.FloatNum(_playerCard, heal, true);
 			_player.Energy -= skill.Cost;
 			Log($"你使用『{skill.Name}』, 恢复 [b]{heal}[/b] 擦伤, 精力-{skill.Cost}", "#88ff88");
 		}
@@ -1068,11 +1196,23 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		var t = targets[(int)(GD.Randi() % (uint)targets.Count)];
 		int d = t.TakeDamage(e.Stats.DealDamage(1.0f));
 		var hit = _compSlots.FirstOrDefault(s => s.Stats == t);
+
+		if (t == _player)
+		{
+			CombatFeedback.Flash(_playerCard, CombatColors.DamageFlash);
+			CombatFeedback.FloatNum(_playerCard, d, false);
+		}
+		else if (hit != null)
+		{
+			CombatFeedback.Flash(hit.Card, CombatColors.DamageFlash);
+			CombatFeedback.FloatNum(hit.Card, d, false);
+		}
+
 		Log($"{e.DisplayName}攻击{(t == _player ? "你" : hit?.State.Name)}，造成 [b]{d}[/b] 伤害", "#ff8888");
 		e.Stats.Energy = Math.Min(e.Stats.Energy + e.Stats.EnergyRegen, e.Stats.EnergyMax);
 
 		foreach (var s in _compSlots)
-			if (s.State.Alive && s.Stats.IsDead) { s.State.Alive = false; Log($"[color=red]{s.State.Name}倒下了！[/color]", "#ff8888"); }
+			if (s.State.Alive && s.Stats.IsDead) { s.State.Alive = false; CombatFeedback.ShrinkDead(s.Card); Log($"[color=red]{s.State.Name}倒下了！[/color]", "#ff8888"); }
 
 		RefreshAll();
 		if (_player.IsDead) Lose();
@@ -1516,8 +1656,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		var st = e.Stats;
 		e.NameLabel.Text = e.Alive ? e.DisplayName : $"{e.DisplayName}(败)";
 		e.NameLabel.Modulate = e.Alive ? new Color(1f, 0.4f, 0.4f) : Colors.Gray;
-		e.BruiseBar.MaxValue = st.MaxBruiseHP; e.BruiseBar.Value = st.BruiseHP;
-		e.SevereBar.MaxValue = st.MaxSevereHP; e.SevereBar.Value = st.SevereHP;
+		e.BruiseBar.MaxValue = st.MaxBruiseHP; CombatFeedback.TweenBar(e.BruiseBar, st.BruiseHP);
+		e.SevereBar.MaxValue = st.MaxSevereHP; CombatFeedback.TweenBar(e.SevereBar, st.SevereHP);
 		e.BruiseLabel.Text = $"擦: {st.BruiseHP}/{st.MaxBruiseHP}";
 		e.SevereLabel.Text = $"重: {st.SevereHP}/{st.MaxSevereHP}";
 		e.StatLabel.Text = $"力{st.Power}体{st.Body}敏{st.Agility}心{st.Heart}运{st.Fortune}  "
@@ -1532,8 +1672,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 	{
 		var st = s.Stats;
 		s.NameLabel.Text = $"{s.State.Name} 羁绊{s.State.Favor}";
-		s.BruiseBar.MaxValue = st.MaxBruiseHP; s.BruiseBar.Value = st.BruiseHP;
-		s.SevereBar.MaxValue = st.MaxSevereHP; s.SevereBar.Value = st.SevereHP;
+		s.BruiseBar.MaxValue = st.MaxBruiseHP; CombatFeedback.TweenBar(s.BruiseBar, st.BruiseHP);
+		s.SevereBar.MaxValue = st.MaxSevereHP; CombatFeedback.TweenBar(s.SevereBar, st.SevereHP);
 		s.BruiseLabel.Text = $"擦: {st.BruiseHP}/{st.MaxBruiseHP}";
 		s.SevereLabel.Text = $"重: {st.SevereHP}/{st.MaxSevereHP}";
 		s.EnergyBar.MaxValue = st.EnergyMax; s.EnergyBar.Value = st.Energy;
@@ -1548,8 +1688,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 	void RefreshBars(CharacterStats st, ProgressBar bb, Label bl, ProgressBar sb, Label sl)
 	{
-		bb.MaxValue = st.MaxBruiseHP; bb.Value = st.BruiseHP;
-		sb.MaxValue = st.MaxSevereHP; sb.Value = st.SevereHP;
+		bb.MaxValue = st.MaxBruiseHP; CombatFeedback.TweenBar(bb, st.BruiseHP);
+		sb.MaxValue = st.MaxSevereHP; CombatFeedback.TweenBar(sb, st.SevereHP);
 		bl.Text = $"擦: {st.BruiseHP}/{st.MaxBruiseHP}";
 		sl.Text = $"重: {st.SevereHP}/{st.MaxSevereHP}";
 	}
@@ -1560,10 +1700,10 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		var parts = new List<string>();
 		foreach (var s in tracker.GetAllActive())
 		{
-			string dur = s.Duration < 0 ? "" : $"({s.Duration})";
-			string color = s.Type == "debuff" ? "red" : s.Type == "buff" ? "cyan" : "yellow";
-			string tick = s.TickDamage > 0 ? $"🔥" : "";
-			parts.Add($"[color={color}][{s.Name}{dur}]{tick}[/color]");
+			string dur = s.Duration < 0 ? "" : $"{s.Duration}";
+			string bgHex = s.Type == "debuff" ? "#cc3333" : s.Type == "buff" ? "#3377cc" : "#cc8833";
+			string tick = s.TickDamage > 0 ? "🔥" : "";
+			parts.Add($"[bgcolor={bgHex}][color=#ffffff] {s.Name}{tick} {dur} [/color][/bgcolor]");
 		}
 		return string.Join(" ", parts);
 	}
@@ -1623,6 +1763,8 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			{
 				int heal = Mathf.RoundToInt(skill.Power * _player.Heart);
 				_player.BruiseHP = Math.Min(_player.BruiseHP + heal, _player.MaxBruiseHP);
+				CombatFeedback.Flash(_playerCard, CombatColors.HealFlash);
+				CombatFeedback.FloatNum(_playerCard, heal, true);
 				Log($"(事件) 你使用{skill.Name}, 恢复 [b]{heal}[/b] 擦伤", "#ffcc44");
 			}
 			RefreshAll();
@@ -1655,6 +1797,22 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 			}
 			int heal = Mathf.RoundToInt(compSkill.Power * comp.Stats.Heart);
 			healTarget.BruiseHP = Math.Min(healTarget.BruiseHP + heal, healTarget.MaxBruiseHP);
+
+			if (healTarget == _player)
+			{
+				CombatFeedback.Flash(_playerCard, CombatColors.HealFlash);
+				CombatFeedback.FloatNum(_playerCard, heal, true);
+			}
+			else
+			{
+				var targetSlot = _compSlots.FirstOrDefault(s => s.Stats == healTarget);
+				if (targetSlot != null)
+				{
+					CombatFeedback.Flash(targetSlot.Card, CombatColors.HealFlash);
+					CombatFeedback.FloatNum(targetSlot.Card, heal, true);
+				}
+			}
+
 			comp.Stats.Energy -= compSkill.Cost;
 			Log($"(事件) 『{actor}』{compSkill.Name}, 恢复 [b]{heal}[/b] 擦伤", "#ffcc44");
 		}
@@ -1681,7 +1839,9 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 
 		var slot = new EnemySlot { Stats = st, Alive = true, DisplayName = name };
 		var card = new PanelContainer();
-		slot.Card = card;
+			card.CustomMinimumSize = new Vector2(160, 180);
+			card.AddThemeStyleboxOverride("panel", CombatColors.PanelStyle(CombatColors.EnemyPanelOutline));
+			slot.Card = card;
 		var inner = new VBoxContainer();
 		inner.AddThemeConstantOverride("separation", 2);
 		var topRow = new HBoxContainer();
@@ -1709,6 +1869,50 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		inner.AddChild(slot.StatusLabel);
 		card.AddChild(inner);
 		_enemyList.AddChild(card);
+
+		// ── Portrait ──
+		var vis = EnemyVisualDef.Get(def.Id);
+		string portraitPath = null;
+		if (vis != null)
+			portraitPath = !string.IsNullOrEmpty(vis.BattlePortrait) ? vis.BattlePortrait : vis.Spritesheet;
+		if (!string.IsNullOrEmpty(portraitPath) && ResourceLoader.Exists(portraitPath))
+		{
+			var tex = GD.Load<Texture2D>(portraitPath);
+			if (tex != null)
+			{
+				float scale = vis?.Scale ?? 1f;
+				var portrait = new TextureRect
+				{
+					Texture = tex,
+					ExpandMode = TextureRect.ExpandModeEnum.FitWidth,
+					StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+					CustomMinimumSize = new Vector2(100, 140 * scale),
+					MouseFilter = MouseFilterEnum.Ignore,
+				};
+				inner.AddChild(portrait);
+				inner.MoveChild(portrait, 0);
+			}
+		}
+		else
+		{
+			var placeholder = new ColorRect
+			{
+				Color = def.Category switch { "boss" => new Color(0.6f, 0.15f, 0.15f), "elite" => new Color(0.4f, 0.25f, 0.1f), _ => new Color(0.25f, 0.15f, 0.2f) },
+				CustomMinimumSize = new Vector2(100, 130),
+				MouseFilter = MouseFilterEnum.Ignore,
+			};
+			var plabel = new Label
+			{
+				Text = def.Name[..Math.Min(def.Name.Length, 2)],
+				HorizontalAlignment = HorizontalAlignment.Center,
+				VerticalAlignment = VerticalAlignment.Center,
+				MouseFilter = MouseFilterEnum.Ignore,
+			};
+			plabel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+			placeholder.AddChild(plabel);
+			inner.AddChild(placeholder);
+			inner.MoveChild(placeholder, 0);
+		}
 		slot.NameLabel.GuiInput += e =>
 		{
 			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
@@ -1766,9 +1970,26 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 		slot.SkillsArea.AddChild(actLabel);
 		outer.AddChild(slot.SkillsArea);
 		var card = new PanelContainer();
+		card.AddThemeStyleboxOverride("panel", CombatColors.PanelStyle(CombatColors.AllyPanelOutline));
 		slot.Card = card;
 		card.AddChild(outer);
 		_companionSection.AddChild(card);
+
+		// ── Portrait ──
+		var portraitTex = PortraitManager.LoadPortrait(name);
+		if (portraitTex != null)
+		{
+			var portrait = new TextureRect
+			{
+				Texture = portraitTex,
+				ExpandMode = TextureRect.ExpandModeEnum.FitWidth,
+				StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+				CustomMinimumSize = new Vector2(70, 90),
+				MouseFilter = MouseFilterEnum.Ignore,
+			};
+			outer.AddChild(portrait);
+			outer.MoveChild(portrait, 0);
+		}
 		slot.NameLabel.GuiInput += e =>
 		{
 			if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
@@ -1892,7 +2113,27 @@ if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } 
 					Round = _round,
 				});
 			}
+			else if (reason == "tick")
+			{
+				int dmg = status.TickDamage;
+				Log($"[color=#ff8844]🔥 {ownerName} 受到 [{status.Name}] {dmg} 点灼烧伤害[/color]", "#ff8844");
+				var card = GetCardForOwner(ownerName);
+				if (card != null)
+				{
+					CombatFeedback.Flash(card, new Color(1f, 0.5f, 0.2f, 0.5f)); // orange flash
+					CombatFeedback.FloatNum(card, dmg, false);
+				}
+			}
 		}
+	}
+
+	PanelContainer GetCardForOwner(string ownerName)
+	{
+		if (ownerName == "玩家") return _playerCard;
+		var comp = _compSlots.FirstOrDefault(s => s.State.Name == ownerName);
+		if (comp != null) return comp.Card;
+		var enemy = _enemies.FirstOrDefault(e => e.DisplayName == ownerName);
+		return enemy?.Card;
 	}
 
 	void EndCharacterTurn(StatusTracker tracker, string name)
