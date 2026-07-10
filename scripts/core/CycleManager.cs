@@ -145,6 +145,9 @@ public partial class CycleManager : Node
 				: new Godot.Collections.Array(),
 			["accountFlags"] = new Godot.Collections.Array(_accountFlags.Select(s => (Variant)s).ToArray()),
 			["recentSeeds"] = new Godot.Collections.Array(RecentSeeds.Select(s => (Variant)s.ToString()).ToArray()),
+			["lastWorldX"] = LastWorldPosition.X,
+			["lastWorldY"] = LastWorldPosition.Y,
+			["lastWorldZ"] = LastWorldPosition.Z,
 		};
 		if (PlayerInventory != null)
 			save["inventory"] = PlayerInventory.Serialize();
@@ -193,6 +196,11 @@ public partial class CycleManager : Node
 
 		if (dict.ContainsKey("worldSeed") && ulong.TryParse(dict["worldSeed"].AsString(), out var ws))
 			WorldSeed = ws;
+
+		float lx = dict.ContainsKey("lastWorldX") ? dict["lastWorldX"].AsSingle() : 0f;
+		float ly = dict.ContainsKey("lastWorldY") ? dict["lastWorldY"].AsSingle() : 0f;
+		float lz = dict.ContainsKey("lastWorldZ") ? dict["lastWorldZ"].AsSingle() : 0f;
+		LastWorldPosition = new Vector3(lx, ly, lz);
 
 		if (dict.ContainsKey("overridePaths"))
 		{

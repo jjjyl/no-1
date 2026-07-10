@@ -1,11 +1,12 @@
 [gd_scene load_steps=3 format=3 uid="uid://f1036miba4tc"]
 
 [ext_resource type="SpriteFrames" uid="uid://m2c1q36u6wtu" path="res://assets/texture/characters/player/knight.tres" id="1_rp718"]
-[ext_resource type="Script" path="res://scripts/world/Player3D.cs" id="2_script"]
+[ext_resource type="Script" uid="uid://bo71pncwugegi" path="res://scripts/world/Player3D.cs" id="2_script"]
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("2_script")
 
 [node name="AnimatedSprite3D" type="AnimatedSprite3D" parent="."]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0.623266, 0)
 sprite_frames = ExtResource("1_rp718")
 animation = &"idle"

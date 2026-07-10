@@ -115,6 +115,7 @@ public partial class WorldMap3D : Node3D
 		{
 			float groundY = _chunkManager.GetHeightAt(_player.Position.X, _player.Position.Z);
 			_player.Position = new Vector3(_player.Position.X, groundY, _player.Position.Z);
+			CycleManager.Instance.LastWorldPosition = _player.GlobalPosition;
 		}
 
 		if (!_combatPending) return;
@@ -698,7 +699,6 @@ public partial class WorldMap3D : Node3D
 		if (savedPos != Vector3.Zero)
 		{
 			_player.Position = savedPos;
-			CycleManager.Instance.LastWorldPosition = Vector3.Zero;
 		}
 		else
 		{
@@ -754,6 +754,8 @@ public partial class WorldMap3D : Node3D
 		};
 		btn.Pressed += () =>
 		{
+			CycleManager.Instance.LastWorldPosition = _player?.GlobalPosition ?? Vector3.Zero;
+			CycleManager.Instance.SaveAccount();
 			CycleManager.Instance.ReturnToTemple();
 			GameManager.Instance.GoToScene(GameManager.SceneTemple);
 		};
