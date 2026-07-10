@@ -22,42 +22,67 @@ public partial class Player3D : CharacterBody3D
 
 	public override void _Ready()
 	{
-		// ── Collision ──
-		var col = new CollisionShape3D();
-		col.Shape = new CylinderShape3D { Height = 1f, Radius = 0.35f };
-		AddChild(col);
-
-		// ── Character texture (12×24 px idle frame) ──
-		var charTex = MakeCharacterTexture();
-
-		// ── Sprite frames: user override or generated idle-only default ──
-		var frames = SpriteFramesOverride ?? BuildDefaultFrames(charTex);
-
-		// ── Body (AnimatedSprite3D — user adds "walk" animation in editor) ──
-		_body = new AnimatedSprite3D
+		// ── Find body from tscn, or generate fallback ──
+		foreach (var child in GetChildren())
 		{
-			SpriteFrames = frames,
-			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-			Position = Vector3.Zero,
-			PixelSize = 0.0625f,
-			Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
-			Name = "Body"
-		};
+			if (child is AnimatedSprite3D anim)
+			{
+				_body = anim;
+				break;
+			}
+		}
+
+		if (_body == null)
+		{
+			var charTex = MakeCharacterTexture();
+			var frames = SpriteFramesOverride ?? BuildDefaultFrames(charTex);
+
+			_body = new AnimatedSprite3D
+			{
+				SpriteFrames = frames,
+				Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+				Position = Vector3.Zero,
+				PixelSize = 0.0625f,
+				Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
+				Name = "Body"
+			};
+			AddChild(_body);
+		}
 
 		_body.Play("idle");
-		AddChild(_body);
 
-		// ── Shadow (static Sprite3D, not animated) ──
-		var shadow = new Sprite3D
+		// ── Collision (skip if tscn already has one) ──
+		bool hasCollision = false;
+		foreach (var child in GetChildren())
 		{
-			Texture = MakeCircleTexture(new Color(0, 0, 0, 0.35f)),
-			Billboard = BaseMaterial3D.BillboardModeEnum.Disabled,
-			RotationDegrees = new Vector3(-90, 0, 0),
-			Position = new Vector3(0, 0.02f, 0),
-			PixelSize = 0.005f,
-			Name = "Shadow"
-		};
-		AddChild(shadow);
+			if (child is CollisionShape3D) { hasCollision = true; break; }
+		}
+		if (!hasCollision)
+		{
+			var col = new CollisionShape3D();
+			col.Shape = new CylinderShape3D { Height = 1f, Radius = 0.35f };
+			AddChild(col);
+		}
+
+		// ── Shadow (skip if tscn already has one) ──
+		bool hasShadow = false;
+		foreach (var child in GetChildren())
+		{
+			if (child is Sprite3D s && s.Name.ToString() == "Shadow") { hasShadow = true; break; }
+		}
+		if (!hasShadow)
+		{
+			var shadow = new Sprite3D
+			{
+				Texture = MakeCircleTexture(new Color(0, 0, 0, 0.35f)),
+				Billboard = BaseMaterial3D.BillboardModeEnum.Disabled,
+				RotationDegrees = new Vector3(-90, 0, 0),
+				Position = new Vector3(0, 0.02f, 0),
+				PixelSize = 0.005f,
+				Name = "Shadow"
+			};
+			AddChild(shadow);
+		}
 	}
 
 	public override void _Process(double delta)
