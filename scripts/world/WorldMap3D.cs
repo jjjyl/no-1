@@ -716,6 +716,11 @@ public partial class WorldMap3D : Node3D
 				_player.Position = new Vector3(WorldWidth * 0.5f, 0, WorldHeight * 0.5f);
 			}
 		}
+		if (_chunkManager != null)
+		{
+			float groundY = _chunkManager.GetHeightAt(_player.Position.X, _player.Position.Z);
+			_player.Position = new Vector3(_player.Position.X, groundY, _player.Position.Z);
+		}
 		AddChild(_player);
 	}
 

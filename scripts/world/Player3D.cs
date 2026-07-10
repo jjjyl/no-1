@@ -44,14 +44,6 @@ public partial class Player3D : CharacterBody3D
 			Name = "Body"
 		};
 
-		// Alpha scissor material (avoids z-fighting on transparent pixels)
-		var bodyMat = new StandardMaterial3D
-		{
-			Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor,
-			AlphaScissorThreshold = 0.5f,
-			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
-		};
-		_body.MaterialOverride = bodyMat;
 		_body.Play("idle");
 		AddChild(_body);
 
