@@ -86,8 +86,7 @@ public static class DecorationPresets
 
 	public static DecorationDef? Find(string name)
 	{
-		if (_defs == null) return null;
-		foreach (var d in _defs)
+		foreach (var d in Defs)
 			if (d.Name == name)
 				return d;
 		return null;
