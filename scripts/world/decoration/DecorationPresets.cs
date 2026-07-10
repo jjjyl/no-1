@@ -1,0 +1,95 @@
+#nullable enable
+namespace No1.World;
+using Godot;
+using System.Collections.Generic;
+
+/// <summary>
+/// Preset decoration definitions with spawn conditions.
+/// </summary>
+public static class DecorationPresets
+{
+	private static List<DecorationDef>? _defs;
+
+	public static List<DecorationDef> Defs => _defs ??= BuildDefs();
+
+	static List<DecorationDef> BuildDefs()
+	{
+		var list = new List<DecorationDef>();
+
+		void Add(string name, Texture2D? tex, float yFrac, float pxPerM,
+			float sMin, float sMax, BaseMaterial3D.BillboardModeEnum bb,
+			int panels = 0, float maxSlope = 0, int slopeRadius = 0,
+			float? minHeight = null, float? maxHeight = null)
+		{
+			if (tex == null) return;
+			list.Add(new DecorationDef
+			{
+				Name = name,
+				Texture = tex,
+				BaseYFrac = yFrac,
+				PixelScaleBase = pxPerM,
+				ScaleRange = new Vector2(sMin, sMax),
+				Billboard = bb,
+				PanelCount = panels,
+				MaxSlope = maxSlope,
+				SlopeRadius = slopeRadius,
+				MinHeight = minHeight,
+				MaxHeight = maxHeight,
+			});
+		}
+
+		var treeTex = WorldTextures.TryLoadTexture("res://assets/texture/world/deco_tree.png")
+			?? WorldTextures.MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
+
+		// Trees: only on flat ground
+		Add("Tree", treeTex,
+			0.88f, 0.007f, 0.6f, 1.0f,
+			BaseMaterial3D.BillboardModeEnum.Enabled,
+			maxSlope: 0.25f, slopeRadius: 2);
+
+		// Rocks: anywhere
+		Add("Rock",
+			WorldTextures.MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)),
+			0.90f, 0.08f, 0.7f, 1.05f,
+			BaseMaterial3D.BillboardModeEnum.Enabled);
+
+		// Bushes: mildly flat
+		Add("Bush",
+			WorldTextures.MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)),
+			0.85f, 0.08f, 0.6f, 0.9f,
+			BaseMaterial3D.BillboardModeEnum.Enabled,
+			maxSlope: 0.4f, slopeRadius: 1);
+
+		// Grass tufts: anywhere
+		Add("Tuft",
+			WorldTextures.MakeSimpleGrassTuftTexture(),
+			0.80f, 0.04f, 0.5f, 0.8f,
+			BaseMaterial3D.BillboardModeEnum.Enabled);
+
+		// Ruins: very flat, moderate elevation
+		Add("Ruin",
+			WorldTextures.MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)),
+			0.95f, 0.10f, 0.8f, 1.0f,
+			BaseMaterial3D.BillboardModeEnum.Enabled,
+			maxSlope: 0.05f, slopeRadius: 1,
+			minHeight: 1.5f, maxHeight: 4.0f);
+
+		// Snow rocks: high altitude only
+		Add("RockSnow",
+			WorldTextures.MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)),
+			0.90f, 0.08f, 0.7f, 1.05f,
+			BaseMaterial3D.BillboardModeEnum.Enabled,
+			minHeight: 2.5f);
+
+		return list;
+	}
+
+	public static DecorationDef? Find(string name)
+	{
+		if (_defs == null) return null;
+		foreach (var d in _defs)
+			if (d.Name == name)
+				return d;
+		return null;
+	}
+}
