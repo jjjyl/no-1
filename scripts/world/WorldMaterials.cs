@@ -65,6 +65,8 @@ public partial class WorldMaterials : Node
 	[Export]
 	public StandardMaterial3D ShopMarker   { get; private set; }
 
+	private readonly Dictionary<string, StandardMaterial3D> _keyMatCache = new();
+
 	public override void _EnterTree()
 	{
 		Instance = this;
@@ -74,6 +76,41 @@ public partial class WorldMaterials : Node
 	public override void _ExitTree()
 	{
 		if (Instance == this) Instance = null;
+	}
+
+	/// <summary>
+	/// Returns a StandardMaterial3D for any canonical material key.
+	/// Pure keys (e.g. "grass") map to existing material properties.
+	/// Transition keys (e.g. "dirt_grass") load or generate a blend material.
+	/// Results are cached.
+	/// </summary>
+	public StandardMaterial3D GetMaterialForKey(string key)
+	{
+		if (!key.Contains('_'))
+		{
+			return key switch
+			{
+				"grass" => GrassBase,
+				"dirt"  => Path01,
+				"water" => ZoneCrystal,
+				"rock"  => ZoneMine,
+				"snow"  => ZoneSpring,
+				"sand"  => ZoneCliff,
+				"swamp" => ZoneWasteland,
+				"path"  => Path01,
+				_ => throw new ArgumentException($"Unknown material key: {key}")
+			};
+		}
+
+		if (_keyMatCache.TryGetValue(key, out var cached))
+			return cached;
+
+		Texture2D tex = TryLoadTexture($"res://assets/texture/world/{key}.png")
+			?? MakeBlendTexture(key);
+
+		var mat = MakeBlendMat(key, tex);
+		_keyMatCache[key] = mat;
+		return mat;
 	}
 
 	// ═══════════════════════════════════════════════════════════════
@@ -194,11 +231,27 @@ public partial class WorldMaterials : Node
 		var mat = new StandardMaterial3D
 		{
 			AlbedoTexture = tex,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.PerPixel,
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
 			Metallic = 0f,
 			Roughness = 0.9f,
 			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest
 		};
+		mat.ResourceName = name;
+		return mat;
+	}
+
+	static StandardMaterial3D MakeBlendMat(string name, Texture2D tex)
+	{
+		var mat = new StandardMaterial3D
+		{
+			AlbedoTexture = tex,
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			Transparency = BaseMaterial3D.TransparencyEnum.Disabled,
+			Metallic = 0f,
+			Roughness = 0.9f,
+			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+		};
+		mat.ResourceLocalToScene = true;
 		mat.ResourceName = name;
 		return mat;
 	}
@@ -293,6 +346,38 @@ public partial class WorldMaterials : Node
 			float n = noise.GetNoise2D(x, y) * 0.5f + 0.5f;
 			float q = Mathf.Round(n * (levels - 1)) / (levels - 1);
 			img.SetPixel(x, y, baseCol.Lerp(varCol, q));
+		}
+		return ImageTexture.CreateFromImage(img);
+	}
+
+	static Color GetTileColor(TileType type) => type switch
+	{
+		TileType.Grass => new Color("#4a8c2a"),
+		TileType.Dirt  => new Color("#8b6914"),
+		TileType.Water => new Color("#2a6e8c"),
+		TileType.Rock  => new Color("#6b6b6b"),
+		TileType.Snow  => new Color("#e8e8f0"),
+		TileType.Sand  => new Color("#d4c090"),
+		TileType.Swamp => new Color("#3d4a2e"),
+		TileType.Path  => new Color("#9b7a3e"),
+		_ => new Color("#ff00ff")
+	};
+
+	static ImageTexture MakeBlendTexture(string key)
+	{
+		var parts = key.Split('_');
+		var typeA = Enum.Parse<TileType>(parts[0], ignoreCase: true);
+		var typeB = Enum.Parse<TileType>(parts[1], ignoreCase: true);
+
+		Color colorA = GetTileColor(typeA);
+		Color colorB = GetTileColor(typeB);
+
+		var img = Image.CreateEmpty(16, 16, false, Image.Format.Rgba8);
+		for (int y = 0; y < 16; y++)
+		for (int x = 0; x < 16; x++)
+		{
+			bool isQuadrantA = (x < 8 && y < 8) || (x >= 8 && y >= 8);
+			img.SetPixel(x, y, isQuadrantA ? colorA : colorB);
 		}
 		return ImageTexture.CreateFromImage(img);
 	}

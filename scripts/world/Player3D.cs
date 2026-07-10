@@ -18,14 +18,18 @@ public partial class Player3D : CharacterBody3D
 		AddChild(col);
 
 		// Player sprite — 12×24 px pixel-art character, ~1.5m tall
+		var charTex = MakeCharacterTexture();
+		var bodyMat = WorldTextures.MakeAlphaMaterial(charTex);
+		bodyMat.BillboardMode = BaseMaterial3D.BillboardModeEnum.Enabled;
 		var body = new Sprite3D
 		{
-			Texture = MakeCharacterTexture(),
+			Texture = charTex,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = Vector3.Zero,
 			PixelSize = 0.0625f,
 			Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
-			Name = "Body"
+			Name = "Body",
+			MaterialOverride = bodyMat,
 		};
 		AddChild(body);
 

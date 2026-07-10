@@ -142,54 +142,60 @@ public partial class ChunkManager : Node
 
 		try
 		{
-			chunk.SceneNode = new Node3D { Name = $"Chunk_{cx}_{cy}" };
+			var chunkCenter = new Vector3(
+				cx * ChunkMeters + ChunkMeters * 0.5f,
+				0,
+				cy * ChunkMeters + ChunkMeters * 0.5f);
 
-			var mesh = BuildChunkMesh(chunk);
-			if (mesh == null)
+			chunk.SceneNode = new Node3D
+			{
+				Name = $"Chunk_{cx}_{cy}",
+				Position = chunkCenter
+			};
+
+			var terrainMesh = BuildChunkMesh(chunk);
+			if (terrainMesh == null)
 			{
 				GD.PrintErr($"[CHUNK] ({cx},{cy}) BuildChunkMesh returned null");
 				return;
 			}
 
-			var mat = SelectMaterial(chunk);
-			if (mat == null)
+			var neutralMat = new StandardMaterial3D
 			{
-				GD.PrintErr($"[CHUNK] ({cx},{cy}) SelectMaterial returned null");
-				return;
-			}
-
-			var meshInstance = new MeshInstance3D
-			{
-				Mesh = mesh,
-				Position = new Vector3(
-					cx * ChunkMeters + ChunkMeters * 0.5f,
-					0,
-					cy * ChunkMeters + ChunkMeters * 0.5f),
-				MaterialOverride = mat
+				AlbedoColor = new Color(0.5f, 0.5f, 0.5f),
+				ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+				Metallic = 0f,
+				Roughness = 1.0f,
+				TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
 			};
-			chunk.GroundMesh = meshInstance;
+			neutralMat.ResourceName = "TerrainBase";
 
-			chunk.SceneNode.AddChild(meshInstance);
-			_terrainParent.AddChild(chunk.SceneNode);
-
-			ScatterDecorations(chunk, chunk.SceneNode);
+			var terrainMI = new MeshInstance3D
+			{
+				Mesh = terrainMesh,
+				MaterialOverride = neutralMat,
+				Name = "terrain"
+			};
+			chunk.GroundMesh = terrainMI;
+			chunk.SceneNode.AddChild(terrainMI);
 
 			int dim = WorldConstants.ChunkDim;
-			if (HasPathTiles(chunk, dim))
+			var materials = WorldMaterials.Instance;
+			var dualMeshes = BuildDualGridMeshes(chunk, cx, cy, dim);
+			foreach (var kvp in dualMeshes)
 			{
-				var pathMesh = BuildPathMesh(chunk, dim);
-				if (pathMesh != null)
+				var mat = materials.GetMaterialForKey(kvp.Key);
+				var mi = new MeshInstance3D
 				{
-					var pathMI = new MeshInstance3D
-					{
-						Mesh = pathMesh,
-						MaterialOverride = WorldMaterials.Instance.Path01,
-						Name = "Paths"
-					};
-					chunk.SceneNode.AddChild(pathMI);
-				}
+					Mesh = kvp.Value,
+					MaterialOverride = mat,
+					Name = kvp.Key
+				};
+				chunk.SceneNode.AddChild(mi);
 			}
 
+			_terrainParent.AddChild(chunk.SceneNode);
+			ScatterDecorations(chunk, chunk.SceneNode);
 			chunk.IsLoaded = true;
 		}
 		catch (System.Exception ex)
@@ -280,63 +286,117 @@ public partial class ChunkManager : Node
 		return st.Commit();
 	}
 
-	bool HasPathTiles(ChunkData chunk, int dim)
-	{
-		for (int ty = 0; ty < dim; ty++)
-			for (int tx = 0; tx < dim; tx++)
-				if (chunk.Tiles[ty * dim + tx].Type == TileType.Path)
-					return true;
-		return false;
-	}
-
-	ArrayMesh BuildPathMesh(ChunkData chunk, int dim)
+	Dictionary<string, ArrayMesh> BuildDualGridMeshes(ChunkData chunk, int cx, int cy, int dim)
 	{
 		const float HEIGHT_SCALE = 5.0f;
-		const float PATH_Y_OFFSET = 0.03f;
-		float tileSize = WorldConstants.TileSizeMeters;
-		float half = dim * tileSize * 0.5f;
+		const float Y_OFFSET = 0.03f;
+		const float EDGE_OVERLAP = 0.05f;
+		float halfExtent = dim * WorldConstants.TileSizeMeters * 0.5f + EDGE_OVERLAP;
+		float cellWidth = 2.0f * halfExtent / dim;
 
-		var st = new SurfaceTool();
-		st.Begin(Mesh.PrimitiveType.Triangles);
+		var sts = new Dictionary<string, SurfaceTool>();
+		var vi = new Dictionary<string, int>();
 
-		int vi = 0;
+		float WorldVertexHeight(int wgx, int wgz, float scale)
+		{
+			float sum = 0;
+			int count = 0;
+			bool allWater = true;
+
+			for (int dz = -1; dz <= 0; dz++)
+			for (int dx = -1; dx <= 0; dx++)
+			{
+				int wx = wgx + dx;
+				int wz = wgz + dz;
+				if (wx < 0 || wz < 0 || wx >= WorldConstants.WorldWidth || wz >= WorldConstants.WorldHeight)
+					continue;
+
+				int ncx = wx / dim;
+				int ncy = wz / dim;
+				int ltx = wx % dim;
+				int ltz = wz % dim;
+
+				var nc = WorldData.Chunks[ncy * WorldConstants.ChunksX + ncx];
+				if (nc.Tiles == null) continue;
+
+				var tile = nc.Tiles[ltz * dim + ltx];
+				count++;
+				if (tile.Type != TileType.Water) allWater = false;
+				sum += tile.Height / 255f;
+			}
+
+			if (count == 0) return 0;
+			if (allWater) return -0.5f;
+			return (sum / count) * scale;
+		}
+
+		float CornerHeight(ChunkData c, int gx, int gz, int d, float scale)
+		{
+			if (gx > 0 && gx < d && gz > 0 && gz < d)
+				return GetVertexHeight(c, gx, gz, d, scale);
+			int wgx = cx * d + gx;
+			int wgz = cy * d + gz;
+			return WorldVertexHeight(wgx, wgz, scale);
+		}
+
 		for (int tz = 0; tz < dim; tz++)
 		{
 			for (int tx = 0; tx < dim; tx++)
 			{
-				if (chunk.Tiles[tz * dim + tx].Type != TileType.Path)
-					continue;
+				int idx = tz * dim + tx;
 
-				var tile = chunk.Tiles[tz * dim + tx];
-				float h = tile.Height / 255f * HEIGHT_SCALE + PATH_Y_OFFSET;
+				var tl = chunk.Tiles[idx];
+				var tr = chunk.Tiles[tz * dim + Math.Min(tx + 1, dim - 1)];
+				var bl = chunk.Tiles[Math.Min(tz + 1, dim - 1) * dim + tx];
+				var br = chunk.Tiles[Math.Min(tz + 1, dim - 1) * dim + Math.Min(tx + 1, dim - 1)];
 
-				float x0 = tx * tileSize - half;
-				float x1 = x0 + tileSize;
-				float z0 = tz * tileSize - half;
-				float z1 = z0 + tileSize;
+				string key = DualGridEvaluator.GetMaterialKey(tl.Type, tr.Type, bl.Type, br.Type);
+
+				if (!sts.TryGetValue(key, out var st))
+				{
+					st = new SurfaceTool();
+					st.Begin(Mesh.PrimitiveType.Triangles);
+					sts[key] = st;
+					vi[key] = 0;
+				}
+
+				float h00 = CornerHeight(chunk, tx,     tz,     dim, HEIGHT_SCALE) + Y_OFFSET;
+				float h10 = CornerHeight(chunk, tx + 1, tz,     dim, HEIGHT_SCALE) + Y_OFFSET;
+				float h01 = CornerHeight(chunk, tx,     tz + 1, dim, HEIGHT_SCALE) + Y_OFFSET;
+				float h11 = CornerHeight(chunk, tx + 1, tz + 1, dim, HEIGHT_SCALE) + Y_OFFSET;
+
+				float x0 = tx * cellWidth - halfExtent;
+				float x1 = x0 + cellWidth;
+				float z0 = tz * cellWidth - halfExtent;
+				float z1 = z0 + cellWidth;
 
 				st.SetUV(new Vector2(0, 0));
-				st.AddVertex(new Vector3(x0, h, z0));
+				st.AddVertex(new Vector3(x0, h00, z0));
 				st.SetUV(new Vector2(1, 0));
-				st.AddVertex(new Vector3(x1, h, z0));
+				st.AddVertex(new Vector3(x1, h10, z0));
 				st.SetUV(new Vector2(0, 1));
-				st.AddVertex(new Vector3(x0, h, z1));
+				st.AddVertex(new Vector3(x0, h01, z1));
 				st.SetUV(new Vector2(1, 1));
-				st.AddVertex(new Vector3(x1, h, z1));
+				st.AddVertex(new Vector3(x1, h11, z1));
 
-				st.AddIndex(vi);
-				st.AddIndex(vi + 1);
-				st.AddIndex(vi + 2);
-				st.AddIndex(vi + 1);
-				st.AddIndex(vi + 3);
-				st.AddIndex(vi + 2);
-
-				vi += 4;
+				int v = vi[key];
+				st.AddIndex(v);
+				st.AddIndex(v + 1);
+				st.AddIndex(v + 2);
+				st.AddIndex(v + 1);
+				st.AddIndex(v + 3);
+				st.AddIndex(v + 2);
+				vi[key] = v + 4;
 			}
 		}
 
-		st.GenerateNormals();
-		return st.Commit();
+		var result = new Dictionary<string, ArrayMesh>();
+		foreach (var kvp in sts)
+		{
+			kvp.Value.GenerateNormals();
+			result[kvp.Key] = kvp.Value.Commit();
+		}
+		return result;
 	}
 
 	float GetVertexHeight(ChunkData chunk, int gx, int gz, int dim, float heightScale)
@@ -373,88 +433,6 @@ public partial class ChunkManager : Node
 		return (heightSum / heightCount) * heightScale;
 	}
 
-	static bool UseShaderMaterial = true;
-
-	Material SelectMaterial(ChunkData chunk)
-	{
-		var analysis = AnalyzeChunkTiles(chunk);
-		var baseMat = SelectMaterialFromAnalysis(analysis);
-
-		if (UseShaderMaterial)
-		{
-			var shader = _tileShader ??= ResourceLoader.Load<Shader>("res://shaders/tile_ground.gdshader");
-			if (shader == null)
-			{
-				GD.PrintErr("[CHUNK] tile_ground.gdshader not found or failed to compile — using StandardMaterial3D fallback");
-				_tileShader = null;
-				return baseMat ?? new StandardMaterial3D
-				{
-					AlbedoColor = new Color(0.2f, 0.45f, 0.15f),
-					ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-					CullMode = BaseMaterial3D.CullModeEnum.Disabled
-				};
-			}
-
-			var sm = new ShaderMaterial { Shader = shader };
-			var tex = GetBiomeTex(analysis.Dominant, baseMat);
-			sm.SetShaderParameter("tex", tex);
-
-			float tileCount = analysis.DominantRatio > 0.8f ? 4f : 12f;
-			sm.SetShaderParameter("tile_count", tileCount);
-			return sm;
-		}
-
-		return new StandardMaterial3D
-		{
-			AlbedoColor = new Color(0.25f, 0.55f, 0.20f),
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-			CullMode = BaseMaterial3D.CullModeEnum.Disabled
-		};
-	}
-	Shader _tileShader;
-	Dictionary<TileType, ImageTexture> _biomeTextures = new();
-
-	ImageTexture GetBiomeTex(TileType type, StandardMaterial3D baseMat)
-	{
-		if (_biomeTextures.TryGetValue(type, out var cached))
-			return cached;
-
-		Color c = type switch
-		{
-			TileType.Grass => new Color(0.15f, 0.45f, 0.10f),
-			TileType.Dirt  => new Color(0.38f, 0.28f, 0.18f),
-			TileType.Water => new Color(0.08f, 0.28f, 0.55f),
-			TileType.Rock  => new Color(0.32f, 0.30f, 0.28f),
-			TileType.Snow  => new Color(0.72f, 0.78f, 0.84f),
-			TileType.Sand  => new Color(0.68f, 0.58f, 0.35f),
-			TileType.Swamp => new Color(0.12f, 0.22f, 0.10f),
-			_              => new Color(0.20f, 0.40f, 0.15f)
-		};
-
-		int s = 32;
-		var img = Image.CreateEmpty(s, s, false, Image.Format.Rgba8);
-		for (int y = 0; y < s; y++)
-		for (int x = 0; x < s; x++)
-		{
-			float n = ((x * 13 + y * 7) % 17) / 17f * 0.18f - 0.09f;
-		Color px = new Color(
-			Mathf.Clamp(c.R + n, 0, 1),
-			Mathf.Clamp(c.G + n, 0, 1),
-			Mathf.Clamp(c.B + n, 0, 1));
-
-			if (type == TileType.Water && (x + y) % 5 < 2)
-				px = new Color(px.R, px.G, Mathf.Min(px.B + 0.10f, 1));
-			if (type == TileType.Rock && (x % 8 < 2 || y % 8 < 2))
-				px = new Color(Mathf.Max(px.R - 0.08f, 0), Mathf.Max(px.G - 0.08f, 0), Mathf.Max(px.B - 0.08f, 0));
-
-			img.SetPixel(x, y, px);
-		}
-
-		var tex = ImageTexture.CreateFromImage(img);
-		_biomeTextures[type] = tex;
-		return tex;
-	}
-
 	void UnloadChunk(int cx, int cy)
 	{
 		var chunk = WorldData.Chunks[cy * WorldConstants.ChunksX + cx];
@@ -463,107 +441,6 @@ public partial class ChunkManager : Node
 		chunk.SceneNode = null;
 		chunk.GroundMesh = null;
 		chunk.IsLoaded = false;
-	}
-
-	struct ChunkTileAnalysis
-	{
-		public int TotalSamples;
-		public TileType Dominant;
-		public TileType SecondDominant;
-		public float DominantRatio;
-	}
-
-	ChunkTileAnalysis AnalyzeChunkTiles(ChunkData chunk)
-	{
-		int[] counts = new int[8];
-		int step = 8;
-		int total = 0;
-
-		for (int ty = 0; ty < WorldConstants.ChunkDim; ty += step)
-		{
-			for (int tx = 0; tx < WorldConstants.ChunkDim; tx += step)
-			{
-				int tileIndex = ty * WorldConstants.ChunkDim + tx;
-				TileType type = chunk.Tiles[tileIndex].Type;
-				if (type != TileType.Path)
-				{
-					counts[(int)type]++;
-					total++;
-				}
-			}
-		}
-
-		TileType dominant = TileType.Grass;
-		TileType second = TileType.Grass;
-		int maxCount = 0;
-		int secondCount = 0;
-
-		for (int i = 0; i < 8; i++)
-		{
-			if (counts[i] > maxCount)
-			{
-				secondCount = maxCount;
-				second = dominant;
-				maxCount = counts[i];
-				dominant = (TileType)i;
-			}
-			else if (counts[i] > secondCount)
-			{
-				secondCount = counts[i];
-				second = (TileType)i;
-			}
-		}
-
-		float ratio = total > 0 ? (float)maxCount / total : 1f;
-
-		return new ChunkTileAnalysis
-		{
-			TotalSamples = total,
-			Dominant = dominant,
-			SecondDominant = second,
-			DominantRatio = ratio
-		};
-	}
-
-	StandardMaterial3D SelectMaterialFromAnalysis(ChunkTileAnalysis a)
-	{
-		var m = WorldMaterials.Instance;
-		if (m == null) return null;
-
-		if (a.DominantRatio > 0.7f || a.TotalSamples == 0)
-			return GetMaterialForTileType(a.Dominant);
-
-		TileType d = a.Dominant;
-		TileType s = a.SecondDominant;
-
-		return (d, s) switch
-		{
-			(TileType.Grass, TileType.Dirt) or (TileType.Dirt, TileType.Grass) => m.GrassBase,
-			(TileType.Grass, TileType.Rock) or (TileType.Rock, TileType.Grass) => m.ZoneMine,
-			(TileType.Grass, TileType.Sand) or (TileType.Sand, TileType.Grass) => m.ZoneCliff,
-			(TileType.Grass, TileType.Water) or (TileType.Water, TileType.Grass) => m.ZoneSpring,
-			(_, TileType.Snow) or (TileType.Snow, _) => m.ZoneSpring,
-			_ => GetMaterialForTileType(d)
-		};
-	}
-
-	StandardMaterial3D GetMaterialForTileType(TileType type)
-	{
-		var m = WorldMaterials.Instance;
-		if (m == null) return null;
-
-		return type switch
-		{
-			TileType.Grass => m.GrassBase,
-			TileType.Dirt => m.Path01,
-			TileType.Water => m.ZoneCrystal,
-			TileType.Rock => m.ZoneMine,
-			TileType.Snow => m.ZoneSpring,
-			TileType.Sand => m.ZoneCliff,
-			TileType.Swamp => m.ZoneWasteland,
-			TileType.Path => m.Path01,
-			_ => m.GrassBase
-		};
 	}
 
 	// ── Height query ────────────────────────────────────────────────
@@ -704,6 +581,8 @@ public partial class ChunkManager : Node
 		else
 		{
 			float offsetY = texH * (def.BaseYFrac - 0.5f);
+			var mat = WorldTextures.MakeAlphaMaterial(tex);
+			mat.BillboardMode = def.Billboard;
 			var sprite = new Sprite3D
 			{
 				Texture = tex,
@@ -712,6 +591,7 @@ public partial class ChunkManager : Node
 				PixelSize = def.PixelScaleBase * scale,
 				Offset = new Vector2(0, offsetY),
 				Modulate = Colors.White,
+				MaterialOverride = mat,
 			};
 			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
 				sprite.RotationDegrees = new Vector3(0, yRot, 0);

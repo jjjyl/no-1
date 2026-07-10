@@ -637,9 +637,11 @@ public static class WorldTextures
 		return new StandardMaterial3D
 		{
 			AlbedoTexture = tex,
-			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+			Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor,
+			AlphaScissorThreshold = 0.1f,
 			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
 			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
 		};
 	}
 

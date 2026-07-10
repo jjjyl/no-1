@@ -19,9 +19,10 @@ public partial class WorldMap3D : Node3D
 	[Export] public float WorldHeight = 15f;
 
 	// ── Camera ──
+	[Export] public Camera3D.ProjectionType CamProjection = Camera3D.ProjectionType.Perspective;
 	[Export] public float CameraDistance = 8f;
 	[Export] public float CameraPitch = 50f;
-	[Export] public float CameraYaw = 45f;       // locked direction — 0=North, 45=isometric
+	[Export] public float CameraYaw = 0f;            // 0=North(面朝Z轴), 90=East(面朝X轴)
 	public static float StaticCameraYaw;
 	[Export] public float CameraZoomMin = 3f;
 	[Export] public float CameraZoomMax = 18f;
@@ -130,7 +131,11 @@ public partial class WorldMap3D : Node3D
 		_cameraPivot = new Node3D { Name = "CameraPivot" };
 		AddChild(_cameraPivot);
 
-		_camera = new Camera3D { Name = "Camera3D" };
+		_camera = new Camera3D
+		{
+			Name = "Camera3D",
+			Projection = CamProjection,
+		};
 		_cameraPivot.AddChild(_camera);
 
 		// Initial position: behind and above, looking down ~45°
