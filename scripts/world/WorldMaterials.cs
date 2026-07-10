@@ -86,6 +86,19 @@ public partial class WorldMaterials : Node
 	/// </summary>
 	public StandardMaterial3D GetMaterialForKey(string key)
 	{
+		if (_keyMatCache.TryGetValue(key, out var cached))
+			return cached;
+
+		// Try loading user-provided PNG (direct load, no import filtering)
+		Texture2D tex = LoadPixelTexture(key);
+		if (tex != null)
+		{
+			var mat = MakeBlendMat(key, tex);
+			_keyMatCache[key] = mat;
+			return mat;
+		}
+
+		// Pure keys: fall back to built-in materials
 		if (!key.Contains('_'))
 		{
 			return key switch
@@ -102,15 +115,26 @@ public partial class WorldMaterials : Node
 			};
 		}
 
-		if (_keyMatCache.TryGetValue(key, out var cached))
-			return cached;
+		// Transition: procedural fallback
+		tex = MakeBlendTexture(key);
+		var mat2 = MakeBlendMat(key, tex);
+		_keyMatCache[key] = mat2;
+		return mat2;
+	}
 
-		Texture2D tex = TryLoadTexture($"res://assets/texture/world/{key}.png")
-			?? MakeBlendTexture(key);
-
-		var mat = MakeBlendMat(key, tex);
-		_keyMatCache[key] = mat;
-		return mat;
+	/// <summary>Load a 16×16 pixel tile PNG directly, bypassing Godot's import pipeline (no filtering).</summary>
+	static ImageTexture LoadPixelTexture(string key)
+	{
+		string path = $"res://assets/texture/world/{key}.png";
+		if (!FileAccess.FileExists(path)) return null;
+		try
+		{
+			var img = Image.LoadFromFile(path);
+			if (img == null || img.IsEmpty()) return null;
+			var tex = ImageTexture.CreateFromImage(img);
+			return tex;
+		}
+		catch { return null; }
 	}
 
 	// ═══════════════════════════════════════════════════════════════

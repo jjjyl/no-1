@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://csry8rjkbden0"
-path="res://.godot/imported/snow_tile.png-ad32fc464d6ab06d4d08eb2738b7a9cf.ctex"
+uid="uid://ihe5gnvauqhg"
+path="res://.godot/imported/rock.png-e6b6728c8ed79c34c6b20d19dd0c4cc2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/texture/world/snow_tile.png"
-dest_files=["res://.godot/imported/snow_tile.png-ad32fc464d6ab06d4d08eb2738b7a9cf.ctex"]
+source_file="res://assets/texture/world/rock.png"
+dest_files=["res://.godot/imported/rock.png-e6b6728c8ed79c34c6b20d19dd0c4cc2.ctex"]
 
 [params]
 
