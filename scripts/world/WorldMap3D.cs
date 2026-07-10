@@ -50,6 +50,11 @@ public partial class WorldMap3D : Node3D
 	ChunkManager _chunkManager;
 	List<RegionNode> _regionNodes = new();
 
+	// ── Player ──
+	/// <summary>Assign a player.tscn (root=Player3D) in editor; falls back to code-built Player3D if null.</summary>
+	[Export] public PackedScene PlayerScene;
+	[Export] public SpriteFrames PlayerSpriteFrames;
+
 	// ── Runtime state ──
 	Player3D _player;
 	Camera3D _camera;
@@ -680,7 +685,15 @@ public partial class WorldMap3D : Node3D
 
 	void BuildPlayer()
 	{
-		_player = new Player3D { Name = "Player" };
+		if (PlayerScene != null)
+		{
+			_player = PlayerScene.Instantiate<Player3D>();
+			_player.Name = "Player";
+		}
+		else
+		{
+			_player = new Player3D { Name = "Player" };
+		}
 		var savedPos = CycleManager.Instance.LastWorldPosition;
 		if (savedPos != Vector3.Zero)
 		{
