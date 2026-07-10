@@ -3,37 +3,59 @@ using Godot;
 
 /// <summary>
 /// 3D player character. WASD movement on XZ plane.
-/// MoveDirection exposed for camera tracking and future mobile joystick.
+/// Body uses AnimatedSprite3D — animations ("idle"/"walk") editable
+/// via exported SpriteFrames resource in the Godot editor.
 /// </summary>
 public partial class Player3D : CharacterBody3D
 {
 	[Export] public float Speed = 5f;
+
+	/// <summary>
+	/// Set in Godot editor to override the default generated idle sprite.
+	/// Add a "walk" animation with 2+ frames to enable walk animation.
+	/// Default: generated 12×24 character with idle-only.
+	/// </summary>
+	[Export] public SpriteFrames SpriteFramesOverride;
+
 	public Vector3 MoveDirection { get; private set; }
+	private AnimatedSprite3D _body;
 
 	public override void _Ready()
 	{
-		// Collision
+		// ── Collision ──
 		var col = new CollisionShape3D();
 		col.Shape = new CylinderShape3D { Height = 1f, Radius = 0.35f };
 		AddChild(col);
 
-		// Player sprite — 12×24 px pixel-art character, ~1.5m tall
+		// ── Character texture (12×24 px idle frame) ──
 		var charTex = MakeCharacterTexture();
-		var bodyMat = WorldTextures.MakeAlphaMaterial(charTex);
-		bodyMat.BillboardMode = BaseMaterial3D.BillboardModeEnum.Enabled;
-		var body = new Sprite3D
+
+		// ── Sprite frames: user override or generated idle-only default ──
+		var frames = SpriteFramesOverride ?? BuildDefaultFrames(charTex);
+
+		// ── Body (AnimatedSprite3D — user adds "walk" animation in editor) ──
+		_body = new AnimatedSprite3D
 		{
-			Texture = charTex,
+			SpriteFrames = frames,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = Vector3.Zero,
 			PixelSize = 0.0625f,
 			Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
-			Name = "Body",
-			MaterialOverride = bodyMat,
+			Name = "Body"
 		};
-		AddChild(body);
 
-		// Shadow
+		// Alpha scissor material (avoids z-fighting on transparent pixels)
+		var bodyMat = new StandardMaterial3D
+		{
+			Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor,
+			AlphaScissorThreshold = 0.5f,
+			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+		};
+		_body.MaterialOverride = bodyMat;
+		_body.Play("idle");
+		AddChild(_body);
+
+		// ── Shadow (static Sprite3D, not animated) ──
 		var shadow = new Sprite3D
 		{
 			Texture = MakeCircleTexture(new Color(0, 0, 0, 0.35f)),
@@ -71,9 +93,29 @@ public partial class Player3D : CharacterBody3D
 
 		MoveDirection = input.Normalized();
 		Translate(MoveDirection * Speed * dt);
+
+		if (_body?.SpriteFrames != null)
+		{
+			bool moving = MoveDirection.LengthSquared() > 0.01f;
+			bool hasWalk = _body.SpriteFrames.HasAnimation("walk");
+
+			string target = (moving && hasWalk) ? "walk" : "idle";
+			if (_body.Animation != target)
+				_body.Play(target);
+
+			if (Mathf.Abs(MoveDirection.X) > 0.01f)
+				_body.FlipH = MoveDirection.X < 0;
+		}
 	}
 
-	// ── Dummy textures (replace with real sprites later) ──
+	static SpriteFrames BuildDefaultFrames(Texture2D tex)
+	{
+		var frames = new SpriteFrames();
+		frames.AddAnimation("idle");
+		frames.SetAnimationSpeed("idle", 1);
+		frames.AddFrame("idle", tex);
+		return frames;
+	}
 
 	static ImageTexture MakeCharacterTexture()
 	{
