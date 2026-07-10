@@ -607,7 +607,9 @@ public partial class ChunkManager : Node
 		rng.Seed = (ulong)(chunk.X * 1000 + chunk.Y) + WorldData.Seed % 1000;
 
 		int dim = WorldConstants.ChunkDim;
-		const int STEP = 4;  // check every 4th tile → max 1024 candidates per chunk
+		const int STEP = 4;
+		float tileSize = WorldConstants.TileSizeMeters;
+		float half = dim * tileSize * 0.5f;
 
 		for (int ty = 0; ty < dim; ty += STEP)
 		for (int tx = 0; tx < dim; tx += STEP)
@@ -617,10 +619,10 @@ public partial class ChunkManager : Node
 			if (tileType == TileType.Water || tileType == TileType.Path)
 				continue;
 
-			float groundH = chunk.Tiles[ti].Height / 255f * 5.0f;
-			float wx = (chunk.X * dim + tx + 0.5f) * WorldConstants.TileSizeMeters;
-			float wz = (chunk.Y * dim + ty + 0.5f) * WorldConstants.TileSizeMeters;
-			Vector3 pos = new Vector3(wx, groundH, wz);
+			float groundH = chunk.Tiles[ti].Height / 255f * 5.0f + 0.02f;
+			float localX = (tx + 0.5f) * tileSize - half;
+			float localZ = (ty + 0.5f) * tileSize - half;
+			Vector3 pos = new Vector3(localX, groundH, localZ);
 
 			float roll = rng.Randf();
 			DecorationDef? pick = null;
