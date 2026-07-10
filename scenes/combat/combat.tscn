@@ -128,8 +128,8 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 3
 size_flags_stretch_ratio = 4.0
-alignment = 1
 theme_override_constants/separation = -40
+alignment = 1
 
 [node name="CenterSection" type="VBoxContainer" parent="MarginContainer/MainLayout"]
 layout_mode = 2
@@ -192,9 +192,9 @@ layout_mode = 2
 
 [node name="PlayerPortrait" type="TextureRect" parent="MarginContainer/MainLayout/PartySection/PlayerCard/CardInner"]
 self_modulate = Color(0.3, 0.3, 0.35, 0.8)
-mouse_filter = 2
 custom_minimum_size = Vector2(100, 130)
 layout_mode = 2
+mouse_filter = 2
 expand_mode = 3
 stretch_mode = 5
 

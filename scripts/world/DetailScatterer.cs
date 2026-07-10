@@ -20,7 +20,8 @@ public static class DetailScatterer
         Biome[,] biomeMap,
         TileData[,] tiles,
         EntityOverride[] entityOverrides = null,
-        TileOverride[] tileOverrides = null)
+        TileOverride[] tileOverrides = null,
+        ForbiddenZone[] forbiddenZones = null)
     {
         var spawns = new List<EntitySpawn>();
         int worldWidth = WorldConstants.WorldWidth;
@@ -28,19 +29,19 @@ public static class DetailScatterer
 
         if (regions == null || regions.Length == 0)
         {
-            ApplyOverrides(tileOverrides, entityOverrides, tiles, spawns);
+            ApplyOverrides(tileOverrides, entityOverrides, tiles, spawns, forbiddenZones);
             return spawns.ToArray();
         }
 
         var globalRng = new RandomNumberGenerator();
         globalRng.Seed = DeriveGlobalSeed(regions);
 
-        PlaceEnemies(regions, biomeMap, tiles, spawns, worldWidth, worldHeight);
-        PlaceNPCs(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng);
-        PlaceFragments(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng);
-        PlaceRuinEntrances(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng);
-        PlaceTimeCocoon(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng);
-        ApplyOverrides(tileOverrides, entityOverrides, tiles, spawns);
+        PlaceEnemies(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, forbiddenZones);
+        PlaceNPCs(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng, forbiddenZones);
+        PlaceFragments(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng, forbiddenZones);
+        PlaceRuinEntrances(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng, forbiddenZones);
+        PlaceTimeCocoon(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, globalRng, forbiddenZones);
+        ApplyOverrides(tileOverrides, entityOverrides, tiles, spawns, forbiddenZones);
 
         return spawns.ToArray();
     }
@@ -65,7 +66,8 @@ public static class DetailScatterer
         TileData[,] tiles,
         List<EntitySpawn> spawns,
         int worldWidth,
-        int worldHeight)
+        int worldHeight,
+        ForbiddenZone[] forbiddenZones)
     {
         for (int i = 0; i < regions.Length; i++)
         {
@@ -84,6 +86,8 @@ public static class DetailScatterer
                 if (!InBounds(tx, ty, worldWidth, worldHeight))
                     continue;
                 if (IsWater(tx, ty, biomeMap))
+                    continue;
+                if (IsInForbiddenZone(tx, ty, forbiddenZones))
                     continue;
 
                 var tile = tiles[tx, ty];
@@ -115,10 +119,11 @@ public static class DetailScatterer
         List<EntitySpawn> spawns,
         int worldWidth,
         int worldHeight,
-        RandomNumberGenerator rng)
+        RandomNumberGenerator rng,
+        ForbiddenZone[] forbiddenZones)
     {
-        PlaceHermits(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, rng);
-        PlaceMerchant(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, rng);
+        PlaceHermits(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, rng, forbiddenZones);
+        PlaceMerchant(regions, biomeMap, tiles, spawns, worldWidth, worldHeight, rng, forbiddenZones);
     }
 
     private static void PlaceHermits(
@@ -128,7 +133,8 @@ public static class DetailScatterer
         List<EntitySpawn> spawns,
         int worldWidth,
         int worldHeight,
-        RandomNumberGenerator rng)
+        RandomNumberGenerator rng,
+        ForbiddenZone[] forbiddenZones)
     {
         int hermitCount = rng.RandiRange(5, 15);
         int placed = 0;
@@ -172,7 +178,8 @@ public static class DetailScatterer
         List<EntitySpawn> spawns,
         int worldWidth,
         int worldHeight,
-        RandomNumberGenerator rng)
+        RandomNumberGenerator rng,
+        ForbiddenZone[] forbiddenZones)
     {
         // Place near first region center (within 5 tiles)
         var region = regions[0];
@@ -218,7 +225,8 @@ public static class DetailScatterer
         List<EntitySpawn> spawns,
         int worldWidth,
         int worldHeight,
-        RandomNumberGenerator rng)
+        RandomNumberGenerator rng,
+        ForbiddenZone[] forbiddenZones)
     {
         int fragmentCount = rng.RandiRange(3, 8);
         int placed = 0;
@@ -268,7 +276,8 @@ public static class DetailScatterer
         List<EntitySpawn> spawns,
         int worldWidth,
         int worldHeight,
-        RandomNumberGenerator rng)
+        RandomNumberGenerator rng,
+        ForbiddenZone[] forbiddenZones)
     {
         int ruinCount = rng.RandiRange(1, 3);
         int placed = 0;
@@ -319,7 +328,8 @@ public static class DetailScatterer
         List<EntitySpawn> spawns,
         int worldWidth,
         int worldHeight,
-        RandomNumberGenerator rng)
+        RandomNumberGenerator rng,
+        ForbiddenZone[] forbiddenZones)
     {
         // 30% chance
         if (rng.RandfRange(0f, 1f) > 0.3f)
@@ -357,7 +367,8 @@ public static class DetailScatterer
         TileOverride[] tileOverrides,
         EntityOverride[] entityOverrides,
         TileData[,] tiles,
-        List<EntitySpawn> spawns)
+        List<EntitySpawn> spawns,
+        ForbiddenZone[] forbiddenZones)
     {
         if (entityOverrides != null)
         {
@@ -440,5 +451,18 @@ public static class DetailScatterer
                 minDist = dist;
         }
         return minDist;
+    }
+
+    private static bool IsInForbiddenZone(int x, int y, ForbiddenZone[] zones)
+    {
+        if (zones == null) return false;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            int dx = x - zones[i].X;
+            int dy = y - zones[i].Y;
+            if (dx * dx + dy * dy <= zones[i].Radius * zones[i].Radius)
+                return true;
+        }
+        return false;
     }
 }

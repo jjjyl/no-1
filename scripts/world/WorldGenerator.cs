@@ -37,15 +37,24 @@ public static class WorldGenerator
         }
 
         // 3. Place regions
-        var regions = RegionPlacer.Place(biomeMap, cycleNumber, overlay?.RegionOverrides);
+        var regions = RegionPlacer.Place(biomeMap, cycleNumber, overlay?.RegionOverrides, overlay?.ForbiddenZones);
 
         // 4. Generate paths
-        var paths = PathGenerator.Generate(regions, biomeMap, overlay?.PathOverrides);
+        var paths = PathGenerator.Generate(regions, biomeMap, overlay?.PathOverrides, overlay?.ForbiddenZones);
 
         // 5. Scatter details
         TileData[,] tiles = CreateTileArray(biomeMap, heightMap);
+
+        // Layer 3: Apply forbidden zones — mark tiles impassable so scatterers skip them
+        if (overlay?.ForbiddenZones != null)
+            ApplyForbiddenZones(tiles, overlay.ForbiddenZones);
+
         var entities = DetailScatterer.Scatter(regions, paths, biomeMap, tiles,
-            overlay?.EntityOverrides, overlay?.TileOverrides);
+            overlay?.EntityOverrides, overlay?.TileOverrides, overlay?.ForbiddenZones);
+
+        // Stamp paths onto tiles so ChunkManager can render them
+        if (paths != null)
+            ApplyPathTiles(tiles, paths);
 
         // 6. Assemble WorldData
         return AssembleWorldData(effectiveSeed, cycleNumber, regions, paths, tiles, entities);
@@ -116,6 +125,9 @@ public static class WorldGenerator
         {
             Seed = seed,
             CycleNumber = cycleNumber,
+            Width = WorldConstants.WorldWidth,
+            Height = WorldConstants.WorldHeight,
+            ChunkSize = WorldConstants.ChunkDim,
             Regions = regions,
             Paths = paths,
             Chunks = new ChunkData[WorldConstants.TotalChunks]
@@ -184,6 +196,8 @@ public static class WorldGenerator
         var pathDict = new Dictionary<(string from, string to), PathOverride>();
         var entityList = new List<EntityOverride>();
         var biomeList = new List<BiomeOverride>();
+        var forbiddenList = new List<ForbiddenZone>();
+        var campingDict = new Dictionary<string, CampingSiteOverride>();
 
         foreach (string path in paths)
         {
@@ -235,6 +249,14 @@ public static class WorldGenerator
             // Biome overrides — just append (later ones overwrite earlier during Apply)
             if (data.ContainsKey("biome_overrides"))
                 ParseBiomeOverrides(data["biome_overrides"].AsGodotArray(), biomeList);
+
+            // Forbidden zones — append
+            if (data.ContainsKey("forbidden_zones"))
+                ParseForbiddenZones(data["forbidden_zones"].AsGodotArray(), forbiddenList);
+
+            // Camping sites — keyed by Id, last wins
+            if (data.ContainsKey("camping_sites"))
+                ParseCampingSites(data["camping_sites"].AsGodotArray(), campingDict);
         }
 
         return new OverlayData
@@ -246,7 +268,9 @@ public static class WorldGenerator
             RegionOverrides = new List<RegionOverride>(regionDict.Values).ToArray(),
             PathOverrides = new List<PathOverride>(pathDict.Values).ToArray(),
             EntityOverrides = entityList.ToArray(),
-            BiomeOverrides = biomeList.ToArray()
+            BiomeOverrides = biomeList.ToArray(),
+            ForbiddenZones = forbiddenList.ToArray(),
+            CampingSites = new List<CampingSiteOverride>(campingDict.Values).ToArray()
         };
     }
 
@@ -297,7 +321,9 @@ public static class WorldGenerator
             var d = item.AsGodotDictionary();
             string from = d["from_region"].AsString();
             string to = d["to_region"].AsString();
-            var waypoints = ParseWaypoints(d["waypoints"].AsGodotArray());
+            var waypoints = d.ContainsKey("waypoints")
+                ? ParseWaypoints(d["waypoints"].AsGodotArray())
+                : Array.Empty<(int x, int y)>();
 
             // Bidirectional key so that either ordering matches
             var key = string.CompareOrdinal(from, to) < 0 ? (from, to) : (to, from);
@@ -345,7 +371,92 @@ public static class WorldGenerator
         }
     }
 
+    private static void ParseForbiddenZones(
+        Godot.Collections.Array arr,
+        List<ForbiddenZone> list)
+    {
+        foreach (var item in arr)
+        {
+            var d = item.AsGodotDictionary();
+            list.Add(new ForbiddenZone
+            {
+                X = d["x"].AsInt32(),
+                Y = d["y"].AsInt32(),
+                Radius = d["radius"].AsInt32(),
+                Reason = d.ContainsKey("reason") ? d["reason"].AsString() : ""
+            });
+        }
+    }
+
+    private static void ParseCampingSites(
+        Godot.Collections.Array arr,
+        Dictionary<string, CampingSiteOverride> dict)
+    {
+        foreach (var item in arr)
+        {
+            var d = item.AsGodotDictionary();
+            string id = d["id"].AsString();
+
+            var events = Array.Empty<string>();
+            if (d.ContainsKey("events"))
+            {
+                var evtArr = d["events"].AsGodotArray();
+                events = new string[evtArr.Count];
+                for (int i = 0; i < evtArr.Count; i++)
+                    events[i] = evtArr[i].AsString();
+            }
+
+            dict[id] = new CampingSiteOverride
+            {
+                Id = id,
+                X = d["x"].AsInt32(),
+                Y = d["y"].AsInt32(),
+                Name = d.ContainsKey("name") ? d["name"].AsString() : id,
+                Events = events
+            };
+        }
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────
+
+    private static void ApplyForbiddenZones(TileData[,] tiles, ForbiddenZone[] zones)
+    {
+        int worldWidth = WorldConstants.WorldWidth;
+        int worldHeight = WorldConstants.WorldHeight;
+
+        foreach (var fz in zones)
+        {
+            for (int dy = -fz.Radius; dy <= fz.Radius; dy++)
+            {
+                for (int dx = -fz.Radius; dx <= fz.Radius; dx++)
+                {
+                    int wx = fz.X + dx;
+                    int wy = fz.Y + dy;
+                    if (wx >= 0 && wx < worldWidth && wy >= 0 && wy < worldHeight)
+                        tiles[wx, wy].Passable = false;
+                }
+            }
+        }
+    }
+
+    private static void ApplyPathTiles(TileData[,] tiles, PathData[] paths)
+    {
+        int worldWidth = WorldConstants.WorldWidth;
+        int worldHeight = WorldConstants.WorldHeight;
+
+        foreach (var path in paths)
+        {
+            for (int i = 0; i < path.TileCount; i++)
+            {
+                int idx = path.TileIndices[i];
+                int x = idx % worldWidth;
+                int y = idx / worldWidth;
+
+                if (x >= 0 && x < worldWidth && y >= 0 && y < worldHeight)
+                    tiles[x, y].Type = TileType.Path;
+            }
+        }
+    }
 
     private static (int x, int y)[] ParseWaypoints(Godot.Collections.Array arr)
     {

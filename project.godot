@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 DialogueManager="*res://scripts/ui/DialogueManager.cs"
 GameManager="*res://scripts/core/GameManager.cs"
 CycleManager="*res://scripts/core/CycleManager.cs"
+DebugConsole="*res://scripts/debug/DebugConsole.cs"
 AmbientCG="*res://addons/ambientcg/ambient_cg.gd"
 
 [dotnet]

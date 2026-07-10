@@ -3,6 +3,7 @@ namespace No1.Temple;
 using Godot;
 using No1.Core;
 using No1.Data;
+using No1.UI;
 
 public partial class Temple3D : Node3D
 {
@@ -22,6 +23,8 @@ public partial class Temple3D : Node3D
 	float _pitch;
 	bool _looking;
 	WorldEnvironment _worldEnv;
+	SeedSelector _seedSelector;
+	BlessingType? _pendingBlessing;
 
 	public override void _Ready()
 	{
@@ -46,6 +49,11 @@ public partial class Temple3D : Node3D
 			_slab.BlessingSelected += OnBlessingSelected;
 			_slab.EnterWorld += OnEnterWorld;
 		}
+
+		_seedSelector = new SeedSelector();
+		AddChild(_seedSelector);
+		_seedSelector.Visible = false;
+		_seedSelector.WorldSeedConfirmed += OnSeedConfirmed;
 
 		StartWakeUp();
 	}
@@ -116,6 +124,8 @@ public partial class Temple3D : Node3D
 
 	public override void _Input(InputEvent e)
 	{
+		if (_seedSelector != null && _seedSelector.Visible) return;
+		if (No1.Debug.DebugConsole.IsOpen) return;
 		if (!_looking || _cam == null) return;
 
 		if (e is InputEventMouseMotion motion)
@@ -186,7 +196,7 @@ public partial class Temple3D : Node3D
 
 	void UpdateHover()
 	{
-		if (!_looking || _slab == null) return;
+		if (!_looking || _slab == null || No1.Debug.DebugConsole.IsOpen || (_seedSelector != null && _seedSelector.Visible)) return;
 
 		var hit = RaycastLayer(1);
 		if (hit != null)
@@ -237,18 +247,24 @@ public partial class Temple3D : Node3D
 
 	void OnEnterWorld()
 	{
-		GD.Print("[Temple3D] Entering world...");
-
-		var cm = CycleManager.Instance;
-		if (cm == null) return;
+		GD.Print("[Temple3D] Opening seed selector...");
 
 		var blessing = _slab?.SelectedBlessing;
 		if (blessing == null) return;
 
-		cm.SelectBlessing(blessing.Value);
+		_pendingBlessing = blessing;
+		_looking = false;
+		Input.MouseMode = Input.MouseModeEnum.Visible;
+		_seedSelector.Show();
+	}
+
+	void OnSeedConfirmed(ulong seed, string[] overridePaths)
+	{
+		if (_pendingBlessing == null) return;
+
+		CycleManager.Instance.SelectBlessing(_pendingBlessing.Value);
 		Input.MouseMode = Input.MouseModeEnum.Visible;
 
-		ulong seed = 0; // 0 = random; TODO: get from SeedSelector
-		GameManager.Instance.EnterWorld(seed);
+		GameManager.Instance.EnterWorld(seed, overridePaths);
 	}
 }

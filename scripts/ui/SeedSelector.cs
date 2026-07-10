@@ -236,7 +236,7 @@ public partial class SeedSelector : CanvasLayer
 		// Collect selected override file names
 		var selectedOverrides = new List<string>();
 		foreach (int idx in _overrideList.GetSelectedItems())
-			selectedOverrides.Add(_overrideList.GetItemText(idx));
+			selectedOverrides.Add(OverrideDir + _overrideList.GetItemText(idx));
 		SelectedOverridePaths = selectedOverrides.ToArray();
 
 		// Persist seed in history
@@ -338,6 +338,7 @@ public partial class SeedSelector : CanvasLayer
 
 	public new void Show()
 	{
+		Visible = true;
 		_seedInput.Clear();
 		_panel.Visible = true;
 		_seedInput.GrabFocus();
@@ -346,6 +347,7 @@ public partial class SeedSelector : CanvasLayer
 
 	public new void Hide()
 	{
+		Visible = false;
 		_panel.Visible = false;
 		GD.Print("[SeedSelector] Panel hidden");
 	}

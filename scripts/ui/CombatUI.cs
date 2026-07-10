@@ -32,10 +32,6 @@ public partial class CombatUI : Control
 	[Export] float EscapeThreshold = 300f;
 	[Export] float GaugeMultiplier = 10f;
 
-	// ── Scene paths ──
-	public const string SceneCombat = "res://scenes/combat/combat.tscn";
-	public const string SceneTemple = "res://scenes/temple/temple_3d.tscn";
-
 	string _queuedAction = "atk";
 	int _defBonus, _dodgeBonus;
 	bool _waiting, _done, _blocking;

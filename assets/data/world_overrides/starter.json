@@ -1,0 +1,41 @@
+{
+  "map_name": "起始之地",
+  "description": "P0 测试地图，所有 8 个区域固定位置，保证可访问",
+  "base_seed": 42,
+  "biome_overrides": [
+    {"x": 0,   "y": 0,   "w": 200, "h": 130, "biome": "Forest"},
+    {"x": 200, "y": 0,   "w": 184, "h": 130, "biome": "Hills"},
+    {"x": 0,   "y": 130, "w": 200, "h": 126, "biome": "Plains"},
+    {"x": 200, "y": 130, "w": 184, "h": 80,  "biome": "Mountain"},
+    {"x": 200, "y": 210, "w": 184, "h": 46,  "biome": "Desert"}
+  ],
+  "region_overrides": [
+    {"id": "forest_edge",    "x": 50,  "y": 60,  "radius": 12},
+    {"id": "abandoned_mine", "x": 270, "y": 50,  "radius": 10},
+    {"id": "cliff_plateau",  "x": 270, "y": 170, "radius": 14},
+    {"id": "ancient_field",  "x": 100, "y": 180, "radius": 16},
+    {"id": "crystal_cave",   "x": 340, "y": 180, "radius": 8},
+    {"id": "wasteland_edge", "x": 300, "y": 230, "radius": 18},
+    {"id": "forgotten_tower","x": 300, "y": 110, "radius": 6},
+    {"id": "sacred_spring",  "x": 50,  "y": 120, "radius": 5}
+  ],
+  "path_overrides": [
+    {"from_region": "forest_edge",    "to_region": "sacred_spring"},
+    {"from_region": "forest_edge",    "to_region": "ancient_field"},
+    {"from_region": "sacred_spring",  "to_region": "ancient_field"},
+    {"from_region": "forest_edge",    "to_region": "abandoned_mine"},
+    {"from_region": "abandoned_mine", "to_region": "forgotten_tower"},
+    {"from_region": "forgotten_tower","to_region": "cliff_plateau"},
+    {"from_region": "cliff_plateau",  "to_region": "crystal_cave"},
+    {"from_region": "crystal_cave",   "to_region": "wasteland_edge"}
+  ],
+  "entity_overrides": [
+    {"type": "NPC", "id": "merchant", "x": 55, "y": 55}
+  ],
+  "forbidden_zones": [
+    {"x": 190, "y": 65, "radius": 8, "reason": "blocked_pass"}
+  ],
+  "camping_sites": [
+    {"id": "tutorial_camp", "x": 120, "y": 135, "name": "扎营教学点", "events": ["evt_camp_tutorial"]}
+  ]
+}

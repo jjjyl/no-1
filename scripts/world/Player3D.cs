@@ -48,7 +48,7 @@ public partial class Player3D : CharacterBody3D
 		var input = Vector3.Zero;
 
 		var dm = No1.UI.DialogueManager.Instance;
-		if (dm == null || !dm.IsOverlayOpen)
+		if ((dm == null || !dm.IsOverlayOpen) && !No1.Debug.DebugConsole.IsOpen)
 		{
 			if (Input.IsKeyPressed(Key.W) || Input.IsKeyPressed(Key.Up))    input.Z -= 1;
 			if (Input.IsKeyPressed(Key.S) || Input.IsKeyPressed(Key.Down))  input.Z += 1;

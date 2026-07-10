@@ -53,11 +53,6 @@ public class EventDef
 	public bool Once = true;
 }
 
-public class EventBundle
-{
-	public List<EventDef> Events = new();
-}
-
 public class FireContext
 {
 	public string Source;      // "player", companion name, enemy display name

@@ -174,6 +174,22 @@ public partial class ChunkManager : Node
 
 			ScatterDecorations(chunk, chunk.SceneNode);
 
+			int dim = WorldConstants.ChunkDim;
+			if (HasPathTiles(chunk, dim))
+			{
+				var pathMesh = BuildPathMesh(chunk, dim);
+				if (pathMesh != null)
+				{
+					var pathMI = new MeshInstance3D
+					{
+						Mesh = pathMesh,
+						MaterialOverride = WorldMaterials.Instance.Path01,
+						Name = "Paths"
+					};
+					chunk.SceneNode.AddChild(pathMI);
+				}
+			}
+
 			chunk.IsLoaded = true;
 		}
 		catch (System.Exception ex)
@@ -218,12 +234,10 @@ public partial class ChunkManager : Node
 				int v10 = (z + 1) * vertsPerRow + x;
 				int v11 = (z + 1) * vertsPerRow + (x + 1);
 
-				// Triangle 1: (x,z) -> (x,z+1) -> (x+1,z)  normal UP
 				st.AddIndex(v00);
 				st.AddIndex(v10);
 				st.AddIndex(v01);
 
-				// Triangle 2: (x,z+1) -> (x+1,z+1) -> (x+1,z)  normal UP
 				st.AddIndex(v10);
 				st.AddIndex(v11);
 				st.AddIndex(v01);
@@ -261,6 +275,65 @@ public partial class ChunkManager : Node
 		for (int z = 0; z < dim; z++) AddSkirtQuad(dim, z, dim, z + 1);
 		for (int x = 0; x < dim; x++) AddSkirtQuad(x, 0, x + 1, 0);
 		for (int x = 0; x < dim; x++) AddSkirtQuad(x, dim, x + 1, dim);
+
+		st.GenerateNormals();
+		return st.Commit();
+	}
+
+	bool HasPathTiles(ChunkData chunk, int dim)
+	{
+		for (int ty = 0; ty < dim; ty++)
+			for (int tx = 0; tx < dim; tx++)
+				if (chunk.Tiles[ty * dim + tx].Type == TileType.Path)
+					return true;
+		return false;
+	}
+
+	ArrayMesh BuildPathMesh(ChunkData chunk, int dim)
+	{
+		const float HEIGHT_SCALE = 5.0f;
+		const float PATH_Y_OFFSET = 0.03f;
+		float tileSize = WorldConstants.TileSizeMeters;
+		float half = dim * tileSize * 0.5f;
+
+		var st = new SurfaceTool();
+		st.Begin(Mesh.PrimitiveType.Triangles);
+
+		int vi = 0;
+		for (int tz = 0; tz < dim; tz++)
+		{
+			for (int tx = 0; tx < dim; tx++)
+			{
+				if (chunk.Tiles[tz * dim + tx].Type != TileType.Path)
+					continue;
+
+				var tile = chunk.Tiles[tz * dim + tx];
+				float h = tile.Height / 255f * HEIGHT_SCALE + PATH_Y_OFFSET;
+
+				float x0 = tx * tileSize - half;
+				float x1 = x0 + tileSize;
+				float z0 = tz * tileSize - half;
+				float z1 = z0 + tileSize;
+
+				st.SetUV(new Vector2(0, 0));
+				st.AddVertex(new Vector3(x0, h, z0));
+				st.SetUV(new Vector2(1, 0));
+				st.AddVertex(new Vector3(x1, h, z0));
+				st.SetUV(new Vector2(0, 1));
+				st.AddVertex(new Vector3(x0, h, z1));
+				st.SetUV(new Vector2(1, 1));
+				st.AddVertex(new Vector3(x1, h, z1));
+
+				st.AddIndex(vi);
+				st.AddIndex(vi + 1);
+				st.AddIndex(vi + 2);
+				st.AddIndex(vi + 1);
+				st.AddIndex(vi + 3);
+				st.AddIndex(vi + 2);
+
+				vi += 4;
+			}
+		}
 
 		st.GenerateNormals();
 		return st.Commit();
@@ -392,22 +465,6 @@ public partial class ChunkManager : Node
 		chunk.IsLoaded = false;
 	}
 
-	ImageTexture MakeColorTex(Color c)
-	{
-		int w = 16, h = 16;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		for (int y = 0; y < h; y++)
-		for (int x = 0; x < w; x++)
-		{
-			float n = ((x * 7 + y * 13) % 16) / 16f * 0.5f - 0.25f;
-			img.SetPixel(x, y, new Color(
-				Mathf.Clamp(c.R + n, 0, 1),
-				Mathf.Clamp(c.G + n, 0, 1),
-				Mathf.Clamp(c.B + n, 0, 1)));
-		}
-		return ImageTexture.CreateFromImage(img);
-	}
-
 	struct ChunkTileAnalysis
 	{
 		public int TotalSamples;
@@ -504,6 +561,7 @@ public partial class ChunkManager : Node
 			TileType.Snow => m.ZoneSpring,
 			TileType.Sand => m.ZoneCliff,
 			TileType.Swamp => m.ZoneWasteland,
+			TileType.Path => m.Path01,
 			_ => m.GrassBase
 		};
 	}
@@ -591,15 +649,15 @@ public partial class ChunkManager : Node
 			});
 		}
 
-		var treeTex = TryLoadTexture("res://assets/texture/world/deco_tree.png")
-			?? MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
+		var treeTex = WorldTextures.TryLoadTexture("res://assets/texture/world/deco_tree.png")
+			?? WorldTextures.MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
 
 		Add("Tree",  treeTex, 0.88f, 0.007f, 0.6f, 1.0f, BaseMaterial3D.BillboardModeEnum.Enabled);
-		Add("Rock",  MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.Enabled);
-		Add("Bush",  MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)), 0.85f, 0.08f, 0.6f, 0.9f, BaseMaterial3D.BillboardModeEnum.Enabled);
-		Add("Tuft",  MakeSimpleGrassTuftTexture(), 0.80f, 0.04f, 0.5f, 0.8f, BaseMaterial3D.BillboardModeEnum.Enabled);
-		Add("Ruin",  MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)), 0.95f, 0.10f, 0.8f, 1.0f, BaseMaterial3D.BillboardModeEnum.Enabled);
-		Add("RockSnow", MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Rock",  WorldTextures.MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Bush",  WorldTextures.MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)), 0.85f, 0.08f, 0.6f, 0.9f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Tuft",  WorldTextures.MakeSimpleGrassTuftTexture(), 0.80f, 0.04f, 0.5f, 0.8f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("Ruin",  WorldTextures.MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)), 0.95f, 0.10f, 0.8f, 1.0f, BaseMaterial3D.BillboardModeEnum.Enabled);
+		Add("RockSnow", WorldTextures.MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)), 0.90f, 0.08f, 0.7f, 1.05f, BaseMaterial3D.BillboardModeEnum.Enabled);
 	}
 
 	static DecorationDef? FindDeco(string name)
@@ -632,8 +690,8 @@ public partial class ChunkManager : Node
 
 		if (def.PanelCount > 0)
 		{
-			var mat = MakeAlphaMaterial(tex);
-			var mesh = BuildCrossMesh(worldW, worldH, def.PanelCount);
+			var mat = WorldTextures.MakeAlphaMaterial(tex);
+			var mesh = WorldTextures.BuildCrossMesh(worldW, worldH, def.PanelCount);
 			var mi = new MeshInstance3D
 			{
 				Mesh = mesh,
@@ -659,54 +717,6 @@ public partial class ChunkManager : Node
 				sprite.RotationDegrees = new Vector3(0, yRot, 0);
 			parent.AddChild(sprite);
 		}
-	}
-
-	static StandardMaterial3D MakeAlphaMaterial(Texture2D tex)
-	{
-		return new StandardMaterial3D
-		{
-			AlbedoTexture = tex,
-			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-		};
-	}
-
-	/// <summary>
-	/// Build a single ArrayMesh containing N crossed quads equally spaced around Y axis.
-	/// Shares a single texture — used for trees to avoid flat-paper look.
-	/// </summary>
-	static ArrayMesh BuildCrossMesh(float w, float h, int panels)
-	{
-		float hw = w * 0.5f;
-		float hh = h * 0.5f;
-
-		var st = new SurfaceTool();
-		st.Begin(Mesh.PrimitiveType.Triangles);
-
-		for (int i = 0; i < panels; i++)
-		{
-			float angle = Mathf.Pi * 2f * i / panels;
-			float cos = Mathf.Cos(angle);
-			float sin = Mathf.Sin(angle);
-
-			Vector3 RotY(float lx, float ly) => new Vector3(lx * cos, ly, lx * sin);
-
-			var bl = RotY(-hw, -hh); var br = RotY(hw, -hh);
-			var tl = RotY(-hw,  hh); var tr = RotY(hw,  hh);
-
-			st.SetUV(new Vector2(0, 1)); st.AddVertex(bl);
-			st.SetUV(new Vector2(1, 1)); st.AddVertex(br);
-			st.SetUV(new Vector2(0, 0)); st.AddVertex(tl);
-			st.SetUV(new Vector2(1, 0)); st.AddVertex(tr);
-
-			int b = i * 4;
-			st.AddIndex(b); st.AddIndex(b + 1); st.AddIndex(b + 2);
-			st.AddIndex(b + 1); st.AddIndex(b + 3); st.AddIndex(b + 2);
-		}
-
-		st.GenerateNormals();
-		return st.Commit();
 	}
 
 	void ScatterDecorations(ChunkData chunk, Node3D sceneNode)
@@ -773,158 +783,4 @@ public partial class ChunkManager : Node
 	}
 
 	// ── Texture helpers ────────────────────────────────────────────
-
-	static Texture2D TryLoadTexture(string path)
-	{
-		if (ResourceLoader.Exists(path))
-		{
-			try { var res = ResourceLoader.Load<Texture2D>(path); if (res != null) return res; }
-			catch { }
-		}
-		if (FileAccess.FileExists(path))
-		{
-			try { var img = Image.LoadFromFile(path); if (img != null && !img.IsEmpty()) return ImageTexture.CreateFromImage(img); }
-			catch { }
-		}
-		return null;
-	}
-
-	// ── Simple procedural textures for decorations ────────────────────
-
-	static ImageTexture MakeSimpleTreeTexture(Color canopyColor)
-	{
-		int w = 16, h = 20;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color trunk = new Color(0.30f, 0.20f, 0.10f);
-		Color darkCanopy = new Color(canopyColor.R * 0.7f, canopyColor.G * 0.7f, canopyColor.B * 0.7f);
-
-		for (int y = 0; y <= 12; y++)
-		{
-			int halfW = 1 + (12 - y) / 2;
-			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
-			{
-				if (x < 0 || x >= w) continue;
-				Color c = ((x + y) % 3 == 0) ? darkCanopy : canopyColor;
-				img.SetPixel(x, y, c);
-			}
-		}
-
-		for (int y = 13; y < h; y++)
-		{
-			img.SetPixel(w / 2 - 1, y, trunk);
-			img.SetPixel(w / 2, y, trunk);
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeSimpleRockTexture(Color baseColor)
-	{
-		int w = 12, h = 10;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color dark = new Color(baseColor.R * 0.7f, baseColor.G * 0.7f, baseColor.B * 0.7f);
-		Color light = new Color(
-			Mathf.Min(baseColor.R * 1.2f, 1f),
-			Mathf.Min(baseColor.G * 1.2f, 1f),
-			Mathf.Min(baseColor.B * 1.2f, 1f));
-
-		int cy = h / 2;
-		for (int y = 1; y < h - 1; y++)
-		{
-			int halfW = 3 + Mathf.Abs(y - cy) / 2;
-			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
-			{
-				if (x < 0 || x >= w) continue;
-				if ((x + y) % 3 == 0)
-					img.SetPixel(x, y, light);
-				else if ((x + y) % 4 == 0)
-					img.SetPixel(x, y, dark);
-				else
-					img.SetPixel(x, y, baseColor);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeSimpleBushTexture(Color baseColor)
-	{
-		int w = 8, h = 6;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color dark = new Color(baseColor.R * 0.7f, baseColor.G * 0.7f, baseColor.B * 0.7f);
-		int cy = h / 2;
-
-		for (int y = 0; y < h; y++)
-		{
-			int dy = Mathf.Abs(y - cy);
-			int halfW = 2 - dy / 2;
-			if (y == 0 || y == h - 1) halfW = 1;
-			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
-			{
-				if (x < 0 || x >= w) continue;
-				Color c = ((x + y) % 3 == 0) ? dark : baseColor;
-				img.SetPixel(x, y, c);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeSimpleGrassTuftTexture()
-	{
-		int w = 4, h = 6;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color grass = new Color(0.16f, 0.40f, 0.12f);
-		Color light = new Color(0.22f, 0.48f, 0.18f);
-
-		img.SetPixel(0, 0, light);
-		img.SetPixel(0, 1, grass);
-
-		img.SetPixel(2, 0, light);
-		img.SetPixel(2, 1, grass);
-		img.SetPixel(2, 2, grass);
-
-		img.SetPixel(1, 0, grass);
-		img.SetPixel(1, 1, light);
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeSimpleRuinTexture(Color baseColor)
-	{
-		int w = 8, h = 16;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color dark = new Color(baseColor.R * 0.6f, baseColor.G * 0.6f, baseColor.B * 0.6f);
-		Color light = new Color(
-			Mathf.Min(baseColor.R * 1.15f, 1f),
-			Mathf.Min(baseColor.G * 1.15f, 1f),
-			Mathf.Min(baseColor.B * 1.15f, 1f));
-
-		for (int y = 2; y < h; y++)
-		{
-			int halfW = (y < 6) ? 2 : 3;
-			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
-			{
-				if (x < 0 || x >= w) continue;
-				if ((x + y) % 3 == 0)
-					img.SetPixel(x, y, light);
-				else if ((x == w / 2 - halfW || x == w / 2 + halfW) && y > 8)
-					img.SetPixel(x, y, dark);
-				else
-					img.SetPixel(x, y, baseColor);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
 }

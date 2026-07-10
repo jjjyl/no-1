@@ -139,6 +139,10 @@ public partial class CycleManager : Node
 			["cycle"] = CurrentCycle,
 			["fragmentCount"] = FragmentCount,
 			["money"] = Money,
+			["worldSeed"] = WorldSeed.ToString(),
+			["overridePaths"] = OverridePaths != null
+				? new Godot.Collections.Array(OverridePaths.Select(s => (Variant)s).ToArray())
+				: new Godot.Collections.Array(),
 			["accountFlags"] = new Godot.Collections.Array(_accountFlags.Select(s => (Variant)s).ToArray()),
 			["recentSeeds"] = new Godot.Collections.Array(RecentSeeds.Select(s => (Variant)s.ToString()).ToArray()),
 		};
@@ -187,7 +191,18 @@ public partial class CycleManager : Node
 				if (ulong.TryParse(item.AsString(), out var s))
 					RecentSeeds.Add(s);
 
-		GD.Print($"[CycleManager] Loaded: cycle={CurrentCycle}, accountFlags={_accountFlags.Count}");
+		if (dict.ContainsKey("worldSeed") && ulong.TryParse(dict["worldSeed"].AsString(), out var ws))
+			WorldSeed = ws;
+
+		if (dict.ContainsKey("overridePaths"))
+		{
+			var arr = dict["overridePaths"].AsGodotArray();
+			OverridePaths = new string[arr.Count];
+			for (int i = 0; i < arr.Count; i++)
+				OverridePaths[i] = arr[i].AsString();
+		}
+
+		GD.Print($"[CycleManager] Loaded: cycle={CurrentCycle}, worldSeed={WorldSeed}, accountFlags={_accountFlags.Count}");
 	}
 
 	void LoadInventory()

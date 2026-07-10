@@ -69,7 +69,7 @@ public static class RegionPlacer
     /// Anchors are always placed. Non-anchors are randomly selected based on cycle progression.
     /// Overrides force specific coordinates.
     /// </summary>
-    public static RegionPlacement[] Place(Biome[,] biomeMap, int cycleNumber, RegionOverride[] overrides = null)
+    public static RegionPlacement[] Place(Biome[,] biomeMap, int cycleNumber, RegionOverride[] overrides = null, ForbiddenZone[] forbiddenZones = null)
     {
         int mapWidth = biomeMap.GetLength(0);
         int mapHeight = biomeMap.GetLength(1);
@@ -112,10 +112,10 @@ public static class RegionPlacer
 
         // Place anchors first, then non-anchors
         foreach (var region in anchors)
-            PlaceRegionGreedy(region, biomeMap, mapWidth, mapHeight, placedRegions);
+            PlaceRegionGreedy(region, biomeMap, mapWidth, mapHeight, placedRegions, forbiddenZones);
 
         foreach (var region in selectedNonAnchors)
-            PlaceRegionGreedy(region, biomeMap, mapWidth, mapHeight, placedRegions);
+            PlaceRegionGreedy(region, biomeMap, mapWidth, mapHeight, placedRegions, forbiddenZones);
 
         // Apply overrides: force-position, overwrite existing if same Id
         foreach (var kvp in overrideLookup)
@@ -144,7 +144,8 @@ public static class RegionPlacer
         Biome[,] biomeMap,
         int mapWidth,
         int mapHeight,
-        List<RegionPlacement> placedRegions)
+        List<RegionPlacement> placedRegions,
+        ForbiddenZone[] forbiddenZones)
     {
         if (!Enum.TryParse(region.RequiredBiome, ignoreCase: true, out Biome requiredBiome))
         {
@@ -170,6 +171,9 @@ public static class RegionPlacer
             for (int x = startX; x < endX; x += scanStep)
             {
                 if (biomeMap[x, y] != requiredBiome)
+                    continue;
+
+                if (IsInForbiddenZone(x, y, forbiddenZones))
                     continue;
 
                 // Check overlap with already-placed regions
@@ -234,5 +238,18 @@ public static class RegionPlacer
             TileY = bestY,
             Radius = radius
         });
+    }
+
+    private static bool IsInForbiddenZone(int x, int y, ForbiddenZone[] zones)
+    {
+        if (zones == null) return false;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            int dx = x - zones[i].X;
+            int dy = y - zones[i].Y;
+            if (dx * dx + dy * dy <= zones[i].Radius * zones[i].Radius)
+                return true;
+        }
+        return false;
     }
 }

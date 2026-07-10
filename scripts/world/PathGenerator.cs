@@ -18,7 +18,8 @@ public static class PathGenerator
     public static PathData[] Generate(
         RegionPlacement[] regions,
         Biome[,] biomeMap,
-        PathOverride[] overrides = null)
+        PathOverride[] overrides = null,
+        ForbiddenZone[] forbiddenZones = null)
     {
         if (regions == null || regions.Length <= 1)
             return Array.Empty<PathData>();
@@ -29,7 +30,7 @@ public static class PathGenerator
         overrides ??= Array.Empty<PathOverride>();
 
         // Step 1 – build minimum spanning tree of regions
-        List<(int from, int to)> adjacency = BuildMST(regions);
+        List<(int from, int to)> adjacency = BuildMST(regions, overrides);
 
         // Step 2 & 3 – A* path per edge, respecting waypoint overrides
         var paths = new List<PathData>(adjacency.Count);
@@ -59,14 +60,14 @@ public static class PathGenerator
             if (matchingOverride.HasValue)
             {
                 tileIndices = BuildWaypointPath(
-                    fromRegion, toRegion, matchingOverride.Value, biomeMap);
+                    fromRegion, toRegion, matchingOverride.Value, biomeMap, forbiddenZones);
             }
             else
             {
                 tileIndices = BuildDirectPath(
                     fromRegion.TileX, fromRegion.TileY,
                     toRegion.TileX, toRegion.TileY,
-                    biomeMap);
+                    biomeMap, forbiddenZones);
             }
 
             // Skip edges that have no viable route
@@ -85,12 +86,44 @@ public static class PathGenerator
 
     // ── Step 1: Prim's MST ──────────────────────────────────────────────────
 
-    private static List<(int from, int to)> BuildMST(RegionPlacement[] regions)
+    private static List<(int from, int to)> BuildMST(RegionPlacement[] regions, PathOverride[] overrides)
     {
         int n = regions.Length;
         var edges = new List<(int from, int to)>(n - 1);
+        bool[] visited = new bool[n];
 
-        // Pre-compute squared-distance matrix (no sqrt needed for ordering)
+        // Pre-insert forced override edges into MST
+        if (overrides != null)
+        {
+            for (int ovIdx = 0; ovIdx < overrides.Length; ovIdx++)
+            {
+                PathOverride ov = overrides[ovIdx];
+                int fromIdx = -1;
+                int toIdx = -1;
+                for (int r = 0; r < n; r++)
+                {
+                    if (regions[r].Id == ov.FromRegion) fromIdx = r;
+                    if (regions[r].Id == ov.ToRegion) toIdx = r;
+                }
+
+                if (fromIdx >= 0 && toIdx >= 0 && fromIdx != toIdx)
+                {
+                    edges.Add((fromIdx, toIdx));
+                    visited[fromIdx] = true;
+                    visited[toIdx] = true;
+                }
+            }
+        }
+
+        // Ensure at least one region is visited for Prim start point
+        bool anyVisited = false;
+        for (int i = 0; i < n; i++)
+        {
+            if (visited[i]) { anyVisited = true; break; }
+        }
+        if (!anyVisited) visited[0] = true;
+
+        // Pre-compute squared-distance matrix
         float[,] dist = new float[n, n];
         for (int i = 0; i < n; i++)
         {
@@ -103,9 +136,6 @@ public static class PathGenerator
                 dist[j, i] = d;
             }
         }
-
-        bool[] visited = new bool[n];
-        visited[0] = true;
 
         // Prim: add the closest unvisited region n-1 times
         for (int iter = 1; iter < n; iter++)
@@ -141,9 +171,9 @@ public static class PathGenerator
     // ── Step 2: direct A* between two region centers ────────────────────────
 
     private static List<int> BuildDirectPath(
-        int startX, int startY, int endX, int endY, Biome[,] biomeMap)
+        int startX, int startY, int endX, int endY, Biome[,] biomeMap, ForbiddenZone[] forbiddenZones)
     {
-        List<int> core = FindPathCore(startX, startY, endX, endY, biomeMap);
+        List<int> core = FindPathCore(startX, startY, endX, endY, biomeMap, forbiddenZones);
         if (core.Count == 0) return core;
         return WidenPath(core);
     }
@@ -154,7 +184,8 @@ public static class PathGenerator
         RegionPlacement from,
         RegionPlacement to,
         PathOverride ov,
-        Biome[,] biomeMap)
+        Biome[,] biomeMap,
+        ForbiddenZone[] forbiddenZones)
     {
         var allTiles = new HashSet<int>();
 
@@ -166,7 +197,7 @@ public static class PathGenerator
         {
             (int wx, int wy) = ov.Waypoints[wpIdx];
 
-            List<int> segment = FindPathCore(prevX, prevY, wx, wy, biomeMap);
+            List<int> segment = FindPathCore(prevX, prevY, wx, wy, biomeMap, forbiddenZones);
             if (segment.Count == 0)
                 return new List<int>(); // waypoint unreachable → abort entire path
 
@@ -179,7 +210,7 @@ public static class PathGenerator
         }
 
         // Final segment: last waypoint → destination region center
-        List<int> finalSeg = FindPathCore(prevX, prevY, to.TileX, to.TileY, biomeMap);
+        List<int> finalSeg = FindPathCore(prevX, prevY, to.TileX, to.TileY, biomeMap, forbiddenZones);
         if (finalSeg.Count == 0)
             return new List<int>();
 
@@ -193,7 +224,7 @@ public static class PathGenerator
     // ── Core A* (returns flat-index list for a single-tile line) ────────────
 
     private static List<int> FindPathCore(
-        int startX, int startY, int endX, int endY, Biome[,] biomeMap)
+        int startX, int startY, int endX, int endY, Biome[,] biomeMap, ForbiddenZone[] forbiddenZones)
     {
         int startIdx = FlatIndex(startX, startY);
         int endIdx = FlatIndex(endX, endY);
@@ -216,7 +247,7 @@ public static class PathGenerator
                 return ReconstructPath(cameFrom, current);
 
             if (!closedSet.Add(current))
-                continue; // already visited
+                continue;
 
             int cx = current % WorldWidth;
             int cy = current / WorldWidth;
@@ -233,6 +264,9 @@ public static class PathGenerator
 
                 int neighborIdx = FlatIndex(nx, ny);
                 if (closedSet.Contains(neighborIdx))
+                    continue;
+
+                if (IsInForbiddenZone(nx, ny, forbiddenZones))
                     continue;
 
                 float moveCost = TileCost(biomeMap[nx, ny]);
@@ -334,6 +368,19 @@ public static class PathGenerator
     private static float Heuristic(int x1, int y1, int x2, int y2)
     {
         return Math.Abs(x2 - x1) + Math.Abs(y2 - y1);
+    }
+
+    private static bool IsInForbiddenZone(int x, int y, ForbiddenZone[] zones)
+    {
+        if (zones == null) return false;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            int dx = x - zones[i].X;
+            int dy = y - zones[i].Y;
+            if (dx * dx + dy * dy <= zones[i].Radius * zones[i].Radius)
+                return true;
+        }
+        return false;
     }
 
     private static int FlatIndex(int x, int y)

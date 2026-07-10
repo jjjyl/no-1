@@ -185,83 +185,6 @@ public partial class WorldMaterials : Node
 		DecoRuin = MakeGroundMat("DecoRuin",
 			TryLoadTexture("res://assets/texture/world/deco_ruin.png") ?? MakeBrickTexture(16, new Color(0.28f, 0.24f, 0.20f)));
 	}
-
-	// ═══════════════════════════════════════════════════════════════
-	//  Preserved factory methods (may be used elsewhere)
-	// ═══════════════════════════════════════════════════════════════
-
-	static StandardMaterial3D MakeFlat(string name, float r, float g, float b)
-	{
-		var mat = new StandardMaterial3D
-		{
-			AlbedoColor = new Color(r, g, b),
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-		};
-		mat.ResourceName = name;
-		return mat;
-	}
-
-	static StandardMaterial3D MakeTextured(string name, string path)
-	{
-		var tex = ResourceLoader.Load<Texture2D>(path);
-		var mat = new StandardMaterial3D
-		{
-			AlbedoTexture = tex,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-		};
-		mat.ResourceName = name;
-		return mat;
-	}
-
-	static StandardMaterial3D MakeTransparent(string name, float r, float g, float b, float a)
-	{
-		var mat = new StandardMaterial3D
-		{
-			AlbedoColor = new Color(r, g, b, a),
-			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded
-		};
-		mat.ResourceName = name;
-		return mat;
-	}
-
-	static StandardMaterial3D MakeGroundWithNoise()
-	{
-		var noise = new FastNoiseLite
-		{
-			Frequency = 0.06f,
-			FractalOctaves = 3,
-			FractalLacunarity = 2.5f,
-			FractalGain = 0.5f
-		};
-
-		var img = Image.CreateEmpty(64, 64, false, Image.Format.Rgba8);
-		int levels = 6;
-		for (int y = 0; y < 64; y++)
-		for (int x = 0; x < 64; x++)
-		{
-			float n = noise.GetNoise2D(x, y) * 0.5f + 0.5f;
-			// Quantize to visible colour bands for pixel-art look
-			float q = Mathf.Round(n * (levels - 1)) / (levels - 1);
-			float g = 0.33f + q * 0.18f;
-			float r = 0.17f + q * 0.12f;
-			float b = 0.09f + q * 0.10f;
-			img.SetPixel(x, y, new Color(r, g, b));
-		}
-
-		var tex = ImageTexture.CreateFromImage(img);
-		var mat = new StandardMaterial3D
-		{
-			AlbedoTexture = tex,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.PerPixel,
-			Metallic = 0f,
-			Roughness = 0.9f,
-			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest
-		};
-		mat.ResourceName = "GrassBase";
-		return mat;
-	}
-
 	// ═══════════════════════════════════════════════════════════════
 	//  Material wrapper helpers (construct StandardMaterial3D)
 	// ═══════════════════════════════════════════════════════════════
@@ -473,44 +396,6 @@ public partial class WorldMaterials : Node
 					img.SetPixel(x, y, c);
 				else
 					img.SetPixel(x, y, clear);
-			}
-		}
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	/// <summary>
-	/// White pixel clusters on transparent background (for potential cloud use).
-	/// </summary>
-	static ImageTexture MakeCloudTexture(int w, int h)
-	{
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		Color clear = new Color(0, 0, 0, 0);
-		Color white = new Color(1, 1, 1, 0.85f);
-		Color softWhite = new Color(1, 1, 1, 0.35f);
-
-		// Fill with transparent first
-		for (int y = 0; y < h; y++)
-		for (int x = 0; x < w; x++)
-			img.SetPixel(x, y, clear);
-
-		// Place random cloud clusters
-		var rng = new System.Random(77);
-		int clusters = rng.Next(4, 7);
-		for (int i = 0; i < clusters; i++)
-		{
-			int cx = rng.Next(w / 4, 3 * w / 4);
-			int cy = rng.Next(h / 4, 3 * h / 4);
-			int cr = rng.Next(3, 6);
-			for (int y = Mathf.Max(0, cy - cr); y < Mathf.Min(h, cy + cr); y++)
-			for (int x = Mathf.Max(0, cx - cr); x < Mathf.Min(w, cx + cr); x++)
-			{
-				float dx = x - cx;
-				float dy = y - cy;
-				float dist = Mathf.Sqrt(dx * dx + dy * dy);
-				if (dist <= cr)
-					img.SetPixel(x, y, white);
-				else if (dist <= cr + 1.5f && ((x + y) & 1) == 0)
-					img.SetPixel(x, y, softWhite);
 			}
 		}
 		return ImageTexture.CreateFromImage(img);

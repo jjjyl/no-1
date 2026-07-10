@@ -27,7 +27,7 @@ public partial class WorldMap3D : Node3D
 	[Export] public float CameraZoomMax = 18f;
 	[Export] public float CameraZoomStep = 1.5f;
 	[Export] public float CameraFollowSpeed = 5f;
-	[Export] public float FirstPersonSensitivity = 0.15f;
+
 
 	// ── Terrain ──
 	[Export] public float ZoneDefaultWidth = 4.2f;
@@ -57,10 +57,6 @@ public partial class WorldMap3D : Node3D
 	Node3D _cameraPivot;
 
 	// Camera control
-	float _fpYaw;
-	float _fpPitch;
-	bool _firstPerson;
-	float _savedCamDistance;
 
 	public override void _Ready()
 	{
@@ -146,17 +142,7 @@ public partial class WorldMap3D : Node3D
 	{
 		if (_player == null) return;
 
-		if (_firstPerson)
-		{
-			// Snap pivot to eye height, no lerp
-			_cameraPivot.GlobalPosition = _player.GlobalPosition + new Vector3(0, 1.6f, 0);
-			_cameraPivot.RotationDegrees = new Vector3(0, _fpYaw, 0);
-			_camera.RotationDegrees = new Vector3(_fpPitch, 0, 0);
-			_camera.Position = Vector3.Zero;
-			return;
-		}
-
-		// Desktop: smooth follow
+		// Smooth follow
 		var targetPos = _player.GlobalPosition;
 		_cameraPivot.GlobalPosition = _cameraPivot.GlobalPosition.Lerp(
 			targetPos, delta * CameraFollowSpeed);
@@ -177,49 +163,11 @@ public partial class WorldMap3D : Node3D
 		_camera.LookAt(_cameraPivot.GlobalPosition, Vector3.Up);
 	}
 
-	void ToggleFirstPerson()
-	{
-		_firstPerson = !_firstPerson;
-
-		if (_firstPerson)
-		{
-			_savedCamDistance = CameraDistance;
-			_fpYaw = CameraYaw;
-			_fpPitch = 0f;
-			Input.MouseMode = Input.MouseModeEnum.Captured;
-			if (_player != null) _player.ProcessMode = ProcessModeEnum.Disabled;
-		}
-		else
-		{
-			CameraDistance = _savedCamDistance;
-			_cameraPivot.RotationDegrees = Vector3.Zero;
-			_camera.RotationDegrees = Vector3.Zero;
-			Input.MouseMode = Input.MouseModeEnum.Visible;
-			if (_player != null) _player.ProcessMode = ProcessModeEnum.Inherit;
-		}
-	}
-
 	public override void _Input(InputEvent e)
 	{
-		// ── Tab: toggle first-person observation ──
-		if (e is InputEventKey key && key.Keycode == Key.Tab)
-		{
-			if (key.Pressed && !key.Echo)
-				ToggleFirstPerson();
-			return;
-		}
+		if (No1.Debug.DebugConsole.IsOpen) return;
 
-		// ── First-person mouse look ──
-		if (_firstPerson && e is InputEventMouseMotion mm)
-		{
-		_fpYaw   -= mm.Relative.X * FirstPersonSensitivity;
-		_fpPitch -= mm.Relative.Y * FirstPersonSensitivity;
-			_fpPitch  = Mathf.Clamp(_fpPitch, -89f, 89f);
-			return;
-		}
-
-		// ── Desktop scroll zoom ──
-		if (_firstPerson) return; // block desktop controls in FP
+		// ── Scroll zoom ──
 
 		if (e is InputEventMouseButton mb)
 		{
@@ -244,12 +192,12 @@ public partial class WorldMap3D : Node3D
 
 		// Layer 0 (z=-15): Full-screen sky gradient
 		var skyTexW = 256; var skyTexH = 128;
-		var skyTex = MakeSkyGradientTexture(skyTexW, skyTexH);
+		var skyTex = WorldTextures.MakeSkyGradientTexture(skyTexW, skyTexH);
 		float skyPixelSize = Mathf.Max(WorldWidth * 2f / skyTexW, WorldHeight * 2f / skyTexH);
 		var skySprite = new Sprite3D
 		{
 			Name = "SkyGradient",
-			Texture = TryLoadTexture("res://assets/texture/world/sky_gradient.png") ?? skyTex,
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/sky_gradient.png") ?? skyTex,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = new Vector3(WorldWidth * 0.5f, WorldHeight * 0.45f, -15f),
 			PixelSize = skyPixelSize,
@@ -264,11 +212,11 @@ public partial class WorldMap3D : Node3D
 			float cx = rng.RandfRange(1f, WorldWidth - 1f);
 			float cy = rng.RandfRange(WorldHeight * 0.55f, WorldHeight * 0.85f);
 			float cs = rng.RandfRange(0.5f, 1.3f);
-			var cloudTex = MakePixelCloudTexture();
+			var cloudTex = WorldTextures.MakePixelCloudTexture();
 			var cloud = new Sprite3D
 			{
 				Name = $"Cloud_{i}",
-				Texture = TryLoadTexture("res://assets/texture/world/cloud.png") ?? cloudTex,
+				Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/cloud.png") ?? cloudTex,
 				Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 				Position = new Vector3(cx, cy, -12f),
 				PixelSize = 0.008f * cs,
@@ -278,13 +226,13 @@ public partial class WorldMap3D : Node3D
 		}
 
 		// Layer 2 (z=-8): Far mountain range with snow caps
-		var farMtnTex = MakeMountainRangeTexture(256, 48,
+		var farMtnTex = WorldTextures.MakeMountainRangeTexture(256, 48,
 			new Color(0.22f, 0.27f, 0.38f),
 			new Color(0.92f, 0.93f, 0.98f), 701);
 		var farMountains = new Sprite3D
 		{
 			Name = "FarMountains",
-			Texture = TryLoadTexture("res://assets/texture/world/mountain_far.png") ?? farMtnTex,
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/mountain_far.png") ?? farMtnTex,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = new Vector3(WorldWidth * 0.5f, WorldHeight * 0.18f, -8f),
 			PixelSize = 0.009f,
@@ -293,13 +241,13 @@ public partial class WorldMap3D : Node3D
 		layer.AddChild(farMountains);
 
 		// Layer 3 (z=-5): Near mountain range — darker, slightly lower
-		var nearMtnTex = MakeMountainRangeTexture(256, 40,
+		var nearMtnTex = WorldTextures.MakeMountainRangeTexture(256, 40,
 			new Color(0.15f, 0.17f, 0.25f),
 			new Color(0.78f, 0.80f, 0.88f), 149);
 		var nearMountains = new Sprite3D
 		{
 			Name = "NearMountains",
-			Texture = TryLoadTexture("res://assets/texture/world/mountain_near.png") ?? nearMtnTex,
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/mountain_near.png") ?? nearMtnTex,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = new Vector3(WorldWidth * 0.5f, WorldHeight * 0.13f, -5f),
 			PixelSize = 0.009f,
@@ -308,11 +256,11 @@ public partial class WorldMap3D : Node3D
 		layer.AddChild(nearMountains);
 
 		// Sun — pixel-art sun with dithered edges, upper right
-		var sunTex = MakePixelSunTexture(32);
+		var sunTex = WorldTextures.MakePixelSunTexture(32);
 		var sun = new Sprite3D
 		{
 			Name = "Sun",
-			Texture = TryLoadTexture("res://assets/texture/world/sun.png") ?? sunTex,
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/sun.png") ?? sunTex,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = new Vector3(WorldWidth - 2.5f, WorldHeight - 1.8f, -13f),
 			PixelSize = 0.005f,
@@ -321,11 +269,11 @@ public partial class WorldMap3D : Node3D
 		layer.AddChild(sun);
 
 		// Layer 4 (z=-4): Dragon shadow — pixel-art winged silhouette
-		var dragonTex = MakeDragonSilhouetteTexture(64, 20);
+		var dragonTex = WorldTextures.MakeDragonSilhouetteTexture(64, 20);
 		var dragon = new Sprite3D
 		{
 			Name = "DragonShadow",
-			Texture = TryLoadTexture("res://assets/texture/world/dragon_shadow.png") ?? dragonTex,
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/dragon_shadow.png") ?? dragonTex,
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = new Vector3(-5f, 5f, -4f),
 			PixelSize = 0.006f,
@@ -344,7 +292,7 @@ public partial class WorldMap3D : Node3D
 		{
 			Name = name,
 			Position = pos,
-			Texture = MakeColorTexture(color, (int)texW, (int)texH),
+			Texture = WorldTextures.MakeColorTexture(color, (int)texW, (int)texH),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			PixelSize = Mathf.Max(size.X / texW, size.Y / texH),
 			Modulate = color
@@ -404,7 +352,7 @@ public partial class WorldMap3D : Node3D
 
 		var sprite = new Sprite3D
 		{
-			Texture = TryLoadTexture("res://assets/texture/world/deco_tree.png") ?? MakePixelTreeTexture(color),
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/deco_tree.png") ?? WorldTextures.MakePixelTreeTexture(color),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = pos + new Vector3(0, 0.50f * scale, 0),
 			PixelSize = 0.030f * scale,
@@ -421,7 +369,7 @@ public partial class WorldMap3D : Node3D
 
 		var sprite = new Sprite3D
 		{
-			Texture = TryLoadTexture($"res://assets/texture/world/deco_rock_{variant}.png") ?? MakePixelRockTexture(color, variant),
+			Texture = WorldTextures.TryLoadTexture($"res://assets/texture/world/deco_rock_{variant}.png") ?? WorldTextures.MakePixelRockTexture(color, variant),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = pos + new Vector3(0, 0.12f * scale, 0),
 			PixelSize = 0.030f * scale,
@@ -437,7 +385,7 @@ public partial class WorldMap3D : Node3D
 
 		var sprite = new Sprite3D
 		{
-			Texture = TryLoadTexture($"res://assets/texture/world/deco_ruin_{variant}.png") ?? MakePixelRuinTexture(color, variant),
+			Texture = WorldTextures.TryLoadTexture($"res://assets/texture/world/deco_ruin_{variant}.png") ?? WorldTextures.MakePixelRuinTexture(color, variant),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = pos + new Vector3(0, 0.42f, 0),
 			PixelSize = 0.035f,
@@ -452,7 +400,7 @@ public partial class WorldMap3D : Node3D
 
 		var sprite = new Sprite3D
 		{
-			Texture = TryLoadTexture("res://assets/texture/world/deco_bush.png") ?? MakePixelBushTexture(color),
+			Texture = WorldTextures.TryLoadTexture("res://assets/texture/world/deco_bush.png") ?? WorldTextures.MakePixelBushTexture(color),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = pos + new Vector3(0, 0.08f * scale, 0),
 			PixelSize = 0.025f * scale,
@@ -468,15 +416,24 @@ public partial class WorldMap3D : Node3D
 	void BuildParticles()
 	{
 		var particlesNode = new Node3D { Name = "Particles" };
+		if (_worldData?.Regions == null) { AddChild(particlesNode); return; }
 
-		if (_worldData?.Regions?.Length > 0)
-			AddLeafParticles(particlesNode, RegionToWorldPos(_worldData.Regions[0]));
-
-		if (_worldData?.Regions?.Length > 1)
-			AddDustParticles(particlesNode, RegionToWorldPos(_worldData.Regions[1]));
-
-		if (_worldData?.Regions?.Length > 4)
-			AddSparkleParticles(particlesNode, RegionToWorldPos(_worldData.Regions[4]));
+		foreach (var region in _worldData.Regions)
+		{
+			Vector3 pos = RegionToWorldPos(region);
+			switch (region.Id)
+			{
+				case "forest_edge":
+					AddLeafParticles(particlesNode, pos);
+					break;
+				case "abandoned_mine":
+					AddDustParticles(particlesNode, pos);
+					break;
+				case "crystal_cave":
+					AddSparkleParticles(particlesNode, pos);
+					break;
+			}
+		}
 
 		AddChild(particlesNode);
 	}
@@ -498,7 +455,7 @@ public partial class WorldMap3D : Node3D
 			Lifetime = 4.5f,
 			AmountRatio = 1.0f,
 			VisibilityAabb = new Aabb(center, new Vector3(8, 3, 8)),
-			DrawPass1 = MakeParticleQuadMesh(new Color(0.22f, 0.58f, 0.16f, 0.85f), 0.05f)
+			DrawPass1 = WorldTextures.MakeParticleQuadMesh(new Color(0.22f, 0.58f, 0.16f, 0.85f), 0.05f)
 		};
 
 		var mat = new ParticleProcessMaterial
@@ -532,7 +489,7 @@ public partial class WorldMap3D : Node3D
 			Lifetime = 6.0f,
 			AmountRatio = 1.0f,
 			VisibilityAabb = new Aabb(center, new Vector3(6, 2, 6)),
-			DrawPass1 = MakeParticleQuadMesh(new Color(0.55f, 0.48f, 0.38f, 0.45f), 0.04f)
+			DrawPass1 = WorldTextures.MakeParticleQuadMesh(new Color(0.55f, 0.48f, 0.38f, 0.45f), 0.04f)
 		};
 
 		var mat = new ParticleProcessMaterial
@@ -566,7 +523,7 @@ public partial class WorldMap3D : Node3D
 			Lifetime = 1.0f,
 			AmountRatio = 1.0f,
 			VisibilityAabb = new Aabb(center, new Vector3(5, 3, 5)),
-			DrawPass1 = MakeParticleQuadMesh(new Color(0.60f, 0.85f, 1.0f, 0.90f), 0.04f)
+			DrawPass1 = WorldTextures.MakeParticleQuadMesh(new Color(0.60f, 0.85f, 1.0f, 0.90f), 0.04f)
 		};
 
 		var mat = new ParticleProcessMaterial
@@ -589,20 +546,6 @@ public partial class WorldMap3D : Node3D
 		gp.ProcessMaterial = mat;
 		gp.Position = center;
 		parent.AddChild(gp);
-	}
-
-	static Mesh MakeParticleQuadMesh(Color color, float size)
-	{
-		var quad = new QuadMesh { Size = new Vector2(size, size) };
-		var mat = new StandardMaterial3D
-		{
-			AlbedoColor = color,
-			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-			CullMode = BaseMaterial3D.CullModeEnum.Disabled
-		};
-		quad.Material = mat;
-		return quad;
 	}
 
 	// ═══════════════════════════════════════════════════════════════
@@ -659,7 +602,7 @@ public partial class WorldMap3D : Node3D
 		var dot = new Sprite3D
 		{
 			Name = name,
-			Texture = MakeCircleTexture(color),
+			Texture = WorldTextures.MakeCircleTexture(color),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			Position = pos,
 			PixelSize = 0.005f,
@@ -669,6 +612,24 @@ public partial class WorldMap3D : Node3D
 		parent.AddChild(dot);
 	}
 
+	Vector3? FindMerchantPosition()
+	{
+		if (_worldData?.Chunks == null) return null;
+		foreach (var chunk in _worldData.Chunks)
+		{
+			if (chunk?.Entities == null) continue;
+			foreach (var entity in chunk.Entities)
+			{
+				if (entity.Type == EntityType.NPC && entity.Id == "merchant")
+					return new Vector3(
+						entity.TileX * WorldConstants.TileSizeMeters,
+						0,
+						entity.TileY * WorldConstants.TileSizeMeters);
+			}
+		}
+		return null;
+	}
+
 	// ═══════════════════════════════════════════════════════════════
 	//  Shop NPC
 	// ═══════════════════════════════════════════════════════════════
@@ -676,13 +637,12 @@ public partial class WorldMap3D : Node3D
 	void BuildShopNPC()
 	{
 		var npc = new ShopNPC { Name = "ShopNPC" };
-		// Place near 废矿入口 zone
-		npc.Position = new Vector3(13f, 0f, 7.5f);
+		npc.Position = FindMerchantPosition() ?? new Vector3(13f, 0f, 7.5f);
 
 		var sprite = new Sprite3D
 		{
 			Name = "Sprite",
-			Texture = MakeCircleTexture(new Color(1f, 0.85f, 0.3f)),
+			Texture = WorldTextures.MakeCircleTexture(new Color(1f, 0.85f, 0.3f)),
 			Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
 			PixelSize = 0.008f,
 			Modulate = new Color(1f, 0.85f, 0.3f)
@@ -778,494 +738,4 @@ public partial class WorldMap3D : Node3D
 		AddChild(canvas);
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	//  Texture helpers — programmatic colored squares for prototyping
-	//  (Replace with real sprites/textures later)
-	// ═══════════════════════════════════════════════════════════════
-
-	static Texture2D TryLoadTexture(string path)
-	{
-		if (ResourceLoader.Exists(path))
-		{
-			try { var res = ResourceLoader.Load<Texture2D>(path); if (res != null) return res; }
-			catch { }
-		}
-		if (FileAccess.FileExists(path))
-		{
-			try { var img = Image.LoadFromFile(path); if (img != null && !img.IsEmpty()) return ImageTexture.CreateFromImage(img); }
-			catch { }
-		}
-		return null;
-	}
-
-	static ImageTexture MakeColorTexture(Color c, int w = 4, int h = 4)
-	{
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(c);
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeCircleTexture(Color c, int size = 32)
-	{
-		var img = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-		float half = size * 0.5f;
-		for (int y = 0; y < size; y++)
-		for (int x = 0; x < size; x++)
-		{
-			float dx = (x - half) / half;
-			float dy = (y - half) / half;
-			if (dx * dx + dy * dy <= 1f)
-				img.SetPixel(x, y, c);
-		}
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeTriangleTexture(int w, int h, Color c)
-	{
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-		for (int y = 0; y < h; y++)
-		{
-			float frac = (float)y / h;
-			int left = (int)(w * frac * 0.5f);
-			int right = w - left;
-			for (int x = left; x < right; x++)
-				img.SetPixel(x, y, c);
-		}
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	// ═══════════════════════════════════════════════════════════════
-	//  Pixel-art texture helpers
-	// ═══════════════════════════════════════════════════════════════
-
-	static ImageTexture MakePixelTreeTexture(Color canopyColor)
-	{
-		int w = 24, h = 32;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color trunk = new Color(0.30f, 0.20f, 0.10f);
-		Color darkGreen = new Color(canopyColor.R * 0.60f, canopyColor.G * 0.60f, canopyColor.B * 0.60f);
-		Color darkerGreen = new Color(canopyColor.R * 0.35f, canopyColor.G * 0.35f, canopyColor.B * 0.35f);
-
-		for (int y = 2; y <= 17; y++)
-		{
-			int halfW;
-			if (y <= 3) halfW = 2;
-			else if (y <= 4) halfW = 3;
-			else if (y <= 5) halfW = 4;
-			else if (y <= 6) halfW = 5;
-			else if (y <= 8) halfW = 6;
-			else if (y <= 12) halfW = 7;
-			else if (y <= 14) halfW = 6;
-			else if (y <= 15) halfW = 5;
-			else if (y <= 16) halfW = 3;
-			else halfW = 2;
-
-			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
-			{
-				if (x < 0 || x >= w) continue;
-				Color c = canopyColor;
-				int shade = (x * 7 + y * 13) % 8;
-				if (shade == 0) c = darkerGreen;
-				else if (shade == 1 || shade == 2) c = darkGreen;
-				img.SetPixel(x, y, c);
-			}
-		}
-
-		for (int y = 15; y <= 31; y++)
-		{
-			if (y >= 24)
-			{
-				img.SetPixel(10, y, trunk);
-				img.SetPixel(11, y, trunk);
-				img.SetPixel(12, y, trunk);
-			}
-			else if (y >= 18)
-			{
-				Color tc = (y % 2 == 0) ? trunk : new Color(trunk.R * 0.85f, trunk.G * 0.85f, trunk.B * 0.85f);
-				img.SetPixel(11, y, tc);
-				img.SetPixel(12, y, tc);
-			}
-			else
-			{
-				img.SetPixel(11, y, trunk);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakePixelRockTexture(Color baseColor, int variant)
-	{
-		int w = 16, h = 16;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color highlight = new Color(
-			Mathf.Min(baseColor.R * 1.4f, 1f),
-			Mathf.Min(baseColor.G * 1.4f, 1f),
-			Mathf.Min(baseColor.B * 1.4f, 1f));
-		Color shadow = new Color(baseColor.R * 0.55f, baseColor.G * 0.55f, baseColor.B * 0.55f);
-
-		var rng = new RandomNumberGenerator();
-		rng.Seed = (ulong)(variant * 313 + baseColor.GetHashCode() & 0x7FFFFFFF);
-
-		int cx = w / 2;
-		int cy = h / 2;
-		for (int y = 3; y <= 13; y++)
-		{
-			int maxHalf = 5 - Mathf.Abs(y - cy) / 2;
-			if (variant == 1) maxHalf += (y % 3 == 0 ? 1 : 0);
-			if (variant == 2) maxHalf += (y > cy ? 0 : 1);
-
-			int left = cx - maxHalf;
-			int right = cx + maxHalf;
-			if (variant == 0) { left += (y - 3) / 4; right -= (y - 3) / 5; }
-
-			for (int x = left; x <= right; x++)
-			{
-				if (x < 0 || x >= w || y < 0 || y >= h) continue;
-				if (x == left && y < 11)
-					img.SetPixel(x, y, highlight);
-				else if (x >= right - 1 && y > 4)
-					img.SetPixel(x, y, shadow);
-				else
-				{
-					float jit = (rng.Randf() - 0.5f) * 0.15f;
-					Color c = new Color(
-						baseColor.R + jit,
-						baseColor.G + jit,
-						baseColor.B + jit);
-					img.SetPixel(x, y, c);
-				}
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakePixelRuinTexture(Color baseColor, int variant)
-	{
-		int w = 16, h = 24;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color brick = new Color(baseColor.R * 1.15f, baseColor.G * 1.15f, baseColor.B * 1.15f);
-		Color dark = new Color(baseColor.R * 0.55f, baseColor.G * 0.55f, baseColor.B * 0.55f);
-		Color moss = new Color(0.10f, 0.28f, 0.08f);
-
-		if (variant == 0)
-		{
-			for (int y = 0; y < h; y++)
-			{
-				int left = 4 + (y / 4);
-				int right = 11 - (y / 5);
-				if (y > 18) { left = 17; right = 16; }
-
-				for (int x = left; x <= right && x < w; x++)
-				{
-					Color c = baseColor;
-					if ((x + y) % 3 == 0) c = brick;
-					if ((x == left || x == right) && (y % 6 > 3)) c = dark;
-					if (y > 16 && (x + y) % 4 == 0) c = moss;
-					img.SetPixel(x, y, c);
-				}
-			}
-		}
-		else
-		{
-			for (int y = 0; y < h; y++)
-			{
-				int pillarLeft = 3 + (y / 6);
-				int pillarRight = 5;
-				int archLeft = 5;
-				int archRight = 11 - (y / 5);
-
-				for (int x = pillarLeft; x <= pillarRight && x < w; x++)
-				{
-					if (y > 17) continue;
-					Color c = baseColor;
-					if ((x + y) % 3 == 0) c = brick;
-					img.SetPixel(x, y, c);
-				}
-				for (int x = archLeft; x <= archRight && x < w; x++)
-				{
-					if (y > 17) continue;
-					Color c = baseColor;
-					if ((x + y) % 4 == 0) c = brick;
-					if (x == archRight && (y % 5 > 2)) c = dark;
-					if (y > 14 && (x + y) % 5 == 0) c = moss;
-					img.SetPixel(x, y, c);
-				}
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakePixelBushTexture(Color baseColor)
-	{
-		int w = 8, h = 8;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color darkGreen = new Color(baseColor.R * 0.55f, baseColor.G * 0.55f, baseColor.B * 0.55f);
-		Color highlight = new Color(
-			Mathf.Min(baseColor.R * 1.3f, 1f),
-			Mathf.Min(baseColor.G * 1.3f, 1f),
-			Mathf.Min(baseColor.B * 1.3f, 1f));
-
-		for (int y = 1; y <= 6; y++)
-		{
-			int halfW;
-			if (y == 1) halfW = 1;
-			else if (y == 2) halfW = 2;
-			else if (y <= 4) halfW = 3;
-			else if (y == 5) halfW = 2;
-			else halfW = 1;
-
-			for (int x = w / 2 - halfW; x <= w / 2 + halfW; x++)
-			{
-				if (x < 0 || x >= w) continue;
-				if ((x + y) % 3 == 0)
-					img.SetPixel(x, y, darkGreen);
-				else if (y == 3 && x == w / 2 + halfW - 1)
-					img.SetPixel(x, y, highlight);
-				else
-					img.SetPixel(x, y, baseColor);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeGrassTuftTexture()
-	{
-		int w = 8, h = 4;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color grass = new Color(0.16f, 0.38f, 0.10f);
-		Color bright = new Color(0.22f, 0.46f, 0.14f);
-
-		img.SetPixel(3, 0, grass);
-		img.SetPixel(3, 1, bright);
-
-		img.SetPixel(5, 0, grass);
-		img.SetPixel(5, 1, bright);
-		img.SetPixel(5, 2, grass);
-
-		img.SetPixel(1, 0, bright);
-		img.SetPixel(1, 1, grass);
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeSkyGradientTexture(int w, int h)
-	{
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-
-		Color topColor = new Color(0.08f, 0.12f, 0.30f);
-		Color midColor = new Color(0.18f, 0.30f, 0.55f);
-		Color lowColor = new Color(0.45f, 0.62f, 0.85f);
-		Color horizonColor = new Color(0.78f, 0.88f, 0.98f);
-
-		for (int y = 0; y < h; y++)
-		{
-			float t = (float)y / h;
-			Color c;
-			if (t < 0.25f)
-				c = topColor.Lerp(midColor, t / 0.25f);
-			else if (t < 0.60f)
-				c = midColor.Lerp(lowColor, (t - 0.25f) / 0.35f);
-			else
-				c = lowColor.Lerp(horizonColor, (t - 0.60f) / 0.40f);
-
-			for (int x = 0; x < w; x++)
-			{
-				float dither = ((x + y) % 8 < 4) ? 0f : 0.02f;
-				Color px = new Color(
-					Mathf.Min(c.R + dither, 1f),
-					Mathf.Min(c.G + dither, 1f),
-					Mathf.Min(c.B + dither, 1f));
-				img.SetPixel(x, y, px);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakePixelCloudTexture()
-	{
-		int w = 48, h = 24;
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color white = new Color(1, 1, 1, 0.95f);
-		Color offWhite = new Color(0.88f, 0.90f, 0.94f, 0.78f);
-		Color edgeWhite = new Color(0.78f, 0.80f, 0.88f, 0.45f);
-
-		(int x, int y, int r)[] blobs = new (int, int, int)[]
-		{
-			(18, 12, 8), (28, 10, 9), (22, 14, 7), (32, 13, 5)
-		};
-
-		for (int y = 0; y < h; y++)
-		{
-			for (int x = 0; x < w; x++)
-			{
-				float maxOverlap = 0;
-				foreach (var (bx, by, br) in blobs)
-				{
-					float dx = x - bx;
-					float dy = y - by;
-					float dist = Mathf.Sqrt(dx * dx + dy * dy) / br;
-					float overlap = 1f - dist;
-					if (overlap > maxOverlap) maxOverlap = overlap;
-				}
-
-				if (maxOverlap > 0.72f)
-					img.SetPixel(x, y, white);
-				else if (maxOverlap > 0.40f)
-					img.SetPixel(x, y, offWhite);
-				else if (maxOverlap > 0.12f)
-					img.SetPixel(x, y, edgeWhite);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeMountainRangeTexture(int w, int h, Color bodyColor, Color snowColor, int seed)
-	{
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		var rng = new RandomNumberGenerator();
-		rng.Seed = (ulong)seed;
-
-		int stepSize = w / 16;
-		int[] heights = new int[w];
-		int prevH = h / 3;
-
-		for (int x = 0; x < w; x++)
-		{
-			if (x % stepSize == 0)
-				prevH = rng.RandiRange(h / 4, h);
-			heights[x] = prevH;
-		}
-
-		for (int x = 0; x < w; x++)
-		{
-			int mh = heights[x];
-			mh += (x * seed + x * x * 3) % 5 - 2;
-			mh = Mathf.Clamp(mh, 0, h);
-
-			int snowStart = mh - h / 8;
-			if (snowStart < 0) snowStart = 0;
-
-			for (int y = 0; y < mh; y++)
-			{
-				int ry = h - 1 - y;
-				if (y >= snowStart && mh > h / 2)
-					img.SetPixel(x, ry, snowColor);
-				else
-					img.SetPixel(x, ry, bodyColor);
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakePixelSunTexture(int size)
-	{
-		var img = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color sunYellow = new Color(1, 0.88f, 0.35f);
-		Color ditherYellow = new Color(1, 0.82f, 0.30f, 0.6f);
-		Color outerYellow = new Color(1, 0.75f, 0.25f, 0.30f);
-
-		float half = size * 0.5f;
-		int sunRadius = size / 2 - 2;
-
-		for (int y = 0; y < size; y++)
-		{
-			for (int x = 0; x < size; x++)
-			{
-				float dx = x - half + 0.5f;
-				float dy = y - half + 0.5f;
-				float dist = Mathf.Sqrt(dx * dx + dy * dy);
-
-				if (dist < sunRadius - 1)
-				{
-					img.SetPixel(x, y, sunYellow);
-				}
-				else if (dist < sunRadius + 1)
-				{
-					if ((x + y) % 2 == 0)
-						img.SetPixel(x, y, ditherYellow);
-				}
-				else if (dist < sunRadius + 3)
-				{
-					if ((x + y) % 3 == 0)
-						img.SetPixel(x, y, outerYellow);
-				}
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
-
-	static ImageTexture MakeDragonSilhouetteTexture(int w, int h)
-	{
-		var img = Image.CreateEmpty(w, h, false, Image.Format.Rgba8);
-		img.Fill(new Color(0, 0, 0, 0));
-
-		Color body = new Color(0, 0, 0, 0.5f);
-		Color wing = new Color(0, 0, 0, 0.2f);
-
-		int center = h / 2;
-		int bodyThickness = 2;
-
-		int[] wingPositions = { 8, 22, 36, 50 };
-		int[] wingSizes = { 7, 8, 7, 5 };
-
-		for (int y = 0; y < h; y++)
-		{
-			for (int x = 0; x < w; x++)
-			{
-				bool pixel = false;
-
-				if (y >= center - bodyThickness && y <= center + bodyThickness)
-					pixel = true;
-
-				for (int i = 0; i < wingPositions.Length; i++)
-				{
-					int wx = wingPositions[i];
-					int ws = wingSizes[i];
-					int dist = Mathf.Abs(x - wx);
-					if (dist < ws)
-					{
-						int wingSpan = ws - dist;
-						if (y <= center && y >= center - wingSpan * 2)
-							pixel = true;
-						if (y >= center && y <= center + wingSpan)
-							pixel = true;
-					}
-				}
-
-				if (pixel)
-				{
-					bool isBody = y >= center - bodyThickness && y <= center + bodyThickness;
-					img.SetPixel(x, y, isBody ? body : wing);
-				}
-			}
-		}
-
-		return ImageTexture.CreateFromImage(img);
-	}
 }

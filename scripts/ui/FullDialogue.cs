@@ -227,7 +227,7 @@ public partial class FullDialogue : Control
 
 	public override void _Input(InputEvent e)
 	{
-		if (!Visible || _dismissing) return;
+		if (!Visible || _dismissing || No1.Debug.DebugConsole.IsOpen) return;
 		if (e is InputEventMouseButton mb && mb.Pressed) Dismiss();
 		if (e is InputEventKey k && k.Pressed && (k.Keycode == Key.Enter || k.Keycode == Key.Space)) Dismiss();
 	}

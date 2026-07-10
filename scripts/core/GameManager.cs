@@ -12,7 +12,6 @@ public partial class GameManager : Node
 	public const string SceneTemple = "res://scenes/temple/temple_3d.tscn";
 	public const string SceneWorld = "res://scenes/world/world_map.tscn";
 	public const string SceneCombat = "res://scenes/combat/combat.tscn";
-	public const string SceneMapUI = "res://scenes/map/map.tscn";
 
 	public override void _Ready()
 	{
@@ -24,23 +23,26 @@ public partial class GameManager : Node
 
 	void LoadStartScene()
 	{
-		if (CycleManager.Instance.HasAccountFlag("scene:world"))
+		var cm = CycleManager.Instance;
+		if (cm.HasAccountFlag("scene:world") && cm.WorldSeed != 0)
 		{
-			try
+			string savePath = WorldSerializer.GetFilePath(cm.WorldSeed, cm.CurrentCycle, cm.OverridePaths);
+			if (FileAccess.FileExists(savePath))
 			{
-				var cm = CycleManager.Instance;
-				CurrentWorldData = WorldSerializer.Deserialize(
-					WorldSerializer.GetFilePath(cm.WorldSeed, cm.CurrentCycle, cm.OverridePaths));
-				GD.Print("[GameManager] Resuming world session");
-				GoToScene(SceneWorld);
-				return;
-			}
-			catch (System.Exception ex)
-			{
-				GD.PrintErr($"[GameManager] Failed to load world save: {ex.Message}");
-				CycleManager.Instance.RemoveAccountFlag("scene:world");
+				try
+				{
+					CurrentWorldData = WorldSerializer.Deserialize(savePath);
+					GD.Print("[GameManager] Resuming world session");
+					GoToScene(SceneWorld);
+					return;
+				}
+				catch (System.Exception ex)
+				{
+					GD.PrintErr($"[GameManager] Failed to load world save: {ex.Message}");
+				}
 			}
 		}
+		cm.RemoveAccountFlag("scene:world");
 		GetTree().ChangeSceneToFile(SceneTemple);
 	}
 

@@ -125,21 +125,24 @@ public class WorldData
 
     private int ChunksX => (Width + ChunkSize - 1) / ChunkSize;
 
-    public ChunkData GetChunk(int cx, int cy)
-    {
-        return Chunks[cy * ChunksX + cx];
-    }
+	public ChunkData GetChunk(int cx, int cy)
+	{
+		if (cx < 0 || cx >= ChunksX || cy < 0 || cy >= (Height + ChunkSize - 1) / ChunkSize)
+			return null;
+		return Chunks[cy * ChunksX + cx];
+	}
 
-    public TileData GetTile(int x, int y)
-    {
-        int cx = x / ChunkSize;
-        int cy = y / ChunkSize;
-        int localX = x % ChunkSize;
-        int localY = y % ChunkSize;
+	public TileData GetTile(int x, int y)
+	{
+		int cx = x / ChunkSize;
+		int cy = y / ChunkSize;
+		int localX = x % ChunkSize;
+		int localY = y % ChunkSize;
 
-        ChunkData chunk = GetChunk(cx, cy);
-        return chunk.Tiles[localY * ChunkSize + localX];
-    }
+		ChunkData chunk = GetChunk(cx, cy);
+		if (chunk == null) return default;
+		return chunk.Tiles[localY * ChunkSize + localX];
+	}
 }
 
 // ── RegionPlacement ───────────────────────────────────────────────────────
@@ -185,6 +188,8 @@ public class OverlayData
     public PathOverride[] PathOverrides;
     public EntityOverride[] EntityOverrides;
     public BiomeOverride[] BiomeOverrides;
+    public ForbiddenZone[] ForbiddenZones;
+    public CampingSiteOverride[] CampingSites;
 }
 
 // ── Override structs ──────────────────────────────────────────────────────
@@ -228,6 +233,23 @@ public struct BiomeOverride
     public Biome Biome;
 }
 
+public struct ForbiddenZone
+{
+    public int X;
+    public int Y;
+    public int Radius;
+    public string Reason;
+}
+
+public struct CampingSiteOverride
+{
+    public string Id;
+    public int X;
+    public int Y;
+    public string Name;
+    public string[] Events;
+}
+
 // ── WorldConstants ────────────────────────────────────────────────────────
 
 public static class WorldConstants
@@ -245,44 +267,4 @@ public static class WorldConstants
     public const float TileSizeMeters = 0.5f;
 }
 
-// ── Utility methods ───────────────────────────────────────────────────────
 
-public static class WorldUtils
-{
-    /// <summary>
-    /// Converts tile coordinates to a flat index (row-major: y * width + x).
-    /// </summary>
-    public static int TileIndex(int x, int y, int width = 1000)
-    {
-        return y * width + x;
-    }
-
-    /// <summary>
-    /// Converts chunk coordinates to a flat chunk array index.
-    /// </summary>
-    public static int ChunkIndex(int cx, int cy)
-    {
-        return cy * WorldConstants.ChunksX + cx;
-    }
-
-    /// <summary>
-    /// Returns the chunk coordinates that contain a given tile.
-    /// </summary>
-    public static (int cx, int cy) TileToChunk(int tileX, int tileY)
-    {
-        int cx = tileX / WorldConstants.ChunkDim;
-        int cy = tileY / WorldConstants.ChunkDim;
-        return (cx, cy);
-    }
-
-    /// <summary>
-    /// Returns the world-space center of a chunk in meters (XZ plane, Y = 0).
-    /// </summary>
-    public static Vector3 ChunkToWorld(int cx, int cy)
-    {
-        float chunkMeters = WorldConstants.ChunkDim * WorldConstants.TileSizeMeters;
-        float centerX = cx * chunkMeters + chunkMeters * 0.5f;
-        float centerZ = cy * chunkMeters + chunkMeters * 0.5f;
-        return new Vector3(centerX, 0f, centerZ);
-    }
-}

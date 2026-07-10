@@ -82,13 +82,13 @@ public static class WorldSerializer
         return FileAccess.FileExists(GetFilePath(seed, cycle, overridePaths));
     }
 
-    public static string GetFilePath(ulong seed, int cycle, string[] overridePaths)
-    {
-        string hash = overridePaths != null && overridePaths.Length > 0
-            ? ((uint)string.Join(",", overridePaths).GetHashCode()).ToString("X8")
-            : "none";
-        return $"user://saves/world_{seed}_{cycle}_{hash}.bin";
-    }
+	public static string GetFilePath(ulong seed, int cycle, string[] overridePaths)
+	{
+		string hash = overridePaths != null && overridePaths.Length > 0
+			? FnvHash(string.Join(",", overridePaths))
+			: "none";
+		return $"user://saves/world_{seed}_{cycle}_{hash}.bin";
+	}
 
     // ── Header ──────────────────────────────────────────────────────────────
 
@@ -119,18 +119,19 @@ public static class WorldSerializer
 
     // ── Tiles ───────────────────────────────────────────────────────────────
 
-    private static void WriteTiles(FileAccess f, WorldData world)
-    {
-        foreach (var chunk in world.Chunks)
-        {
-            f.Store16((ushort)chunk.X);
-            f.Store16((ushort)chunk.Y);
-            for (int i = 0; i < WorldConstants.TilesPerChunk; i++)
-            {
-                f.Store16(chunk.Tiles[i].ToU16());
-            }
-        }
-    }
+	private static void WriteTiles(FileAccess f, WorldData world)
+	{
+		foreach (var chunk in world.Chunks)
+		{
+			if (chunk == null || chunk.Tiles == null) continue;
+			f.Store16((ushort)chunk.X);
+			f.Store16((ushort)chunk.Y);
+			for (int i = 0; i < WorldConstants.TilesPerChunk; i++)
+			{
+				f.Store16(chunk.Tiles[i].ToU16());
+			}
+		}
+	}
 
     private static void ReadTiles(FileAccess f, WorldData world)
     {
@@ -208,16 +209,17 @@ public static class WorldSerializer
 
     // ── Entities ────────────────────────────────────────────────────────────
 
-    private static ushort CountAllEntities(WorldData world)
-    {
-        ushort count = 0;
-        foreach (var chunk in world.Chunks)
-        {
-            if (chunk.Entities != null)
-                count += (ushort)chunk.Entities.Count;
-        }
-        return count;
-    }
+	private static ushort CountAllEntities(WorldData world)
+	{
+		ushort count = 0;
+		foreach (var chunk in world.Chunks)
+		{
+			if (chunk == null) continue;
+			if (chunk.Entities != null)
+				count += (ushort)chunk.Entities.Count;
+		}
+		return count;
+	}
 
     private static void WriteEntities(FileAccess f, WorldData world)
     {
@@ -263,9 +265,21 @@ public static class WorldSerializer
             world.Chunks[i].Entities = entitiesByChunk[i];
     }
 
-    // ── String helpers ──────────────────────────────────────────────────────
+	// ── String helpers ──────────────────────────────────────────────────────
 
-    private static void WriteString(FileAccess f, string s)
+	private static string FnvHash(string s)
+	{
+		const uint fnvPrime = 0x01000193;
+		uint hash = 0x811C9DC5;
+		foreach (char c in s)
+		{
+			hash ^= (byte)c;
+			hash *= fnvPrime;
+		}
+		return hash.ToString("X8");
+	}
+
+	private static void WriteString(FileAccess f, string s)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(s ?? "");
         f.Store8((byte)bytes.Length);
