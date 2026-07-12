@@ -55,7 +55,7 @@ public static class DecorationPresets
 		Add("Tree", treeTex,
 			0.88f, 0.007f, 0.6f, 1.0f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
-			collision: true, colShape: "Cylinder", cwFrac: 0.15f, chFrac: 0.6f, cdFrac: 0.15f,
+			collision: true, colShape: "Cylinder", cwFrac: 0.35f, chFrac: 0.6f, cdFrac: 0.35f,
 			maxSlope: 0.25f, slopeRadius: 2);
 
 		// Rocks: anywhere
