@@ -67,7 +67,7 @@ public partial class Player3D : CharacterBody3D
 		if (_col == null)
 		{
 			_col = new CollisionShape3D();
-			_col.Shape = new CylinderShape3D { Height = 1f, Radius = 0.35f };
+			_col.Shape = new CylinderShape3D { Height = 0.3f, Radius = 0.2f };
 			AddChild(_col);
 		}
 
@@ -132,13 +132,17 @@ public partial class Player3D : CharacterBody3D
 
 	public override void _PhysicsProcess(double delta)
 	{
-		var vel = MoveDirection * Speed;
-		Velocity = new Vector3(vel.X, 0, vel.Z);
+		var moveDir = MoveDirection;
+		var vel = moveDir * Speed;
+
+		// Climb small obstacles: if stuck on wall and step is clear, rise up
+		if (IsOnWall() && moveDir.LengthSquared() > 0.01f && CanStepUp(moveDir.Normalized()))
+			vel.Y = StepUpSpeed;
+
+		Velocity = new Vector3(vel.X, vel.Y, vel.Z);
 		MoveAndSlide();
 
-		if (IsOnWall())
-			TryStepUp();
-		else if (!IsOnFloor())
+		if (!IsOnWall() && !IsOnFloor())
 		{
 			var cm = WorldMap3D.StaticChunkManager;
 			if (cm != null)
@@ -151,27 +155,26 @@ public partial class Player3D : CharacterBody3D
 		UpdateBodyTilt();
 	}
 
-	private const float StepHeight = 0.5f;
-	private const float StepCheckDist = 1.2f;
+	private const float StepHeight = 0.65f;
+	private const float StepCheckDist = 0.3f;
+	private const float StepUpSpeed = 4.0f;
 
-	private void TryStepUp()
+	private bool CanStepUp(Vector3 moveDir)
 	{
-		if (MoveDirection.LengthSquared() < 0.01f) return;
-		if (_col?.Shape == null) return;
+		if (_col?.Shape == null) return false;
 
-		var moveDir = MoveDirection.Normalized();
 		var spaceState = GetWorld3D().DirectSpaceState;
 		var query = new PhysicsShapeQueryParameters3D
 		{
 			Shape = _col.Shape,
 			CollisionMask = CollisionMask,
-			Transform = GlobalTransform.Translated(
-				Vector3.Up * StepHeight + moveDir * StepCheckDist),
+			Transform = new Transform3D(
+				GlobalTransform.Basis,
+				GlobalTransform.Origin + Vector3.Up * StepHeight + moveDir * StepCheckDist),
 			Exclude = new Godot.Collections.Array<Rid> { GetRid() },
 		};
 
-		if (spaceState.IntersectShape(query, 1).Count == 0)
-			GlobalPosition += Vector3.Up * StepHeight + moveDir * StepCheckDist;
+		return spaceState.IntersectShape(query, 1).Count == 0;
 	}
 
 	private void UpdateBodyTilt()
