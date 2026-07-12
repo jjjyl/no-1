@@ -153,6 +153,8 @@ public static class DecorationPlacer
 				SortingUseAabbCenter = false,
 			};
 			parent.AddChild(mi);
+			if (def.Collision)
+				AttachCollision(def, mi, worldW, worldH, 0f);
 		}
 		else
 		{
@@ -178,6 +180,34 @@ public static class DecorationPlacer
 				RotationDegrees = new Vector3(tiltXDeg, 0, tiltZDeg), // X=base lean, Z=terrain slope
 			};
 			parent.AddChild(sprite);
+			if (def.Collision)
+			{
+				float centerY = worldH * (def.BaseYFrac - 0.5f);
+				AttachCollision(def, sprite, worldW, worldH, centerY);
+			}
 		}
+	}
+
+	static void AttachCollision(DecorationDef def, Node3D parentNode, float worldW, float worldH, float centerY)
+	{
+		float cW = worldW * def.CollisionWFrac;
+		float cH = worldH * def.CollisionHFrac;
+		float cD = worldW * def.CollisionDFrac;
+
+		Shape3D shape = def.CollisionShape switch
+		{
+			"Cylinder" => new CylinderShape3D { Height = cH, Radius = cW / 2f },
+			"Capsule" => new CapsuleShape3D { Height = cH, Radius = cW / 2f },
+			_ => new BoxShape3D { Size = new Vector3(cW, cH, cD) },
+		};
+
+		var col = new CollisionShape3D
+		{
+			Shape = shape,
+			Position = new Vector3(0, centerY, 0),
+		};
+		var body = new StaticBody3D();
+		body.AddChild(col);
+		parentNode.AddChild(body);
 	}
 }
