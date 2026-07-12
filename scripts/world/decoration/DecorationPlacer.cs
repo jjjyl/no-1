@@ -139,10 +139,20 @@ public static class DecorationPlacer
 		else
 		{
 			float offsetY = texH * (def.BaseYFrac - 0.5f);
-			var mat = def.SolidOcclusion
-				? WorldTextures.MakeSolidDecoMaterial(tex)
-				: WorldTextures.MakeAlphaMaterial(tex);
-			mat.BillboardMode = def.Billboard;
+			var mat = new StandardMaterial3D
+			{
+				AlbedoTexture = tex,
+				ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+				TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+				BillboardMode = def.Billboard,
+				Transparency = def.SolidOcclusion
+					? BaseMaterial3D.TransparencyEnum.Disabled
+					: BaseMaterial3D.TransparencyEnum.Alpha,
+				DepthDrawMode = def.SolidOcclusion
+					? BaseMaterial3D.DepthDrawModeEnum.OpaqueOnly
+					: BaseMaterial3D.DepthDrawModeEnum.Disabled,
+				CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+			};
 			var sprite = new Sprite3D
 			{
 				Texture = tex,
@@ -156,6 +166,7 @@ public static class DecorationPlacer
 				AlphaCut = def.SolidOcclusion
 					? SpriteBase3D.AlphaCutMode.Discard
 					: SpriteBase3D.AlphaCutMode.Disabled,
+				AlphaScissorThreshold = def.SolidOcclusion ? 0.1f : 0.5f,
 			};
 			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
 				sprite.RotationDegrees = new Vector3(0, yRot, 0);
