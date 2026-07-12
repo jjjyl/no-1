@@ -94,7 +94,6 @@ public partial class Player3D : CharacterBody3D
 
 	public override void _Process(double delta)
 	{
-		float dt = (float)delta;
 		var input = Vector3.Zero;
 
 		var dm = No1.UI.DialogueManager.Instance;
