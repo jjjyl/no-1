@@ -168,11 +168,11 @@ public static class DecorationPlacer
 			var mat = def.HardAlpha
 				? WorldTextures.MakeSolidDecoMaterial(tex)
 				: WorldTextures.MakeAlphaMaterial(tex);
-			mat.BillboardMode = BaseMaterial3D.BillboardModeEnum.Enabled;
+			mat.BillboardMode = BaseMaterial3D.BillboardModeEnum.Disabled;
 			var sprite = new Sprite3D
 			{
 				Texture = tex,
-				Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+				Billboard = BaseMaterial3D.BillboardModeEnum.FixedY,
 				Position = groundPos,
 				PixelSize = def.PixelScaleBase * scale,
 				Offset = new Vector2(0, offsetY),
