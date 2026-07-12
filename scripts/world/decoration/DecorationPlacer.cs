@@ -143,8 +143,8 @@ public static class DecorationPlacer
 			Mathf.Lerp(0f, terrainNormal.X, TILT_STRENGTH),
 			Mathf.Lerp(1f, terrainNormal.Y, TILT_STRENGTH),
 			Mathf.Lerp(0f, terrainNormal.Z, TILT_STRENGTH)).Normalized();
-		float tiltZDeg = Mathf.RadToDeg(Mathf.Clamp(
-			-Mathf.Atan2(tiltedUp.X, tiltedUp.Y), -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG)));
+		float tiltXDeg = Mathf.RadToDeg(Mathf.Clamp(
+			Mathf.Atan2(tiltedUp.Z, tiltedUp.Y), -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG)));
 
 		if (def.PanelCount > 0)
 		{
@@ -157,7 +157,7 @@ public static class DecorationPlacer
 				Mesh = mesh,
 				MaterialOverride = mat,
 				Position = groundPos + new Vector3(0, yOffset, 0),
-				RotationDegrees = new Vector3(0, yRot, tiltZDeg),
+				RotationDegrees = new Vector3(tiltXDeg, yRot, 0),
 				SortingUseAabbCenter = false,
 			};
 			parent.AddChild(mi);
@@ -183,7 +183,7 @@ public static class DecorationPlacer
 					? SpriteBase3D.AlphaCutMode.Discard
 					: SpriteBase3D.AlphaCutMode.Disabled,
 				AlphaScissorThreshold = def.HardAlpha ? 0.1f : 0.5f,
-				RotationDegrees = new Vector3(0, yRot, tiltZDeg),
+				RotationDegrees = new Vector3(tiltXDeg, yRot, 0),
 			};
 			parent.AddChild(sprite);
 		}
