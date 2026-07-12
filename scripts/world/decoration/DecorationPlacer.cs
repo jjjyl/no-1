@@ -132,6 +132,7 @@ public static class DecorationPlacer
 				MaterialOverride = mat,
 				Position = groundPos + new Vector3(0, yOffset, 0),
 				RotationDegrees = new Vector3(0, yRot, 0),
+				SortingUseAabbCenter = false,
 			};
 			parent.AddChild(mi);
 		}
@@ -151,6 +152,7 @@ public static class DecorationPlacer
 				Offset = new Vector2(0, offsetY),
 				Modulate = Colors.White,
 				MaterialOverride = mat,
+				SortingUseAabbCenter = false,
 			};
 			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
 				sprite.RotationDegrees = new Vector3(0, yRot, 0);

@@ -638,9 +638,9 @@ public static class WorldTextures
 		{
 			AlbedoTexture = tex,
 			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+			DepthDrawMode = BaseMaterial3D.DepthDrawModeEnum.Disabled,
 			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
 			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-			NoDepthTest = true,
 			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
 		};
 	}
@@ -652,6 +652,7 @@ public static class WorldTextures
 			AlbedoTexture = tex,
 			Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor,
 			AlphaScissorThreshold = 0.1f,
+			DepthDrawMode = BaseMaterial3D.DepthDrawModeEnum.OpaqueOnly,
 			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
 			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
 			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
