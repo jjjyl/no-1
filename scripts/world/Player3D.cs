@@ -139,9 +139,7 @@ public partial class Player3D : CharacterBody3D
 
 		if (IsOnWall())
 			TryStepUp();
-
-		// Snap to terrain (unless standing on a decoration)
-		if (!IsOnWall() && !IsOnFloor())
+		else if (!IsOnFloor())
 		{
 			var cm = WorldMap3D.StaticChunkManager;
 			if (cm != null)
@@ -154,26 +152,27 @@ public partial class Player3D : CharacterBody3D
 		UpdateBodyTilt();
 	}
 
-	private const float StepHeight = 0.3f;
-	private const float StepCheckDist = 0.4f;
+	private const float StepHeight = 0.5f;
+	private const float StepCheckDist = 1.2f;
 
 	private void TryStepUp()
 	{
 		if (MoveDirection.LengthSquared() < 0.01f) return;
 		if (_col?.Shape == null) return;
 
+		var moveDir = MoveDirection.Normalized();
 		var spaceState = GetWorld3D().DirectSpaceState;
 		var query = new PhysicsShapeQueryParameters3D
 		{
 			Shape = _col.Shape,
 			CollisionMask = CollisionMask,
 			Transform = GlobalTransform.Translated(
-				Vector3.Up * StepHeight + MoveDirection.Normalized() * StepCheckDist),
+				Vector3.Up * StepHeight + moveDir * StepCheckDist),
 			Exclude = new Godot.Collections.Array<Rid> { GetRid() },
 		};
 
 		if (spaceState.IntersectShape(query, 1).Count == 0)
-			GlobalPosition += Vector3.Up * StepHeight;
+			GlobalPosition += Vector3.Up * StepHeight + moveDir * StepCheckDist;
 	}
 
 	private void UpdateBodyTilt()
