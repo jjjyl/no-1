@@ -122,7 +122,7 @@ public static class DecorationPlacer
 
 		if (def.PanelCount > 0)
 		{
-			var mat = def.SolidOcclusion
+			var mat = def.HardAlpha
 				? WorldTextures.MakeSolidDecoMaterial(tex)
 				: WorldTextures.MakeAlphaMaterial(tex);
 			var mesh = WorldTextures.BuildCrossMesh(worldW, worldH, def.PanelCount);
@@ -139,7 +139,7 @@ public static class DecorationPlacer
 		else
 		{
 			float offsetY = texH * (def.BaseYFrac - 0.5f);
-			var mat = def.SolidOcclusion
+			var mat = def.HardAlpha
 				? WorldTextures.MakeSolidDecoMaterial(tex)
 				: WorldTextures.MakeAlphaMaterial(tex);
 			mat.BillboardMode = def.Billboard;
@@ -153,10 +153,10 @@ public static class DecorationPlacer
 				Modulate = Colors.White,
 				MaterialOverride = mat,
 				SortingUseAabbCenter = false,
-				AlphaCut = def.SolidOcclusion
+				AlphaCut = def.HardAlpha
 					? SpriteBase3D.AlphaCutMode.Discard
 					: SpriteBase3D.AlphaCutMode.Disabled,
-				AlphaScissorThreshold = def.SolidOcclusion ? 0.1f : 0.5f,
+				AlphaScissorThreshold = def.HardAlpha ? 0.1f : 0.5f,
 			};
 			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
 				sprite.RotationDegrees = new Vector3(0, yRot, 0);

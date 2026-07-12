@@ -31,7 +31,7 @@ public static class DecorationPresets
 				ScaleRange = new Vector2(sMin, sMax),
 				Billboard = bb,
 				PanelCount = panels,
-				SolidOcclusion = solid,
+				HardAlpha = solid,
 				MaxSlope = maxSlope,
 				SlopeRadius = slopeRadius,
 				MinHeight = minHeight,
@@ -54,7 +54,7 @@ public static class DecorationPresets
 			0.90f, 0.08f, 0.7f, 1.05f,
 			BaseMaterial3D.BillboardModeEnum.Enabled);
 
-		// Bushes: mildly flat, solid occlusion
+		// Bushes: mildly flat, hard alpha
 		Add("Bush",
 			WorldTextures.MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)),
 			0.85f, 0.08f, 0.6f, 0.9f,
@@ -62,7 +62,7 @@ public static class DecorationPresets
 			solid: true,
 			maxSlope: 0.4f, slopeRadius: 1);
 
-		// Grass tufts: anywhere, solid occlusion
+		// Grass tufts: anywhere, hard alpha
 		Add("Tuft",
 			WorldTextures.TryLoadTexture("res://assets/texture/world/grass1_1.png")
 				?? WorldTextures.MakeSimpleGrassTuftTexture(),
