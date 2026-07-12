@@ -71,25 +71,8 @@ public static class DecorationPlacer
 			}
 
 			if (pick != null && CheckConditions(pick.Value, chunk, tx, ty, dim, cx, cy, allChunks))
-		{
-			Vector3 normal = ComputeNormal(chunk, tx, ty, dim, cx, cy, allChunks);
-			Spawn(pick.Value, parent, pos, normal, rng);
+				Spawn(pick.Value, parent, pos, rng);
 		}
-		}
-	}
-
-	// ── Terrain normal ────────────────────────────────────────────────
-
-	static Vector3 ComputeNormal(ChunkData chunk, int tx, int ty, int dim, int cx, int cy, ChunkData[] allChunks)
-	{
-		float ts = WorldConstants.TileSizeMeters;
-		float h00 = TerrainHeight.CornerHeight(chunk, tx,     ty,     dim, HeightScale, cx, cy, allChunks);
-		float h10 = TerrainHeight.CornerHeight(chunk, tx + 1, ty,     dim, HeightScale, cx, cy, allChunks);
-		float h01 = TerrainHeight.CornerHeight(chunk, tx,     ty + 1, dim, HeightScale, cx, cy, allChunks);
-		float h11 = TerrainHeight.CornerHeight(chunk, tx + 1, ty + 1, dim, HeightScale, cx, cy, allChunks);
-		float dx = ((h10 + h11) - (h00 + h01)) * 0.5f / ts;
-		float dz = ((h01 + h11) - (h00 + h10)) * 0.5f / ts;
-		return new Vector3(-dx, 1f, -dz).Normalized();
 	}
 
 	// ── Spawn condition checks ────────────────────────────────────────
@@ -123,7 +106,7 @@ public static class DecorationPlacer
 	/// Instantiates a decoration sprite or cross-mesh at groundPos.
 	/// BaseYFrac pivot aligns the bottom contact point with groundPos.Y.
 	/// </summary>
-	static void Spawn(DecorationDef def, Node parent, Vector3 groundPos, Vector3 terrainNormal, RandomNumberGenerator rng)
+	static void Spawn(DecorationDef def, Node parent, Vector3 groundPos, RandomNumberGenerator rng)
 	{
 		var tex = def.Texture;
 		if (tex == null) return;
