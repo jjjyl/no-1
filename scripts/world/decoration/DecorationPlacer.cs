@@ -154,7 +154,7 @@ public static class DecorationPlacer
 			};
 			parent.AddChild(mi);
 			if (def.Collision)
-				AttachCollision(def, mi, worldW, worldH, 0f);
+				AttachCollision(def, parent, groundPos, tiltZDeg, worldW, worldH, yOffset);
 		}
 		else
 		{
@@ -183,12 +183,12 @@ public static class DecorationPlacer
 			if (def.Collision)
 			{
 				float centerY = worldH * (def.BaseYFrac - 0.5f);
-				AttachCollision(def, sprite, worldW, worldH, centerY);
+				AttachCollision(def, parent, groundPos, tiltZDeg, worldW, worldH, centerY);
 			}
 		}
 	}
 
-	static void AttachCollision(DecorationDef def, Node3D parentNode, float worldW, float worldH, float centerY)
+	static void AttachCollision(DecorationDef def, Node parent, Vector3 worldPos, float tiltZDeg, float worldW, float worldH, float centerY)
 	{
 		float cW = worldW * def.CollisionWFrac;
 		float cH = worldH * def.CollisionHFrac;
@@ -201,13 +201,13 @@ public static class DecorationPlacer
 			_ => new BoxShape3D { Size = new Vector3(cW, cH, cD) },
 		};
 
-		var col = new CollisionShape3D
+		var col = new CollisionShape3D { Shape = shape };
+		var body = new StaticBody3D
 		{
-			Shape = shape,
-			Position = new Vector3(0, centerY, 0),
+			Position = new Vector3(worldPos.X, worldPos.Y + centerY, worldPos.Z),
+			RotationDegrees = new Vector3(0, 0, tiltZDeg),
 		};
-		var body = new StaticBody3D();
 		body.AddChild(col);
-		parentNode.AddChild(body);
+		parent.AddChild(body);
 	}
 }
