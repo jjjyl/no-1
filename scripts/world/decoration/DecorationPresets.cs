@@ -18,7 +18,7 @@ public static class DecorationPresets
 
 		void Add(string name, Texture2D? tex, float yFrac, float pxPerM,
 			float sMin, float sMax, BaseMaterial3D.BillboardModeEnum bb,
-			int panels = 0, float maxSlope = 0, int slopeRadius = 0,
+			int panels = 0, bool solid = false, float maxSlope = 0, int slopeRadius = 0,
 			float? minHeight = null, float? maxHeight = null)
 		{
 			if (tex == null) return;
@@ -31,6 +31,7 @@ public static class DecorationPresets
 				ScaleRange = new Vector2(sMin, sMax),
 				Billboard = bb,
 				PanelCount = panels,
+				SolidOcclusion = solid,
 				MaxSlope = maxSlope,
 				SlopeRadius = slopeRadius,
 				MinHeight = minHeight,
@@ -41,44 +42,49 @@ public static class DecorationPresets
 		var treeTex = WorldTextures.TryLoadTexture("res://assets/texture/world/deco_tree.png")
 			?? WorldTextures.MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
 
-		// Trees: only on flat ground
+		// Trees: only on flat ground, solid occlusion
 		Add("Tree", treeTex,
 			0.88f, 0.007f, 0.6f, 1.0f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
+			solid: true,
 			maxSlope: 0.25f, slopeRadius: 2);
 
-		// Rocks: anywhere
+		// Rocks: anywhere, solid occlusion
 		Add("Rock",
 			WorldTextures.MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)),
 			0.90f, 0.08f, 0.7f, 1.05f,
-			BaseMaterial3D.BillboardModeEnum.Enabled);
+			BaseMaterial3D.BillboardModeEnum.Enabled,
+			solid: true);
 
-		// Bushes: mildly flat
+		// Bushes: mildly flat, pass-through
 		Add("Bush",
 			WorldTextures.MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)),
 			0.85f, 0.08f, 0.6f, 0.9f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
 			maxSlope: 0.4f, slopeRadius: 1);
 
-		// Grass tufts: anywhere
+		// Grass tufts: anywhere, pass-through
 		Add("Tuft",
-			WorldTextures.MakeSimpleGrassTuftTexture(),
-			0.80f, 0.04f, 0.5f, 0.8f,
+			WorldTextures.TryLoadTexture("res://assets/texture/world/grass1_1.png")
+				?? WorldTextures.MakeSimpleGrassTuftTexture(),
+			0.80f, 0.08f, 0.5f, 0.8f,
 			BaseMaterial3D.BillboardModeEnum.Enabled);
 
-		// Ruins: very flat, moderate elevation
+		// Ruins: very flat, moderate elevation, solid occlusion
 		Add("Ruin",
 			WorldTextures.MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)),
 			0.95f, 0.10f, 0.8f, 1.0f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
+			solid: true,
 			maxSlope: 0.05f, slopeRadius: 1,
 			minHeight: 1.5f, maxHeight: 4.0f);
 
-		// Snow rocks: high altitude only
+		// Snow rocks: high altitude only, solid occlusion
 		Add("RockSnow",
 			WorldTextures.MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)),
 			0.90f, 0.08f, 0.7f, 1.05f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
+			solid: true,
 			minHeight: 2.5f);
 
 		return list;

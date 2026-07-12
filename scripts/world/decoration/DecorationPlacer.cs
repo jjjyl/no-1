@@ -122,7 +122,9 @@ public static class DecorationPlacer
 
 		if (def.PanelCount > 0)
 		{
-			var mat = WorldTextures.MakeAlphaMaterial(tex);
+			var mat = def.SolidOcclusion
+				? WorldTextures.MakeSolidDecoMaterial(tex)
+				: WorldTextures.MakeAlphaMaterial(tex);
 			var mesh = WorldTextures.BuildCrossMesh(worldW, worldH, def.PanelCount);
 			var mi = new MeshInstance3D
 			{
@@ -136,7 +138,9 @@ public static class DecorationPlacer
 		else
 		{
 			float offsetY = texH * (def.BaseYFrac - 0.5f);
-			var mat = WorldTextures.MakeAlphaMaterial(tex);
+			var mat = def.SolidOcclusion
+				? WorldTextures.MakeSolidDecoMaterial(tex)
+				: WorldTextures.MakeAlphaMaterial(tex);
 			mat.BillboardMode = def.Billboard;
 			var sprite = new Sprite3D
 			{

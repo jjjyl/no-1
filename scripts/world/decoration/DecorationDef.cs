@@ -14,6 +14,7 @@ public struct DecorationDef
 	public Vector2 ScaleRange;
 	public BaseMaterial3D.BillboardModeEnum Billboard;
 	public int PanelCount;         // 0=sprite, N=crossed quads around Y
+	public bool SolidOcclusion;     // true=depth-sorted solid (trees), false=blend pass-through (grass)
 
 	// ── Spawn conditions (0 / null = no check) ──
 	public float MaxSlope;         // max height variance (meters) within SlopeRadius. 0=no check

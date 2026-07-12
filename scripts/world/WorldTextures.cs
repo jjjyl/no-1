@@ -637,6 +637,19 @@ public static class WorldTextures
 		return new StandardMaterial3D
 		{
 			AlbedoTexture = tex,
+			Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			NoDepthTest = true,
+			TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+		};
+	}
+
+	public static StandardMaterial3D MakeSolidDecoMaterial(Texture2D tex)
+	{
+		return new StandardMaterial3D
+		{
+			AlbedoTexture = tex,
 			Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor,
 			AlphaScissorThreshold = 0.1f,
 			CullMode = BaseMaterial3D.CullModeEnum.Disabled,
