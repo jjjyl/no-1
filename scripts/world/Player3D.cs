@@ -136,7 +136,7 @@ public partial class Player3D : CharacterBody3D
 					Mathf.Lerp(0f, normal.Z, TILT_STRENGTH)).Normalized();
 				float tiltZ = -Mathf.Atan2(tiltedUp.X, tiltedUp.Y);
 				tiltZ = Mathf.Clamp(tiltZ, -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG));
-				_body.RotationDegrees = new Vector3(-60f, 0, Mathf.RadToDeg(tiltZ)); // X=-45 leans away from cam, Z=terrain slope
+				_body.RotationDegrees = new Vector3(-60f, 0, Mathf.RadToDeg(tiltZ)); // X=-60 leans away from cam, Z=terrain slope
 			}
 		}
 
