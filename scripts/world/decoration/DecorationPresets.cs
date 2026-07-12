@@ -42,49 +42,47 @@ public static class DecorationPresets
 		var treeTex = WorldTextures.TryLoadTexture("res://assets/texture/world/deco_tree.png")
 			?? WorldTextures.MakeSimpleTreeTexture(new Color(0.15f, 0.40f, 0.10f));
 
-		// Trees: only on flat ground, solid occlusion
+		// Trees: only on flat ground
 		Add("Tree", treeTex,
 			0.88f, 0.007f, 0.6f, 1.0f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
-			solid: true,
 			maxSlope: 0.25f, slopeRadius: 2);
 
-		// Rocks: anywhere, solid occlusion
+		// Rocks: anywhere
 		Add("Rock",
 			WorldTextures.MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)),
 			0.90f, 0.08f, 0.7f, 1.05f,
-			BaseMaterial3D.BillboardModeEnum.Enabled,
-			solid: true);
+			BaseMaterial3D.BillboardModeEnum.Enabled);
 
-		// Bushes: mildly flat, pass-through
+		// Bushes: mildly flat, solid occlusion
 		Add("Bush",
 			WorldTextures.MakeSimpleBushTexture(new Color(0.15f, 0.40f, 0.10f)),
 			0.85f, 0.08f, 0.6f, 0.9f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
+			solid: true,
 			maxSlope: 0.4f, slopeRadius: 1);
 
-		// Grass tufts: anywhere, pass-through
+		// Grass tufts: anywhere, solid occlusion
 		Add("Tuft",
 			WorldTextures.TryLoadTexture("res://assets/texture/world/grass1_1.png")
 				?? WorldTextures.MakeSimpleGrassTuftTexture(),
 			0.80f, 0.08f, 0.5f, 0.8f,
-			BaseMaterial3D.BillboardModeEnum.Enabled);
+			BaseMaterial3D.BillboardModeEnum.Enabled,
+			solid: true);
 
-		// Ruins: very flat, moderate elevation, solid occlusion
+		// Ruins: very flat, moderate elevation
 		Add("Ruin",
 			WorldTextures.MakeSimpleRuinTexture(new Color(0.28f, 0.24f, 0.20f)),
 			0.95f, 0.10f, 0.8f, 1.0f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
-			solid: true,
 			maxSlope: 0.05f, slopeRadius: 1,
 			minHeight: 1.5f, maxHeight: 4.0f);
 
-		// Snow rocks: high altitude only, solid occlusion
+		// Snow rocks: high altitude only
 		Add("RockSnow",
 			WorldTextures.MakeSimpleRockTexture(new Color(0.55f, 0.55f, 0.58f)),
 			0.90f, 0.08f, 0.7f, 1.05f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
-			solid: true,
 			minHeight: 2.5f);
 
 		return list;
