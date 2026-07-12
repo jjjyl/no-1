@@ -120,7 +120,7 @@ public static class DecorationPlacer
 		float yOffset = worldH * (def.BaseYFrac - 0.5f);
 		float yRot = rng.RandfRange(-12, 12);
 
-		const float TILT_DEG = 45f;
+		const float TILT_DEG = -45f;
 
 		if (def.PanelCount > 0)
 		{
