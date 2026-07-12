@@ -15,6 +15,7 @@ public struct DecorationDef
 	public BaseMaterial3D.BillboardModeEnum Billboard;
 	public int PanelCount;         // 0=sprite, N=crossed quads around Y
 	public bool HardAlpha;          // true=AlphaCut Discard (binary), false=Alpha blend
+	public float BaseTiltDeg;       // fixed X tilt override (default 0 → use -45)
 
 	// ── Spawn conditions (0 / null = no check) ──
 	public float MaxSlope;         // max height variance (meters) within SlopeRadius. 0=no check

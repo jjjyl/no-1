@@ -128,6 +128,7 @@ public static class DecorationPlacer
 
 		float yOffset = worldH * (def.BaseYFrac - 0.5f);
 
+		float tiltXDeg = def.BaseTiltDeg != 0f ? def.BaseTiltDeg : -45f;
 		const float TILT_STRENGTH = 0.5f;
 		const float MAX_TILT_DEG = 30f;
 		Vector3 tiltedUp = new Vector3(
@@ -148,7 +149,7 @@ public static class DecorationPlacer
 				Mesh = mesh,
 				MaterialOverride = mat,
 				Position = groundPos + new Vector3(0, yOffset, 0),
-				RotationDegrees = new Vector3(-45f, 0, tiltZDeg), // X=-45 leans away from cam, Z=terrain slope
+				RotationDegrees = new Vector3(tiltXDeg, 0, tiltZDeg), // X=base lean, Z=terrain slope
 				SortingUseAabbCenter = false,
 			};
 			parent.AddChild(mi);
@@ -174,7 +175,7 @@ public static class DecorationPlacer
 					? SpriteBase3D.AlphaCutMode.Discard
 					: SpriteBase3D.AlphaCutMode.Disabled,
 				AlphaScissorThreshold = def.HardAlpha ? 0.1f : 0.5f,
-				RotationDegrees = new Vector3(-45f, 0, tiltZDeg), // X=-45 leans away from cam, Z=terrain slope
+				RotationDegrees = new Vector3(tiltXDeg, 0, tiltZDeg), // X=base lean, Z=terrain slope
 			};
 			parent.AddChild(sprite);
 		}
