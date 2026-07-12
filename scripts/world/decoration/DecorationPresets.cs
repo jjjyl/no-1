@@ -54,7 +54,7 @@ public static class DecorationPresets
 		Add("Rock",
 			WorldTextures.TryLoadTexture("res://assets/texture/world/stone1_1.png")
 				?? WorldTextures.MakeSimpleRockTexture(new Color(0.35f, 0.33f, 0.30f)),
-			0.90f, 0.04f, 0.7f, 1.05f,
+			0.90f, 0.02f, 0.7f, 1.05f,
 			BaseMaterial3D.BillboardModeEnum.Enabled,
 			tiltDeg: -60f);
 
