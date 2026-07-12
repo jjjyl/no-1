@@ -24,6 +24,7 @@ public partial class WorldMap3D : Node3D
 	[Export] public float CameraPitch = 50f;
 	[Export] public float CameraYaw = 0f;            // 0=North(面朝Z轴), 90=East(面朝X轴)
 	public static float StaticCameraYaw;
+	public static ChunkManager StaticChunkManager;
 	[Export] public float CameraZoomMin = 3f;
 	[Export] public float CameraZoomMax = 18f;
 	[Export] public float CameraZoomStep = 1.5f;
@@ -88,6 +89,7 @@ public partial class WorldMap3D : Node3D
 		_chunkManager = new ChunkManager { Name = "ChunkManager" };
 		AddChild(_chunkManager);
 		_chunkManager.Init(_worldData, terrainNode);
+		StaticChunkManager = _chunkManager;
 
 		BuildParallax();
 		GD.Print("[WorldMap3D] Parallax done");

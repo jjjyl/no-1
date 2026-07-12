@@ -40,7 +40,7 @@ public partial class Player3D : CharacterBody3D
 			_body = new AnimatedSprite3D
 			{
 				SpriteFrames = frames,
-				Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+				Billboard = BaseMaterial3D.BillboardModeEnum.FixedY,
 				Position = Vector3.Zero,
 				PixelSize = 0.0625f,
 				Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
@@ -49,6 +49,8 @@ public partial class Player3D : CharacterBody3D
 			};
 			AddChild(_body);
 		}
+
+		_body.Billboard = BaseMaterial3D.BillboardModeEnum.FixedY;
 
 		_body.Play("idle");
 
@@ -111,6 +113,32 @@ public partial class Player3D : CharacterBody3D
 
 		MoveDirection = input.Normalized();
 		Translate(MoveDirection * Speed * dt);
+
+		if (_body != null)
+		{
+			var cm = WorldMap3D.StaticChunkManager;
+			if (cm != null)
+			{
+				const float SAMPLE_DIST = 0.5f;
+				float px = Position.X, pz = Position.Z;
+				float hL = cm.GetHeightAt(px - SAMPLE_DIST, pz);
+				float hR = cm.GetHeightAt(px + SAMPLE_DIST, pz);
+				float hU = cm.GetHeightAt(px, pz - SAMPLE_DIST);
+				float hD = cm.GetHeightAt(px, pz + SAMPLE_DIST);
+				float dx = (hR - hL) / (2f * SAMPLE_DIST);
+				float dz = (hD - hU) / (2f * SAMPLE_DIST);
+				Vector3 normal = new Vector3(-dx, 1f, -dz).Normalized();
+				const float TILT_STRENGTH = 0.5f;
+				const float MAX_TILT_DEG = 30f;
+				Vector3 tiltedUp = new Vector3(
+					Mathf.Lerp(0f, normal.X, TILT_STRENGTH),
+					Mathf.Lerp(1f, normal.Y, TILT_STRENGTH),
+					Mathf.Lerp(0f, normal.Z, TILT_STRENGTH)).Normalized();
+				float tiltZ = -Mathf.Atan2(tiltedUp.X, tiltedUp.Y);
+				tiltZ = Mathf.Clamp(tiltZ, -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG));
+				_body.RotationDegrees = new Vector3(0, 0, Mathf.RadToDeg(tiltZ));
+			}
+		}
 
 		if (_body?.SpriteFrames != null)
 		{
