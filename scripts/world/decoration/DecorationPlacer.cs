@@ -153,6 +153,9 @@ public static class DecorationPlacer
 				Modulate = Colors.White,
 				MaterialOverride = mat,
 				SortingUseAabbCenter = false,
+				AlphaCut = def.SolidOcclusion
+					? SpriteBase3D.AlphaCutMode.Discard
+					: SpriteBase3D.AlphaCutMode.Disabled,
 			};
 			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
 				sprite.RotationDegrees = new Vector3(0, yRot, 0);

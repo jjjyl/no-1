@@ -44,6 +44,7 @@ public partial class Player3D : CharacterBody3D
 				Position = Vector3.Zero,
 				PixelSize = 0.0625f,
 				Offset = new Vector2(0, 24 * (0.917f - 0.5f)),
+				AlphaCut = SpriteBase3D.AlphaCutMode.OpaquePrepass,
 				Name = "Body"
 			};
 			AddChild(_body);
