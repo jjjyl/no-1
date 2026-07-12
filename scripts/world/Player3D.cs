@@ -19,6 +19,7 @@ public partial class Player3D : CharacterBody3D
 
 	public Vector3 MoveDirection { get; private set; }
 	private AnimatedSprite3D _body;
+	private CollisionShape3D _col;
 
 	public override void _Ready()
 	{
@@ -54,17 +55,20 @@ public partial class Player3D : CharacterBody3D
 
 		_body.Play("idle");
 
-		// ── Collision (skip if tscn already has one) ──
-		bool hasCollision = false;
+		// ── Collision shape (find existing or create) ──
 		foreach (var child in GetChildren())
 		{
-			if (child is CollisionShape3D) { hasCollision = true; break; }
+			if (child is CollisionShape3D cs3d)
+			{
+				_col = cs3d;
+				break;
+			}
 		}
-		if (!hasCollision)
+		if (_col == null)
 		{
-			var col = new CollisionShape3D();
-			col.Shape = new CylinderShape3D { Height = 1f, Radius = 0.35f };
-			AddChild(col);
+			_col = new CollisionShape3D();
+			_col.Shape = new CylinderShape3D { Height = 1f, Radius = 0.35f };
+			AddChild(_col);
 		}
 
 		// ── Shadow (skip if tscn already has one) ──
@@ -112,33 +116,6 @@ public partial class Player3D : CharacterBody3D
 			-input.X * sin + input.Z * cos);
 
 		MoveDirection = input.Normalized();
-		Translate(MoveDirection * Speed * dt);
-
-		if (_body != null)
-		{
-			var cm = WorldMap3D.StaticChunkManager;
-			if (cm != null)
-			{
-				const float SAMPLE_DIST = 0.5f;
-				float px = Position.X, pz = Position.Z;
-				float hL = cm.GetHeightAt(px - SAMPLE_DIST, pz);
-				float hR = cm.GetHeightAt(px + SAMPLE_DIST, pz);
-				float hU = cm.GetHeightAt(px, pz - SAMPLE_DIST);
-				float hD = cm.GetHeightAt(px, pz + SAMPLE_DIST);
-				float dx = (hR - hL) / (2f * SAMPLE_DIST);
-				float dz = (hD - hU) / (2f * SAMPLE_DIST);
-				Vector3 normal = new Vector3(-dx, 1f, -dz).Normalized();
-				const float TILT_STRENGTH = 0.5f;
-				const float MAX_TILT_DEG = 30f;
-				Vector3 tiltedUp = new Vector3(
-					Mathf.Lerp(0f, normal.X, TILT_STRENGTH),
-					Mathf.Lerp(1f, normal.Y, TILT_STRENGTH),
-					Mathf.Lerp(0f, normal.Z, TILT_STRENGTH)).Normalized();
-				float tiltZ = -Mathf.Atan2(tiltedUp.X, tiltedUp.Y);
-				tiltZ = Mathf.Clamp(tiltZ, -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG));
-				_body.RotationDegrees = new Vector3(-60f, 0, Mathf.RadToDeg(tiltZ)); // X=-60 leans away from cam, Z=terrain slope
-			}
-		}
 
 		if (_body?.SpriteFrames != null)
 		{
@@ -152,6 +129,77 @@ public partial class Player3D : CharacterBody3D
 			if (Mathf.Abs(MoveDirection.X) > 0.01f)
 				_body.FlipH = MoveDirection.X < 0;
 		}
+	}
+
+	public override void _PhysicsProcess(double delta)
+	{
+		var vel = MoveDirection * Speed;
+		Velocity = new Vector3(vel.X, 0, vel.Z);
+		MoveAndSlide();
+
+		if (IsOnWall())
+			TryStepUp();
+
+		// Snap to terrain (unless standing on a decoration)
+		if (!IsOnWall() && !IsOnFloor())
+		{
+			var cm = WorldMap3D.StaticChunkManager;
+			if (cm != null)
+			{
+				float terrainH = cm.GetHeightAt(Position.X, Position.Z);
+				Position = new Vector3(Position.X, terrainH, Position.Z);
+			}
+		}
+
+		UpdateBodyTilt();
+	}
+
+	private const float StepHeight = 0.3f;
+	private const float StepCheckDist = 0.4f;
+
+	private void TryStepUp()
+	{
+		if (MoveDirection.LengthSquared() < 0.01f) return;
+		if (_col?.Shape == null) return;
+
+		var spaceState = GetWorld3D().DirectSpaceState;
+		var query = new PhysicsShapeQueryParameters3D
+		{
+			Shape = _col.Shape,
+			CollisionMask = CollisionMask,
+			Transform = GlobalTransform.Translated(
+				Vector3.Up * StepHeight + MoveDirection.Normalized() * StepCheckDist),
+			Exclude = new Godot.Collections.Array<Rid> { GetRid() },
+		};
+
+		if (spaceState.IntersectShape(query, 1).Count == 0)
+			GlobalPosition += Vector3.Up * StepHeight;
+	}
+
+	private void UpdateBodyTilt()
+	{
+		if (_body == null) return;
+		var cm = WorldMap3D.StaticChunkManager;
+		if (cm == null) return;
+
+		const float SAMPLE_DIST = 0.5f;
+		float px = Position.X, pz = Position.Z;
+		float hL = cm.GetHeightAt(px - SAMPLE_DIST, pz);
+		float hR = cm.GetHeightAt(px + SAMPLE_DIST, pz);
+		float hU = cm.GetHeightAt(px, pz - SAMPLE_DIST);
+		float hD = cm.GetHeightAt(px, pz + SAMPLE_DIST);
+		float dx = (hR - hL) / (2f * SAMPLE_DIST);
+		float dz = (hD - hU) / (2f * SAMPLE_DIST);
+		Vector3 normal = new Vector3(-dx, 1f, -dz).Normalized();
+		const float TILT_STRENGTH = 0.5f;
+		const float MAX_TILT_DEG = 30f;
+		Vector3 tiltedUp = new Vector3(
+			Mathf.Lerp(0f, normal.X, TILT_STRENGTH),
+			Mathf.Lerp(1f, normal.Y, TILT_STRENGTH),
+			Mathf.Lerp(0f, normal.Z, TILT_STRENGTH)).Normalized();
+		float tiltZ = -Mathf.Atan2(tiltedUp.X, tiltedUp.Y);
+		tiltZ = Mathf.Clamp(tiltZ, -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG));
+		_body.RotationDegrees = new Vector3(-60f, 0, Mathf.RadToDeg(tiltZ));
 	}
 
 	static SpriteFrames BuildDefaultFrames(Texture2D tex)
