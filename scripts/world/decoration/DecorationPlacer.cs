@@ -71,8 +71,25 @@ public static class DecorationPlacer
 			}
 
 			if (pick != null && CheckConditions(pick.Value, chunk, tx, ty, dim, cx, cy, allChunks))
-				Spawn(pick.Value, parent, pos, rng);
+		{
+			Vector3 normal = ComputeNormal(chunk, tx, ty, dim, cx, cy, allChunks);
+			Spawn(pick.Value, parent, pos, normal, rng);
 		}
+		}
+	}
+
+	// ── Terrain normal ────────────────────────────────────────────────
+
+	static Vector3 ComputeNormal(ChunkData chunk, int tx, int ty, int dim, int cx, int cy, ChunkData[] allChunks)
+	{
+		float ts = WorldConstants.TileSizeMeters;
+		float h00 = TerrainHeight.CornerHeight(chunk, tx,     ty,     dim, HeightScale, cx, cy, allChunks);
+		float h10 = TerrainHeight.CornerHeight(chunk, tx + 1, ty,     dim, HeightScale, cx, cy, allChunks);
+		float h01 = TerrainHeight.CornerHeight(chunk, tx,     ty + 1, dim, HeightScale, cx, cy, allChunks);
+		float h11 = TerrainHeight.CornerHeight(chunk, tx + 1, ty + 1, dim, HeightScale, cx, cy, allChunks);
+		float dx = ((h10 + h11) - (h00 + h01)) * 0.5f / ts;
+		float dz = ((h01 + h11) - (h00 + h10)) * 0.5f / ts;
+		return new Vector3(-dx, 1f, -dz).Normalized();
 	}
 
 	// ── Spawn condition checks ────────────────────────────────────────
@@ -106,7 +123,7 @@ public static class DecorationPlacer
 	/// Instantiates a decoration sprite or cross-mesh at groundPos.
 	/// BaseYFrac pivot aligns the bottom contact point with groundPos.Y.
 	/// </summary>
-	static void Spawn(DecorationDef def, Node parent, Vector3 groundPos, RandomNumberGenerator rng)
+	static void Spawn(DecorationDef def, Node parent, Vector3 groundPos, Vector3 terrainNormal, RandomNumberGenerator rng)
 	{
 		var tex = def.Texture;
 		if (tex == null) return;
@@ -120,6 +137,15 @@ public static class DecorationPlacer
 		float yOffset = worldH * (def.BaseYFrac - 0.5f);
 		float yRot = rng.RandfRange(-12, 12);
 
+		const float TILT_STRENGTH = 0.5f;
+		const float MAX_TILT_DEG = 30f;
+		Vector3 tiltedUp = new Vector3(
+			Mathf.Lerp(0f, terrainNormal.X, TILT_STRENGTH),
+			Mathf.Lerp(1f, terrainNormal.Y, TILT_STRENGTH),
+			Mathf.Lerp(0f, terrainNormal.Z, TILT_STRENGTH)).Normalized();
+		float tiltX = Mathf.Clamp(Mathf.Atan2(tiltedUp.Z, tiltedUp.Y), -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG));
+		float tiltZ = Mathf.Clamp(-Mathf.Atan2(tiltedUp.X, tiltedUp.Y), -Mathf.DegToRad(MAX_TILT_DEG), Mathf.DegToRad(MAX_TILT_DEG));
+
 		if (def.PanelCount > 0)
 		{
 			var mat = def.HardAlpha
@@ -131,7 +157,7 @@ public static class DecorationPlacer
 				Mesh = mesh,
 				MaterialOverride = mat,
 				Position = groundPos + new Vector3(0, yOffset, 0),
-				RotationDegrees = new Vector3(0, yRot, 0),
+				RotationDegrees = new Vector3(Mathf.RadToDeg(tiltX), yRot, Mathf.RadToDeg(tiltZ)),
 				SortingUseAabbCenter = false,
 			};
 			parent.AddChild(mi);
@@ -142,11 +168,11 @@ public static class DecorationPlacer
 			var mat = def.HardAlpha
 				? WorldTextures.MakeSolidDecoMaterial(tex)
 				: WorldTextures.MakeAlphaMaterial(tex);
-			mat.BillboardMode = def.Billboard;
+			mat.BillboardMode = BaseMaterial3D.BillboardModeEnum.Disabled;
 			var sprite = new Sprite3D
 			{
 				Texture = tex,
-				Billboard = def.Billboard,
+				Billboard = BaseMaterial3D.BillboardModeEnum.FixedY,
 				Position = groundPos,
 				PixelSize = def.PixelScaleBase * scale,
 				Offset = new Vector2(0, offsetY),
@@ -157,9 +183,8 @@ public static class DecorationPlacer
 					? SpriteBase3D.AlphaCutMode.Discard
 					: SpriteBase3D.AlphaCutMode.Disabled,
 				AlphaScissorThreshold = def.HardAlpha ? 0.1f : 0.5f,
+				RotationDegrees = new Vector3(Mathf.RadToDeg(tiltX), yRot, Mathf.RadToDeg(tiltZ)),
 			};
-			if (def.Billboard != BaseMaterial3D.BillboardModeEnum.Disabled)
-				sprite.RotationDegrees = new Vector3(0, yRot, 0);
 			parent.AddChild(sprite);
 		}
 	}
