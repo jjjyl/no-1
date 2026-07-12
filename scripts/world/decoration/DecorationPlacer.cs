@@ -148,7 +148,7 @@ public static class DecorationPlacer
 				Mesh = mesh,
 				MaterialOverride = mat,
 				Position = groundPos + new Vector3(0, yOffset, 0),
-				RotationDegrees = new Vector3(0, 0, tiltZDeg),
+				RotationDegrees = new Vector3(-45f, 0, tiltZDeg), // X=-45 leans away from cam, Z=terrain slope
 				SortingUseAabbCenter = false,
 			};
 			parent.AddChild(mi);
@@ -174,7 +174,7 @@ public static class DecorationPlacer
 					? SpriteBase3D.AlphaCutMode.Discard
 					: SpriteBase3D.AlphaCutMode.Disabled,
 				AlphaScissorThreshold = def.HardAlpha ? 0.1f : 0.5f,
-				RotationDegrees = new Vector3(0, 0, tiltZDeg),
+				RotationDegrees = new Vector3(-45f, 0, tiltZDeg), // X=-45 leans away from cam, Z=terrain slope
 			};
 			parent.AddChild(sprite);
 		}
